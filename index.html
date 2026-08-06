@@ -23,7 +23,27 @@
     --accent: #c9a463;
     --accent-soft: #8a7550;
     --whatsapp: #ffffff;
+    --input-bg: #0f0f10;
+    --hover-bg: rgba(255,255,255,.05);
   }
+  /* ---------- TEMA CLARO (Área Restrita) ---------- */
+  #admin-view.tema-claro{
+    --bg: #f4f3ef;
+    --bg-soft: #ffffff;
+    --card: #ffffff;
+    --border: #e2ded3;
+    --text: #1c1b19;
+    --text-muted: #6c6a63;
+    --accent: #a9803f;
+    --accent-soft: #8a7550;
+    --input-bg: #f7f6f2;
+    --hover-bg: rgba(0,0,0,.045);
+  }
+  #admin-view.tema-claro .admin-login-btn{color:#fff;}
+  #admin-view.tema-claro .status-confirmado{background:rgba(60,120,190,.12);color:#2f6fb0;}
+  #admin-view.tema-claro .status-finalizado{background:rgba(50,150,80,.12);color:#2f8a52;}
+  #admin-view.tema-claro .status-cancelado{background:rgba(200,70,70,.12);color:#c14b4b;}
+  #admin-view.tema-claro .admin-sair-btn:hover{border-color:#c96363;color:#c14b4b;}
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
@@ -488,6 +508,18 @@
       background:#e6e6e6;
   }
   #booking-view .day-cell.selected .dot{background:#161616;}
+  #booking-view .day-cell.bloqueado{
+      background:rgba(200,80,80,.08);
+      color:#7a4a4a;
+  }
+
+  #booking-view .slots-empty{
+      grid-column:1/-1;
+      text-align:center;
+      color:#8b8b8b;
+      font-size:13.5px;
+      padding:18px 8px;
+  }
 
   #booking-view .horarios-label{
       font-size:11px;letter-spacing:1.4px;color:#8b8b8b;
@@ -828,10 +860,32 @@
     background:var(--card);
     border:1px solid var(--border);
     border-radius:20px;
-    padding:44px 36px;
     text-align:center;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
+    overflow:hidden;
   }
+  .admin-login-top{
+    background:#000;
+    padding:38px 30px 30px;
+    position:relative;
+    border-bottom:1px solid var(--border);
+  }
+  .admin-login-top::before{
+      content:"";
+      width:180px;height:180px;
+      background:rgba(255,255,255,.04);
+      border-radius:50%;
+      position:absolute;left:50%;top:-90px;
+      transform:translateX(-50%);
+      filter:blur(40px);
+  }
+  .admin-login-top img{
+      position:relative;
+      width:100%;max-width:170px;
+      height:auto;margin:0 auto;display:block;
+      filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+  }
+  .admin-login-bottom{padding:34px 36px 40px;}
   .admin-login-card .admin-logo{
     width:72px;height:72px;border-radius:50%;
     margin:0 auto 18px;
@@ -839,12 +893,12 @@
     display:flex;align-items:center;justify-content:center;
     color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;
   }
-  .admin-login-card h1{font-size:26px;margin-bottom:6px;letter-spacing:.5px;}
-  .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-bottom:30px;}
+  .admin-login-card h1{font-size:24px;margin-bottom:6px;letter-spacing:.5px;}
+  .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-bottom:26px;}
   .admin-field{text-align:left;margin-bottom:16px;}
   .admin-field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:7px;letter-spacing:.3px;}
   .admin-field input{
-    width:100%;background:#0f0f10;border:1px solid var(--border);
+    width:100%;background:var(--input-bg);border:1px solid var(--border);
     border-radius:10px;padding:12px 14px;color:var(--text);
     font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:.2s;
   }
@@ -888,7 +942,9 @@
     width:34px;height:34px;border-radius:9px;background:var(--accent);
     color:#1a1305;font-family:'Bebas Neue',sans-serif;font-size:15px;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    overflow:hidden;
   }
+  .admin-sidebar-brand .mark img{width:100%;height:100%;object-fit:contain;padding:4px;}
   .admin-sidebar-brand span{font-size:13px;color:var(--text-muted);letter-spacing:.3px;}
   .admin-menu{list-style:none;flex:1;}
   .admin-menu li{margin-bottom:4px;}
@@ -899,7 +955,7 @@
     font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;transition:.15s;
   }
   .admin-menu button i{width:16px;text-align:center;font-size:14px;}
-  .admin-menu button:hover{background:rgba(255,255,255,.05);color:var(--text);}
+  .admin-menu button:hover{background:var(--hover-bg);color:var(--text);}
   .admin-menu button.active{background:rgba(201,164,99,.12);color:var(--accent);}
   .admin-sidebar-footer{border-top:1px solid var(--border);padding-top:14px;margin-top:10px;}
   .admin-sair-btn{
@@ -921,7 +977,9 @@
     width:32px;height:32px;border-radius:50%;background:var(--accent);
     color:#1a1305;display:flex;align-items:center;justify-content:center;
     font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
+    overflow:hidden;
   }
+  .admin-avatar-chip img{width:100%;height:100%;object-fit:cover;}
   .admin-content{padding:28px 32px 60px;flex:1;}
 
   /* ---------- PÁGINA AGENDAMENTOS ---------- */
@@ -980,7 +1038,7 @@
   .dash-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;}
   .dash-panel h4{font-size:14px;margin-bottom:16px;color:var(--text);}
   .mini-list{display:flex;flex-direction:column;gap:10px;}
-  .mini-list-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 12px;background:#151516;border-radius:10px;}
+  .mini-list-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 12px;background:var(--input-bg);border-radius:10px;}
   .mini-list-item .n{font-weight:600;}
   .mini-list-item .m{color:var(--text-muted);font-size:12px;}
   .bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;}
@@ -988,7 +1046,7 @@
   .bar-chart .bar{width:100%;background:var(--accent);border-radius:5px 5px 0 0;min-height:3px;transition:height .3s;}
   .bar-chart .lbl{font-size:10px;color:var(--text-muted);}
   .mini-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-  .mini-cal .dcell{aspect-ratio:1/1;border-radius:6px;background:#151516;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--text-muted);position:relative;}
+  .mini-cal .dcell{aspect-ratio:1/1;border-radius:6px;background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--text-muted);position:relative;}
   .mini-cal .dcell.tem{color:var(--text);}
   .mini-cal .dcell.tem::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px;}
   .mini-cal .dcell.hoje{border:1px solid var(--accent);}
@@ -1001,8 +1059,15 @@
   .admin-btn-primario:hover{background:#d9b578;}
   .item-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
   .item-card .info{flex:1;min-width:180px;}
-  .item-card .info .t{font-weight:700;font-size:14.5px;margin-bottom:4px;}
+  .item-card .info .t{font-weight:700;font-size:14.5px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
   .item-card .info .s{color:var(--text-muted);font-size:12.5px;}
+  .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .status-dot.on{background:#3fd06b;box-shadow:0 0 0 3px rgba(63,208,107,.18);}
+  .status-dot.off{background:#5a5a5e;}
+  .item-card select{
+      background:var(--input-bg);border:1px solid var(--border);border-radius:9px;
+      padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+  }
   .badge-ativo{background:rgba(94,200,120,.15);color:#7ee6a0;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
   .badge-inativo{background:rgba(150,150,150,.15);color:#9a9a9e;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 
@@ -1018,7 +1083,7 @@
   .campos-linha{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:14px;}
   .campo-bloco label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:7px;}
   .campo-bloco input,.campo-bloco select{
-    width:100%;background:#0f0f10;border:1px solid var(--border);border-radius:9px;
+    width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;
     padding:10px 12px;color:var(--text);font-size:13.5px;font-family:'Inter',sans-serif;
   }
   .dia-semana-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;}
@@ -1050,7 +1115,7 @@
   .admin-modal .campo{margin-bottom:14px;}
   .admin-modal .campo label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;}
   .admin-modal .campo input,.admin-modal .campo select{
-    width:100%;background:#0f0f10;border:1px solid var(--border);border-radius:9px;
+    width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;
     padding:10px 12px;color:var(--text);font-size:13.5px;font-family:'Inter',sans-serif;
   }
   .admin-modal-actions{display:flex;gap:10px;margin-top:20px;}
@@ -1153,7 +1218,7 @@
     opacity:.6;
   }
   .admin-field input{transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease;}
-  .admin-field input:focus{box-shadow:0 0 0 3px rgba(201,164,99,.12);background:#111112;}
+  .admin-field input:focus{box-shadow:0 0 0 3px rgba(201,164,99,.12);background:var(--input-bg);}
 
   /* ---------- Área Restrita: sidebar ---------- */
   .admin-sidebar{box-shadow:4px 0 24px rgba(0,0,0,.25);}
@@ -1795,25 +1860,29 @@
   <!-- ============= LOGIN ============= -->
   <div id="admin-login">
     <div class="admin-login-card">
-      <div class="admin-logo">BP</div>
-      <h1>Área Restrita</h1>
-      <p class="sub">Acesso exclusivo para barbeiros da Prieto Barbearia</p>
-        
-      <div class="admin-login-error" id="admin-login-error"></div>
+      <div class="admin-login-top">
+        <img src="logo.png" alt="Prieto Barbearia">
+        <h1>Área Restrita</h1>
+      </div>
+      <div class="admin-login-bottom">
+        <p class="sub">Acesso exclusivo para barbeiros da Prieto Barbearia</p>
 
-      <form onsubmit="handleAdminLogin(event)">
-        <div class="admin-field">
-          <label for="admin-email">E-mail</label>
-          <input type="email" id="admin-email" placeholder="seuemail@exemplo.com" required autocomplete="username">
-        </div>
-        <div class="admin-field">
-          <label for="admin-senha">Senha</label>
-          <input type="password" id="admin-senha" placeholder="••••••••" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
-      </form>
+        <div class="admin-login-error" id="admin-login-error"></div>
 
-      <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="admin-field">
+            <label for="admin-email">E-mail</label>
+            <input type="email" id="admin-email" placeholder="seuemail@exemplo.com" required autocomplete="username">
+          </div>
+          <div class="admin-field">
+            <label for="admin-senha">Senha</label>
+            <input type="password" id="admin-senha" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
+        </form>
+
+        <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+      </div>
     </div>
   </div>
 
@@ -1821,7 +1890,7 @@
   <div id="admin-panel">
     <aside class="admin-sidebar">
       <div class="admin-sidebar-brand">
-        <div class="mark">BP</div>
+        <div class="mark"><img src="logo.png" alt="Prieto Barbearia"></div>
         <span>Prieto Barbearia</span>
       </div>
       <ul class="admin-menu" id="admin-menu">
@@ -1837,6 +1906,7 @@
         <li><button data-page="relatorios" onclick="admin.irPara('relatorios')"><i class="fa-solid fa-chart-line"></i>Relatórios</button></li>
         <li><button data-page="perfil" onclick="admin.irPara('perfil')"><i class="fa-solid fa-id-badge"></i>Perfil</button></li>
         <li><button data-page="configuracoes" onclick="admin.irPara('configuracoes')"><i class="fa-solid fa-gear"></i>Configurações</button></li>
+        <li id="menu-item-equipe" style="display:none;"><button data-page="equipe" onclick="admin.irPara('equipe')"><i class="fa-solid fa-user-shield"></i>Equipe</button></li>
       </ul>
       <div class="admin-sidebar-footer">
         <button class="admin-sair-btn" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
@@ -1849,7 +1919,7 @@
         <h2 id="admin-page-title">Agendamentos</h2>
         <div class="quem">
           <span id="admin-barbeiro-nome">—</span>
-          <div class="admin-avatar-chip" id="admin-avatar-chip">B</div>
+          <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="logo.png" alt="Prieto Barbearia"></div>
         </div>
       </div>
       <div class="admin-content" id="admin-content">
@@ -1974,12 +2044,95 @@ const barbers = [
 ];
 
 const shopAddress = "Rua Sindoca Varques • Sanga Puitã, Ponta Porã - MS - CEP: 79909000";
-const timeSlots = ["13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
+const DURACAO_PADRAO_MIN = 30; // duração padrão de cada horário, em minutos
 
 let currentBarber = null;
 let viewYear, viewMonth; // mês exibido no calendário
 let selectedDate = null; // "YYYY-MM-DD"
 let selectedTime = null;
+
+/* horários de funcionamento e bloqueios do barbeiro selecionado,
+   carregados do Supabase (mesma fonte que a Área Restrita usa) */
+let horariosPorDia = {};   // { 0..6: {ativo, hora_abertura, hora_fechamento, intervalo_inicio, intervalo_fim} }
+let bloqueiosBarbeiro = []; // [{data_inicio, data_fim}, ...]
+let carregandoDisponibilidade = false;
+
+/* o cliente supabase (const sb) é criado mais abaixo no arquivo, mas como
+   estas funções só rodam após toda a página carregar, ele já existe. */
+function getSb(){ return (typeof sb !== 'undefined') ? sb : null; }
+
+/* verifica se uma data (YYYY-MM-DD) está dentro de algum bloqueio */
+function dataBloqueada(dateKey){
+    return bloqueiosBarbeiro.some(b => dateKey >= b.data_inicio && dateKey <= b.data_fim);
+}
+
+/* carrega horários de funcionamento + bloqueios do barbeiro no Supabase */
+async function carregarDisponibilidadeBarbeiro(){
+    horariosPorDia = {};
+    bloqueiosBarbeiro = [];
+    currentBarber.dbId = null;
+    const sbClient = getSb();
+    if(!sbClient) return;
+
+    carregandoDisponibilidade = true;
+    try{
+        const { data: barbeiroRow } = await sbClient.from('barbeiros').select('id').eq('nome', currentBarber.name).single();
+        if(!barbeiroRow) return;
+        currentBarber.dbId = barbeiroRow.id;
+
+        const [{ data: horarios }, { data: bloqueios }] = await Promise.all([
+            sbClient.from('horarios_funcionamento').select('*').eq('barbeiro_id', barbeiroRow.id),
+            sbClient.from('bloqueios_data').select('data_inicio, data_fim').eq('barbeiro_id', barbeiroRow.id)
+        ]);
+        (horarios||[]).forEach(h => horariosPorDia[h.dia_semana] = h);
+        bloqueiosBarbeiro = bloqueios || [];
+    } catch(e){
+        console.error('Erro ao carregar disponibilidade do barbeiro:', e);
+    } finally {
+        carregandoDisponibilidade = false;
+    }
+}
+
+/* gera os horários (slots) de um dia a partir da configuração salva na Área Restrita,
+   descontando o intervalo de almoço e os horários já agendados por outros clientes */
+async function gerarSlotsDoDia(dateKey){
+    const [y,m,d] = dateKey.split('-').map(Number);
+    const diaSemana = new Date(y, m-1, d).getDay();
+    const h = horariosPorDia[diaSemana];
+
+    if(!h || h.ativo === false || !h.hora_abertura || !h.hora_fechamento) return [];
+
+    const paraMin = hhmm => { const [hh,mm] = hhmm.slice(0,5).split(':').map(Number); return hh*60+mm; };
+    const paraHHMM = min => `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+
+    const abertura = paraMin(h.hora_abertura);
+    const fechamento = paraMin(h.hora_fechamento);
+    const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
+    const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
+
+    const slots = [];
+    for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
+        if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
+        slots.push(paraHHMM(t));
+    }
+
+    // remove horários já ocupados por outros agendamentos nesse dia
+    const sbClient = getSb();
+    if(sbClient && currentBarber.dbId){
+        try{
+            const { data: ocupados } = await sbClient.from('agendamentos')
+                .select('horario, status')
+                .eq('barbeiro_id', currentBarber.dbId)
+                .eq('data', dateKey)
+                .neq('status', 'cancelado');
+            const horariosOcupados = new Set((ocupados||[]).map(a => a.horario.slice(0,5)));
+            return slots.filter(s => !horariosOcupados.has(s));
+        } catch(e){
+            console.error('Erro ao verificar horários ocupados:', e);
+        }
+    }
+    return slots;
+}
 
 /* ---------------- RENDER LISTA ---------------- */
 function renderBarberList(){
@@ -1997,7 +2150,7 @@ function renderBarberList(){
 }
 
 /* ---------------- NAVEGAÇÃO ENTRE TELAS DO AGENDAMENTO ---------------- */
-function openBooking(barberId){
+async function openBooking(barberId){
     currentBarber = barbers.find(b => b.id === barberId);
     if(!currentBarber) return;
 
@@ -2013,13 +2166,17 @@ function openBooking(barberId){
     selectedDate = null;
     selectedTime = null;
 
-    renderCalendar();
-    renderSlots();
-    updateContinueButton();
-
     document.getElementById('screen-list').classList.remove('active');
     document.getElementById('screen-booking').classList.add('active');
     document.getElementById('screen-booking').scrollTop = 0;
+
+    // carrega horários e bloqueios reais do barbeiro (cadastrados na Área Restrita)
+    renderCalendar();
+    renderSlots();
+    updateContinueButton();
+    await carregarDisponibilidadeBarbeiro();
+    renderCalendar();
+    renderSlots();
 }
 
 function goToList(){
@@ -2211,17 +2368,23 @@ function renderCalendar(){
 
     for(let d=1; d<=daysInMonth; d++){
         const cellDate = new Date(viewYear, viewMonth, d);
-        const isSunday = cellDate.getDay() === 0;
         const isPast = cellDate < today;
         const dateKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const diaSemana = cellDate.getDay();
+
+        // dia fechado: sem configuração de horário para esse dia da semana, ou marcado como inativo
+        const h = horariosPorDia[diaSemana];
+        const diaFechado = !h || h.ativo === false;
+        const diaBloqueado = dataBloqueada(dateKey);
 
         const btn = document.createElement('button');
         btn.className = 'day-cell';
         btn.textContent = d;
 
-        const disabled = isSunday || isPast;
+        const disabled = isPast || diaFechado || diaBloqueado;
         if(disabled){
             btn.disabled = true;
+            if(diaBloqueado) btn.classList.add('bloqueado');
         } else {
             btn.innerHTML = `${d}<span class="dot"></span>`;
             btn.onclick = () => selectDate(dateKey, btn);
@@ -2235,7 +2398,7 @@ function renderCalendar(){
     }
 }
 
-function selectDate(dateKey, btn){
+async function selectDate(dateKey, btn){
     selectedDate = dateKey;
     selectedTime = null;
     renderCalendar();
@@ -2244,16 +2407,43 @@ function selectDate(dateKey, btn){
 }
 
 /* ---------------- HORÁRIOS ---------------- */
-function renderSlots(){
+let slotsAtuaisCache = []; // horários já calculados para a data selecionada (evita nova consulta a cada clique)
+
+async function renderSlots(){
     const grid = document.getElementById('slots-grid');
-    grid.innerHTML = timeSlots.map(t => `
+
+    if(!selectedDate){
+        slotsAtuaisCache = [];
+        grid.innerHTML = '<div class="slots-empty">Selecione uma data para ver os horários disponíveis.</div>';
+        return;
+    }
+
+    grid.innerHTML = '<div class="slots-empty">Carregando horários...</div>';
+    const dataConsultada = selectedDate;
+    const slotsDoDia = await gerarSlotsDoDia(dataConsultada);
+
+    // se o usuário já trocou de data enquanto carregava, não sobrescreve o resultado errado
+    if(selectedDate !== dataConsultada) return;
+
+    slotsAtuaisCache = slotsDoDia;
+    pintarSlots();
+}
+
+/* redesenha os horários já calculados, sem consultar o banco de novo (usado ao clicar num horário) */
+function pintarSlots(){
+    const grid = document.getElementById('slots-grid');
+    if(!slotsAtuaisCache.length){
+        grid.innerHTML = '<div class="slots-empty">Nenhum horário disponível nesse dia.</div>';
+        return;
+    }
+    grid.innerHTML = slotsAtuaisCache.map(t => `
         <div class="slot ${selectedTime===t ? 'selected':''}" onclick="selectTime('${t}')">${t}</div>
     `).join('');
 }
 
 function selectTime(t){
     selectedTime = t;
-    renderSlots();
+    pintarSlots();
     updateContinueButton();
 }
 
@@ -2307,8 +2497,19 @@ const TITULOS_PAGINA = {
     financeiro: 'Financeiro',
     relatorios: 'Relatórios',
     perfil: 'Perfil',
-    configuracoes: 'Configurações'
+    configuracoes: 'Configurações',
+    equipe: 'Equipe'
 };
+
+/* avatar do topo: mostra a foto do barbeiro se cadastrada, senão a logo da barbearia */
+function atualizarAvatarChip(barbeiro){
+    const chip = document.getElementById('admin-avatar-chip');
+    if(barbeiro.foto_url){
+        chip.innerHTML = `<img src="${barbeiro.foto_url}" alt="${barbeiro.nome}">`;
+    } else {
+        chip.innerHTML = `<img src="logo.png" alt="Prieto Barbearia">`;
+    }
+}
 
 const admin = {
     barbeiro: null,
@@ -2330,9 +2531,30 @@ const admin = {
         const { data: { user } } = await sb.auth.getUser();
         if(!user){ return; }
 
-        const { data, error } = await sb.from('barbeiros').select('*').eq('user_id', user.id).single();
-        if(error || !data){
+        let { data, error } = await sb.from('barbeiros').select('*').eq('user_id', user.id).single();
+
+        // primeiro login de um funcionário/barbeiro cujo usuário já existe no Supabase Auth,
+        // mas ainda não tem registro na tabela "barbeiros": criamos automaticamente (nível
+        // mínimo, inativo p/ o site público até o administrador revisar e ativar).
+        if((error || !data) && error && error.code === 'PGRST116'){
+            const nomeSugerido = (user.user_metadata && user.user_metadata.nome) || user.email.split('@')[0];
+            const { data: novo, error: erroCriar } = await sb.from('barbeiros')
+                .insert({ user_id: user.id, nome: nomeSugerido, nivel_acesso: 'funcionario', ativo: true })
+                .select('*').single();
+            if(erroCriar || !novo){
+                this.mostrarErroLogin('Não encontramos um barbeiro vinculado a este login e não foi possível criar automaticamente. Fale com o administrador.');
+                await sb.auth.signOut();
+                return;
+            }
+            data = novo;
+        } else if(error || !data){
             this.mostrarErroLogin('Não encontramos um barbeiro vinculado a este login.');
+            await sb.auth.signOut();
+            return;
+        }
+
+        if(data.ativo === false){
+            this.mostrarErroLogin('Seu acesso está desativado. Fale com o administrador da barbearia.');
             await sb.auth.signOut();
             return;
         }
@@ -2341,9 +2563,89 @@ const admin = {
         document.getElementById('admin-login').classList.add('hidden');
         document.getElementById('admin-panel').classList.add('active');
         document.getElementById('admin-barbeiro-nome').textContent = data.nome;
-        document.getElementById('admin-avatar-chip').textContent = data.nome.charAt(0).toUpperCase();
+        atualizarAvatarChip(data);
+        this.aplicarPermissoes();
+        this.marcarOnline();
 
         this.irPara('agendamentos');
+
+        // aplica o tema salvo (já tentamos aplicar um valor em cache antes disso; aqui confirmamos com o banco)
+        this.carregarTema();
+    },
+
+    /* ============ CONTROLE DE ACESSO ============ */
+    ehAdmin(){ return this.barbeiro && this.barbeiro.nivel_acesso === 'administrador'; },
+
+    // páginas que cada nível pode acessar. Barbeiro mantém acesso total (comportamento
+    // já existente, para não quebrar nada para quem já usa o sistema hoje).
+    paginasPermitidas(){
+        const nivel = this.barbeiro ? this.barbeiro.nivel_acesso : 'barbeiro';
+        if(nivel === 'administrador') return null; // null = todas + Equipe
+        if(nivel === 'funcionario') return ['dashboard','agendamentos','agenda','clientes','perfil','configuracoes'];
+        return null; // barbeiro: todas as páginas normais (exceto Equipe, só admin)
+    },
+
+    aplicarPermissoes(){
+        const permitidas = this.paginasPermitidas();
+        document.querySelectorAll('#admin-menu [data-page]').forEach(btn => {
+            const pagina = btn.dataset.page;
+            const permitido = permitidas === null || permitidas.includes(pagina);
+            btn.style.display = permitido ? '' : 'none';
+        });
+        const itemEquipe = document.getElementById('menu-item-equipe');
+        if(itemEquipe) itemEquipe.style.display = this.ehAdmin() ? '' : 'none';
+    },
+
+    /* ============ STATUS ONLINE ============ */
+    heartbeatInterval: null,
+    async marcarOnline(){
+        await sb.from('barbeiros').update({
+            online: true,
+            ultimo_login: new Date().toISOString(),
+            ultimo_acesso: new Date().toISOString()
+        }).eq('id', this.barbeiro.id);
+
+        if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        this.heartbeatInterval = setInterval(() => {
+            if(!this.barbeiro) return;
+            sb.from('barbeiros').update({ ultimo_acesso: new Date().toISOString() }).eq('id', this.barbeiro.id);
+        }, 60000);
+
+        window.addEventListener('beforeunload', () => {
+            if(!this.barbeiro) return;
+            // best-effort: navegador pode não dar tempo de completar a requisição
+            navigator.sendBeacon && sb.from('barbeiros').update({ online:false, ultimo_logout: new Date().toISOString() }).eq('id', this.barbeiro.id);
+        });
+    },
+
+    async marcarOffline(){
+        if(this.heartbeatInterval){ clearInterval(this.heartbeatInterval); this.heartbeatInterval = null; }
+        if(!this.barbeiro) return;
+        await sb.from('barbeiros').update({ online:false, ultimo_logout: new Date().toISOString() }).eq('id', this.barbeiro.id);
+    },
+
+    /* ============ TEMA CLARO / ESCURO ============ */
+    aplicarTema(tema){
+        const view = document.getElementById('admin-view');
+        if(tema === 'claro'){
+            view.classList.add('tema-claro');
+        } else {
+            view.classList.remove('tema-claro');
+        }
+        try{ localStorage.setItem('prieto_admin_tema', tema); }catch(e){}
+        const select = document.getElementById('cfg-tema');
+        if(select) select.value = tema;
+    },
+
+    async carregarTema(){
+        // aplica instantaneamente o que já está salvo localmente, sem esperar o Supabase
+        try{
+            const cache = localStorage.getItem('prieto_admin_tema');
+            if(cache) this.aplicarTema(cache);
+        }catch(e){}
+
+        const { data: cfg } = await sb.from('configuracoes').select('tema').eq('barbeiro_id', this.barbeiro.id).maybeSingle();
+        if(cfg && cfg.tema) this.aplicarTema(cfg.tema);
     },
 
     mostrarErroLogin(msg){
@@ -2359,6 +2661,12 @@ const admin = {
     },
 
     irPara(pagina){
+        // bloqueio defensivo: um funcionário não pode abrir uma página fora do seu nível,
+        // mesmo chamando a função diretamente (ex: link antigo salvo)
+        const permitidas = this.paginasPermitidas();
+        if(permitidas !== null && !permitidas.includes(pagina)){ pagina = 'dashboard'; }
+        if(pagina === 'equipe' && !this.ehAdmin()){ pagina = 'dashboard'; }
+
         this.paginaAtual = pagina;
         document.querySelectorAll('.admin-menu button').forEach(b => {
             b.classList.toggle('active', b.dataset.page === pagina);
@@ -2377,7 +2685,8 @@ const admin = {
             financeiro: () => this.renderFinanceiro(),
             relatorios: () => this.renderRelatorios(),
             perfil: () => this.renderPerfil(),
-            configuracoes: () => this.renderConfiguracoes()
+            configuracoes: () => this.renderConfiguracoes(),
+            equipe: () => this.renderEquipe()
         };
         if(rotas[pagina]) rotas[pagina]();
     },
@@ -3330,7 +3639,7 @@ const admin = {
         const b = this.barbeiro;
         document.getElementById('admin-content').innerHTML = `
             <div class="dash-panel" style="max-width:520px;">
-                <div class="campo" style="margin-bottom:16px;"><label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:7px;">URL da foto</label><input class="campo-bloco" id="pf-foto" value="${b.foto_url||''}" style="width:100%;background:#0f0f10;border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);"></div>
+                <div class="campo" style="margin-bottom:16px;"><label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:7px;">URL da foto</label><input class="campo-bloco" id="pf-foto" value="${b.foto_url||''}" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);"></div>
                 <div class="campos-linha">
                     <div class="campo-bloco"><label>Nome</label><input id="pf-nome" value="${b.nome||''}"></div>
                     <div class="campo-bloco"><label>Especialidade</label><input id="pf-especialidade" value="${b.especialidade||''}"></div>
@@ -3364,7 +3673,71 @@ const admin = {
         if(error){ alert('Não foi possível salvar o perfil.'); return; }
         this.barbeiro = {...this.barbeiro, ...payload};
         document.getElementById('admin-barbeiro-nome').textContent = this.barbeiro.nome;
+        atualizarAvatarChip(this.barbeiro);
         alert('Perfil atualizado! Essas informações já aparecem no Agendamento Online.');
+    },
+
+    /* ============ EQUIPE (somente administrador) ============ */
+    nivelLabel: {administrador:'Administrador', barbeiro:'Barbeiro', funcionario:'Funcionário'},
+
+    async renderEquipe(){
+        if(!this.ehAdmin()){ this.irPara('dashboard'); return; }
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando equipe...</div>';
+
+        const { data: equipe } = await sb.from('barbeiros').select('*').order('nome');
+        this.equipeCache = equipe || [];
+
+        const agora = Date.now();
+        const online = b => b.online && b.ultimo_acesso && (agora - new Date(b.ultimo_acesso).getTime()) < 90000;
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="admin-empty" style="text-align:left;padding:0 0 18px;color:var(--text-muted);font-size:13px;">
+                Para adicionar alguém à equipe: crie o login da pessoa em
+                <strong>Supabase → Authentication → Users → Add user</strong> (e-mail + senha provisória).
+                No primeiro login dela na Área Restrita, o sistema cria o cadastro automaticamente aqui,
+                como <strong>Funcionário</strong> — depois é só ajustar o nível de acesso abaixo.
+            </div>
+            ${this.equipeCache.map(b => `
+                <div class="item-card">
+                    <div class="info">
+                        <div class="t">
+                            <span class="status-dot ${online(b)?'on':'off'}" title="${online(b)?'Online':'Offline'}"></span>
+                            ${b.nome}
+                            ${b.id === this.barbeiro.id ? ' <span style="color:var(--text-muted);font-size:12px;">(você)</span>' : ''}
+                        </div>
+                        <div class="s">
+                            ${online(b) ? 'Online agora' : (b.ultimo_acesso ? 'Último acesso: '+this.formatarDataHoraBR(b.ultimo_acesso) : 'Nunca acessou')}
+                            ${b.ultimo_login ? ' • Login: '+this.formatarDataHoraBR(b.ultimo_login) : ''}
+                            ${b.ultimo_logout ? ' • Logout: '+this.formatarDataHoraBR(b.ultimo_logout) : ''}
+                        </div>
+                    </div>
+                    <select onchange="admin.alterarNivel('${b.id}', this.value)" ${b.id===this.barbeiro.id?'disabled title="Você não pode alterar seu próprio nível"':''}>
+                        ${Object.entries(this.nivelLabel).map(([v,l]) => `<option value="${v}" ${b.nivel_acesso===v?'selected':''}>${l}</option>`).join('')}
+                    </select>
+                    <button class="ag-btn ${b.ativo?'cancelar':''}" ${b.id===this.barbeiro.id?'disabled':''} onclick="admin.alternarAtivo('${b.id}', ${!b.ativo})">
+                        <i class="fa-solid ${b.ativo?'fa-user-slash':'fa-user-check'}"></i>${b.ativo?'Desativar':'Ativar'}
+                    </button>
+                </div>
+            `).join('') || '<div class="admin-empty">Nenhum membro na equipe ainda.</div>'}
+        `;
+    },
+
+    async alterarNivel(id, nivel){
+        const { error } = await sb.from('barbeiros').update({nivel_acesso: nivel}).eq('id', id);
+        if(error){ alert('Não foi possível alterar o nível de acesso.'); return; }
+        await this.renderEquipe();
+    },
+
+    async alternarAtivo(id, novoAtivo){
+        if(!novoAtivo && !confirm('Desativar este acesso? A pessoa não conseguirá mais logar nem aparecer no site.')) return;
+        const { error } = await sb.from('barbeiros').update({ativo: novoAtivo}).eq('id', id);
+        if(error){ alert('Não foi possível atualizar.'); return; }
+        await this.renderEquipe();
+    },
+
+    formatarDataHoraBR(iso){
+        const d = new Date(iso);
+        return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
 
     /* ============ 11. CONFIGURAÇÕES ============ */
@@ -3389,7 +3762,7 @@ const admin = {
             <div class="dash-panel">
                 <h4>Sistema</h4>
                 <div class="campos-linha">
-                    <div class="campo-bloco"><label>Tema</label><select id="cfg-tema"><option value="escuro" ${cfg.tema==='escuro'?'selected':''}>Escuro</option><option value="claro" ${cfg.tema==='claro'?'selected':''}>Claro (em breve)</option></select></div>
+                    <div class="campo-bloco"><label>Tema</label><select id="cfg-tema" onchange="admin.aplicarTema(this.value)"><option value="escuro" ${cfg.tema==='escuro'?'selected':''}>🌙 Escuro</option><option value="claro" ${cfg.tema==='claro'?'selected':''}>☀️ Claro</option></select></div>
                     <div class="campo-bloco"><label>Idioma</label><select id="cfg-idioma"><option value="pt-BR" ${cfg.idioma==='pt-BR'?'selected':''}>Português (Brasil)</option></select></div>
                     <div class="campo-bloco"><label>Formato de data</label><select id="cfg-formato-data"><option value="DD/MM/AAAA" ${cfg.formato_data==='DD/MM/AAAA'?'selected':''}>DD/MM/AAAA</option><option value="AAAA-MM-DD" ${cfg.formato_data==='AAAA-MM-DD'?'selected':''}>AAAA-MM-DD</option></select></div>
                     <div class="campo-bloco"><label>Formato de horário</label><select id="cfg-formato-horario"><option value="24h" ${cfg.formato_horario==='24h'?'selected':''}>24h</option><option value="12h" ${cfg.formato_horario==='12h'?'selected':''}>12h (AM/PM)</option></select></div>
@@ -3448,6 +3821,7 @@ const admin = {
     },
 
     async sair(){
+        await this.marcarOffline();
         await sb.auth.signOut();
         this.barbeiro = null;
         document.getElementById('admin-panel').classList.remove('active');
