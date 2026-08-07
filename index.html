@@ -2275,20 +2275,6 @@ async function finalizarAgendamento(){
                 horario: selectedTime,
                 origem: 'online'
             });
-
-            // notificações por e-mail (barbearia + confirmação do cliente).
-            // Nunca deve travar o fluxo do cliente nem exibir erro para ele:
-            // qualquer falha aqui fica só no console, o agendamento já foi salvo.
-            sb.functions.invoke('enviar-notificacoes-agendamento', {
-                body: {
-                    cliente_nome: nome,
-                    cliente_email: email || null,
-                    cliente_telefone: whats || null,
-                    barbeiro_nome: currentBarber.name,
-                    data: selectedDate,
-                    horario: selectedTime
-                }
-            }).catch(e => console.error('Erro ao enviar notificações por e-mail:', e));
         }
     } catch(e){
         console.error('Erro ao salvar agendamento no Supabase:', e);
