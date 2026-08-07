@@ -976,12 +976,14 @@
     border-bottom:1px solid var(--border);
   }
   .admin-sidebar-brand .mark{
-    width:34px;height:34px;border-radius:9px;background:var(--accent);
+    width:34px;height:34px;border-radius:9px;background:#0b0b0c;border:1px solid var(--border);
     color:#1a1305;font-family:'Bebas Neue',sans-serif;font-size:15px;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
     overflow:hidden;
   }
-  .admin-sidebar-brand .mark img{width:100%;height:100%;object-fit:contain;padding:4px;}
+  /* imagem original da logo, sem tingir as cores: antes o fundo dourado (--accent)
+     atrás do PNG com transparência fazia a marca aparecer quase toda amarela */
+  .admin-sidebar-brand .mark img{width:100%;height:100%;object-fit:contain;padding:4px;filter:none;mix-blend-mode:normal;opacity:1;}
   .admin-sidebar-brand span{font-size:13px;color:var(--text-muted);letter-spacing:.3px;}
   .admin-menu{list-style:none;flex:1;}
   .admin-menu li{margin-bottom:4px;}
@@ -1229,7 +1231,12 @@
     .admin-topbar{padding:14px 16px;gap:10px;}
     .admin-topbar h2{font-size:20px;}
     .admin-content{padding:18px 16px 60px;}
-    .admin-topbar .quem span{display:none;} /* nome completo escondido no celular, avatar já identifica */
+    /* no celular, o topbar já mostra o logo da marca à esquerda (.admin-topbar-brand);
+       o chip da direita (.quem) só existia como avatar do barbeiro logado, mas sem o
+       nome ao lado (escondido aqui embaixo) ele virava uma segunda logo, já que sem
+       foto cadastrada o chip caía no fallback "logo.png". Removido só no mobile —
+       no desktop o nome continua visível ao lado do avatar, então não há duplicidade. */
+    .admin-topbar .quem{display:none;}
 
     /* ---------- cards de agendamento / equipe: empilhados, sem colunas lado a lado ---------- */
     .agendamento-card, .item-card{
@@ -2221,7 +2228,7 @@ async function carregarBarbeirosPublicos(){
     try{
         const { data, error } = await sbClient
             .from('barbeiros')
-            .select('id, nome, especialidade, foto_url, whatsapp, telefone, ativo, recebe_agendamento_online')
+            .select('id, nome, especialidade, foto_url, whatsapp, telefone, ativo, recebe_agendamento_online, nivel_acesso')
             .eq('ativo', true)
             .order('nome');
 
@@ -2230,7 +2237,12 @@ async function carregarBarbeirosPublicos(){
         // "recebe_agendamento_online" pode não existir ainda no banco (é uma coluna nova
         // e opcional); nesse caso, tratamos como visível por padrão (!== false cobre
         // tanto true quanto undefined).
-        const ativosNoAgendamento = data.filter(b => b.recebe_agendamento_online !== false);
+        // "funcionario" (cargo que NÃO atende clientes) nunca aparece na seleção pública,
+        // mesmo que esteja ativo — só "barbeiro" (e cadastros antigos sem nivel_acesso
+        // definido, tratados como barbeiro por compatibilidade) devem aparecer.
+        const ativosNoAgendamento = data.filter(b =>
+            b.recebe_agendamento_online !== false && b.nivel_acesso !== 'funcionario'
+        );
         if(!ativosNoAgendamento.length) return;
 
         barbers = ativosNoAgendamento.map((b, i) => ({
@@ -3963,7 +3975,14 @@ const admin = {
         if(!this.ehAdmin()){ this.irPara('dashboard'); return; }
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando equipe...</div>';
 
-        const { data: equipe } = await sb.from('barbeiros').select('*').order('nome');
+        const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('*').order('nome');
+        if(erroEquipe){
+            // RLS pode estar bloqueando corretamente um não-administrador que chegou até
+            // aqui por algum outro caminho, ou a política ainda não foi aplicada no banco.
+            document.getElementById('admin-content').innerHTML =
+                `<div class="admin-empty">Não foi possível carregar a equipe (${erroEquipe.message}). Verifique as políticas de acesso (RLS) da tabela "barbeiros".</div>`;
+            return;
+        }
         this.equipeCache = equipe || [];
 
         const agora = Date.now();
@@ -3972,20 +3991,17 @@ const admin = {
         document.getElementById('admin-content').innerHTML = `
             <button class="admin-btn-primario" style="margin-bottom:18px;" onclick="admin.formNovoMembro()"><i class="fa-solid fa-user-plus"></i> Adicionar funcionário</button>
             <div class="admin-empty" style="text-align:left;padding:0 0 18px;color:var(--text-muted);font-size:13px;">
-                Ao adicionar alguém aqui, o cadastro fica com status <strong>"aguardando primeiro acesso"</strong>.
-                Combine uma senha provisória com a pessoa e crie o login dela em
-                <strong>Supabase → Authentication → Users → Add user</strong>, usando <u>o mesmo e-mail</u> informado abaixo.
-                No primeiro login na Área Restrita, o sistema reconhece esse e-mail e conecta automaticamente
-                a esse cadastro — sem duplicar e sem perder o nível de acesso já definido.
+                Ao adicionar alguém aqui, o sistema já cria o acesso dessa pessoa automaticamente e envia um
+                e-mail de convite para ela definir a própria senha. Não é preciso criar nada manualmente no Supabase.
             </div>
             ${this.equipeCache.map(b => `
                 <div class="item-card">
                     <div class="info">
                         <div class="t">
-                            <span class="status-dot ${online(b)?'on':(b.user_id?'off':'')}" style="${b.user_id?'':'background:#c9a463;'}" title="${online(b)?'Online':(b.user_id?'Offline':'Aguardando primeiro acesso')}"></span>
+                            <span class="status-dot ${online(b)?'on':(b.user_id?'off':'')}" style="${b.user_id?'':'background:#c9a463;'}" title="${online(b)?'Online':(b.user_id?'Offline':'Convite enviado, aguardando 1º acesso')}"></span>
                             ${b.nome}
                             ${b.id === this.barbeiro.id ? ' <span style="color:var(--text-muted);font-size:12px;">(você)</span>' : ''}
-                            ${!b.user_id ? ' <span style="color:var(--accent);font-size:11.5px;">(aguardando 1º acesso)</span>' : ''}
+                            ${!b.user_id ? ' <span style="color:var(--accent);font-size:11.5px;">(convite enviado, aguardando 1º acesso)</span>' : ''}
                         </div>
                         <div class="s">
                             ${b.telefone ? b.telefone+' • ' : ''}${b.email ? b.email+' • ' : ''}
@@ -3998,6 +4014,9 @@ const admin = {
                     <select onchange="admin.alterarNivel('${b.id}', this.value)" ${b.id===this.barbeiro.id?'disabled title="Você não pode alterar seu próprio nível"':''}>
                         ${Object.entries(this.nivelLabel).map(([v,l]) => `<option value="${v}" ${b.nivel_acesso===v?'selected':''}>${l}</option>`).join('')}
                     </select>
+                    <button class="ag-btn" onclick="admin.formEditarMembro('${b.id}')">
+                        <i class="fa-solid fa-pen"></i>Editar
+                    </button>
                     <button class="ag-btn ${b.ativo?'cancelar':''}" ${b.id===this.barbeiro.id?'disabled':''} onclick="admin.alternarAtivo('${b.id}', ${!b.ativo})">
                         <i class="fa-solid ${b.ativo?'fa-user-slash':'fa-user-check'}"></i>${b.ativo?'Desativar':'Ativar'}
                     </button>
@@ -4012,13 +4031,13 @@ const admin = {
             <div class="campo"><label>Nome</label><input id="novo-nome" placeholder="Nome completo"></div>
             <div class="campo"><label>Tipo / perfil</label>
                 <select id="novo-nivel">
-                    <option value="funcionario">Funcionário</option>
                     <option value="barbeiro">Barbeiro</option>
+                    <option value="funcionario">Funcionário</option>
                     <option value="administrador">Administrador</option>
                 </select>
             </div>
             <div class="campo"><label>Telefone</label><input id="novo-telefone" placeholder="(67) 90000-0000"></div>
-            <div class="campo"><label>E-mail (o mesmo que a pessoa vai usar para logar)</label><input id="novo-email" type="email" placeholder="pessoa@exemplo.com"></div>
+            <div class="campo"><label>E-mail (para onde vai o convite de acesso)</label><input id="novo-email" type="email" placeholder="pessoa@exemplo.com"></div>
             <div class="campo"><label>Status</label>
                 <select id="novo-ativo">
                     <option value="true">Ativo</option>
@@ -4031,9 +4050,10 @@ const admin = {
                     <option value="false">Não</option>
                 </select>
             </div>
+            <div id="novo-membro-erro" style="display:none;color:#e6a3a3;font-size:12.5px;margin-top:6px;"></div>
             <div class="admin-modal-actions">
                 <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
-                <button class="admin-modal-salvar" onclick="admin.salvarNovoMembro()">Adicionar</button>
+                <button class="admin-modal-salvar" id="novo-membro-btn" onclick="admin.salvarNovoMembro()">Adicionar</button>
             </div>
         `;
         document.getElementById('admin-modal-overlay').classList.add('active');
@@ -4046,33 +4066,106 @@ const admin = {
         const email = document.getElementById('novo-email').value.trim().toLowerCase();
         const ativo = document.getElementById('novo-ativo').value === 'true';
         const recebe_agendamento_online = document.getElementById('novo-recebe').value === 'true';
+        const erroBox = document.getElementById('novo-membro-erro');
+        const mostrarErro = (msg) => { erroBox.textContent = msg; erroBox.style.display = 'block'; };
 
-        if(!nome){ alert('Informe o nome.'); return; }
-        if(!email){ alert('Informe o e-mail — é por ele que o sistema vai reconhecer a pessoa no primeiro login.'); return; }
+        // -------- validações (item 15): nada de falha silenciosa --------
+        if(!nome){ mostrarErro('Informe o nome.'); return; }
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if(!email || !emailValido){ mostrarErro('Informe um e-mail válido — é para ele que vai o convite de acesso.'); return; }
+        if(!nivel_acesso){ mostrarErro('Selecione o cargo.'); return; }
+        if(telefone && telefone.replace(/\D/g,'').length < 10){ mostrarErro('Informe um telefone válido, com DDD.'); return; }
 
-        const { error } = await sb.from('barbeiros').insert({
-            nome, nivel_acesso, telefone: telefone || null, email, ativo, recebe_agendamento_online
+        const btn = document.getElementById('novo-membro-btn');
+        btn.disabled = true; btn.textContent = 'Adicionando...';
+        erroBox.style.display = 'none';
+
+        // A criação do LOGIN (Supabase Auth) não pode acontecer no frontend — exigiria
+        // expor a service_role key. Por isso chamamos a Edge Function "criar-funcionario",
+        // que roda no backend com privilégios de admin, confirma que quem está chamando
+        // é de fato um administrador, cria o usuário no Supabase Auth (convite por e-mail,
+        // sem senha em texto puro) e grava/atualiza a linha correspondente na tabela
+        // "barbeiros" já vinculada ao novo user_id — sem duplicar estrutura.
+        const { data, error } = await sb.functions.invoke('criar-funcionario', {
+            body: { nome, nivel_acesso, telefone: telefone || null, email, ativo, recebe_agendamento_online }
         });
-        if(error){
-            // se a coluna "email" ou "recebe_agendamento_online" ainda não existir no banco
-            // (projeto sem a migração aplicada), tenta de novo sem esses campos extras
-            const { error: erro2 } = await sb.from('barbeiros').insert({ nome, nivel_acesso, telefone: telefone || null, ativo });
-            if(erro2){ alert('Não foi possível adicionar o funcionário: ' + error.message); return; }
+
+        btn.disabled = false; btn.textContent = 'Adicionar';
+
+        if(error || !data || data.ok === false){
+            const msg = (data && data.error) || error?.message || 'Erro desconhecido.';
+            mostrarErro('Não foi possível cadastrar o funcionário: ' + msg);
+            return;
         }
+
+        this.fecharModal();
+        await this.renderEquipe();
+        alert('Funcionário cadastrado com sucesso. Um e-mail de convite foi enviado para ' + email + '.');
+    },
+
+    formEditarMembro(id){
+        const b = (this.equipeCache || []).find(x => String(x.id) === String(id));
+        if(!b){ alert('Não foi possível carregar este funcionário.'); return; }
+        document.getElementById('admin-modal-body').innerHTML = `
+            <h3>Editar funcionário</h3>
+            <div class="campo"><label>Nome</label><input id="edit-nome" value="${(b.nome||'').replace(/"/g,'&quot;')}"></div>
+            <div class="campo"><label>Telefone</label><input id="edit-telefone" value="${(b.telefone||'').replace(/"/g,'&quot;')}" placeholder="(67) 90000-0000"></div>
+            <div class="campo"><label>E-mail</label><input id="edit-email" type="email" value="${(b.email||'').replace(/"/g,'&quot;')}"></div>
+            <div class="campo"><label>Status</label>
+                <select id="edit-ativo">
+                    <option value="true" ${b.ativo?'selected':''}>Ativo</option>
+                    <option value="false" ${!b.ativo?'selected':''}>Inativo</option>
+                </select>
+            </div>
+            <div class="campo"><label>Aparece no Agendamento Online?</label>
+                <select id="edit-recebe">
+                    <option value="true" ${b.recebe_agendamento_online !== false ? 'selected' : ''}>Sim</option>
+                    <option value="false" ${b.recebe_agendamento_online === false ? 'selected' : ''}>Não</option>
+                </select>
+            </div>
+            <div id="edit-membro-erro" style="display:none;color:#e6a3a3;font-size:12.5px;margin-top:6px;"></div>
+            <div class="admin-modal-actions">
+                <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
+                <button class="admin-modal-salvar" onclick="admin.salvarEdicaoMembro('${id}')">Salvar</button>
+            </div>
+        `;
+        document.getElementById('admin-modal-overlay').classList.add('active');
+    },
+
+    async salvarEdicaoMembro(id){
+        const nome = document.getElementById('edit-nome').value.trim();
+        const telefone = document.getElementById('edit-telefone').value.trim();
+        const email = document.getElementById('edit-email').value.trim().toLowerCase();
+        const ativo = document.getElementById('edit-ativo').value === 'true';
+        const recebe_agendamento_online = document.getElementById('edit-recebe').value === 'true';
+        const erroBox = document.getElementById('edit-membro-erro');
+        const mostrarErro = (msg) => { erroBox.textContent = msg; erroBox.style.display = 'block'; };
+
+        if(!nome){ mostrarErro('Informe o nome.'); return; }
+        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if(!email || !emailValido){ mostrarErro('Informe um e-mail válido.'); return; }
+        if(telefone && telefone.replace(/\D/g,'').length < 10){ mostrarErro('Informe um telefone válido, com DDD.'); return; }
+
+        const { error } = await sb.from('barbeiros').update({
+            nome, telefone: telefone || null, email, ativo, recebe_agendamento_online
+        }).eq('id', id);
+
+        if(error){ mostrarErro('Não foi possível salvar: ' + error.message); return; }
+
         this.fecharModal();
         await this.renderEquipe();
     },
 
     async alterarNivel(id, nivel){
         const { error } = await sb.from('barbeiros').update({nivel_acesso: nivel}).eq('id', id);
-        if(error){ alert('Não foi possível alterar o nível de acesso.'); return; }
+        if(error){ alert('Não foi possível alterar o nível de acesso: ' + error.message); return; }
         await this.renderEquipe();
     },
 
     async alternarAtivo(id, novoAtivo){
-        if(!novoAtivo && !confirm('Desativar este acesso? A pessoa não conseguirá mais logar nem aparecer no site.')) return;
+        if(!novoAtivo && !confirm('Desativar este acesso? A pessoa não conseguirá mais logar nem aparecer no site. O histórico de agendamentos dela é mantido.')) return;
         const { error } = await sb.from('barbeiros').update({ativo: novoAtivo}).eq('id', id);
-        if(error){ alert('Não foi possível atualizar.'); return; }
+        if(error){ alert('Não foi possível atualizar: ' + error.message); return; }
         await this.renderEquipe();
     },
 
