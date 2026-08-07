@@ -915,9 +915,9 @@
       position:relative;
       text-align:center;
       font-family:'Inter',sans-serif;
-      font-size:12px;
-      font-weight:700;
-      letter-spacing:3px;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:2.5px;
       color:#FFFFFF;
       text-transform:uppercase;
       margin-top:16px;
@@ -1012,6 +1012,10 @@
   }
   .admin-topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
   .admin-topbar h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* grupo do canto superior direito: logo (elemento independente) + nome/avatar
+     do usuário logado — com espaço generoso entre os dois, para não parecer
+     que a logo "faz parte" do avatar */
+  .admin-topbar-right{display:flex;align-items:center;gap:20px;flex-shrink:0;}
   .admin-topbar .quem{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;flex-shrink:0;}
   .admin-topbar .quem strong{color:var(--text);font-weight:600;}
   .admin-avatar-chip{
@@ -1204,12 +1208,6 @@
     #admin-panel.active{position:relative;}
 
     .admin-hamburger{display:flex;}
-    /* no mobile a logo passa para DEPOIS do título (mesmo elemento,
-       só muda a ordem visual via flex "order" — sem duplicar nada) */
-    .admin-topbar-left{flex-wrap:nowrap;}
-    .admin-hamburger{order:1;}
-    .admin-topbar h2{order:2;}
-    .admin-topbar-brand{order:3;}
 
     .admin-sidebar{
       position:fixed;top:0;left:0;height:100vh;height:100dvh;
@@ -1239,7 +1237,7 @@
     .admin-topbar{padding:14px 16px;gap:10px;}
     .admin-topbar h2{font-size:20px;}
     .admin-content{padding:18px 16px 60px;}
-    /* no celular, o topbar já mostra o logo da marca à esquerda (.admin-topbar-brand);
+    /* no celular, a logo (.admin-topbar-brand) fica isolada no canto direito;
        o chip da direita (.quem) só existia como avatar do barbeiro logado, mas sem o
        nome ao lado (escondido aqui embaixo) ele virava uma segunda logo, já que sem
        foto cadastrada o chip caía no fallback "logo.png". Removido só no mobile —
@@ -2088,14 +2086,19 @@
           <button class="admin-hamburger" id="admin-hamburger" onclick="abrirMenuAdminMobile()" aria-label="Abrir menu">
             <i class="fa-solid fa-bars"></i>
           </button>
+          <h2 id="admin-page-title">Agendamentos</h2>
+        </div>
+        <!-- logo tratada como elemento independente do cabeçalho, no canto
+             superior direito — separada do título "Agendamentos" e também
+             separada do avatar/nome do usuário logado (não é a mesma coisa) -->
+        <div class="admin-topbar-right">
           <div class="admin-topbar-brand">
             <img src="logo.png" alt="Prieto Barbearia">
           </div>
-          <h2 id="admin-page-title">Agendamentos</h2>
-        </div>
-        <div class="quem">
-          <span id="admin-barbeiro-nome">—</span>
-          <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="logo.png" alt="Prieto Barbearia"></div>
+          <div class="quem">
+            <span id="admin-barbeiro-nome">—</span>
+            <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="logo.png" alt="Prieto Barbearia"></div>
+          </div>
         </div>
       </div>
       <div class="admin-content" id="admin-content">
