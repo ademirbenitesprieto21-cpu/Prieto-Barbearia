@@ -265,6 +265,27 @@
     .section-title{font-size:32px;}
     .services-grid{grid-template-columns:1fr;}
     .hero-logo{max-width:260px;}
+
+    /* ---------- Cards de Serviços no celular: retângulo horizontal,
+       como os cards de Ambiente, em vez do card vertical alto do desktop.
+       Estrutura muda de "imagem + texto em overlay" para
+       "imagem no topo + bloco de texto abaixo", sem esconder nada. ---------- */
+    .service-card{
+      aspect-ratio:auto;
+      display:flex;flex-direction:column;
+    }
+    .service-card img{
+      height:170px;width:100%;flex-shrink:0;
+    }
+    .service-overlay{
+      position:static;
+      background:var(--card);
+      background-image:none;
+      padding:16px 18px 18px;
+      flex:1;
+    }
+    .service-overlay h3{font-size:17px;margin-bottom:4px;}
+    .service-overlay p{font-size:13px;color:var(--text-muted);}
   }
 
   /* =========================================================
@@ -297,6 +318,9 @@
   }
   .voltar-btn:hover{background:rgba(255,255,255,.16);color:#fff;}
   .voltar-btn i{font-size:12px;}
+  /* nas telas 2 e 3 do agendamento (perfil do barbeiro / resumo) o botão com seta
+     interno já cobre a função de "voltar" — este some pra não ficar em cima dele */
+  .voltar-btn.escondido{display:none;}
 
   #booking-view .app{
     width:480px;
@@ -716,6 +740,7 @@
       #booking-view .app{width:100%;}
       #booking-view{padding:15px;}
       .voltar-btn{top:14px;left:14px;padding:9px 14px;font-size:12px;}
+      #booking-view .back-btn{width:42px;height:42px;} /* alvo de toque maior no celular */
   }
 
   /* =========================================================
@@ -866,9 +891,8 @@
   }
   .admin-login-top{
     background:#000;
-    padding:38px 30px 30px;
+    padding:40px 30px 22px;
     position:relative;
-    border-bottom:1px solid var(--border);
   }
   .admin-login-top::before{
       content:"";
@@ -881,11 +905,24 @@
   }
   .admin-login-top img{
       position:relative;
-      width:100%;max-width:170px;
+      width:100%;max-width:150px;
       height:auto;margin:0 auto;display:block;
       filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
   }
-  .admin-login-bottom{padding:34px 36px 40px;}
+  /* [LOGO] + "ÁREA RESTRITA" formando um único bloco de identidade visual,
+     bem colado logo abaixo da logo, sem o divisor que separava os dois blocos */
+  .admin-login-kicker{
+      position:relative;
+      text-align:center;
+      font-family:'Inter',sans-serif;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:3px;
+      color:var(--accent);
+      text-transform:uppercase;
+      margin-top:16px;
+  }
+  .admin-login-bottom{padding:22px 36px 40px;}
   .admin-login-card .admin-logo{
     width:72px;height:72px;border-radius:50%;
     margin:0 auto 18px;
@@ -893,8 +930,8 @@
     display:flex;align-items:center;justify-content:center;
     color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;
   }
-  .admin-login-card h1{font-size:24px;margin-bottom:6px;letter-spacing:.5px;}
-  .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-bottom:26px;}
+  .admin-login-card h1{display:none;} /* substituído pelo kicker abaixo da logo, mantido no DOM por compatibilidade */
+  .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-top:6px;margin-bottom:26px;text-align:center;}
   .admin-field{text-align:left;margin-bottom:16px;}
   .admin-field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:7px;letter-spacing:.3px;}
   .admin-field input{
@@ -969,18 +1006,45 @@
   .admin-topbar{
     display:flex;align-items:center;justify-content:space-between;
     padding:20px 32px;border-bottom:1px solid var(--border);
+    gap:16px;
   }
-  .admin-topbar h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.5px;}
-  .admin-topbar .quem{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;}
+  .admin-topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
+  .admin-topbar h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .admin-topbar .quem{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;flex-shrink:0;}
   .admin-topbar .quem strong{color:var(--text);font-weight:600;}
   .admin-avatar-chip{
     width:32px;height:32px;border-radius:50%;background:var(--accent);
     color:#1a1305;display:flex;align-items:center;justify-content:center;
     font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
-    overflow:hidden;
+    overflow:hidden;flex-shrink:0;
   }
   .admin-avatar-chip img{width:100%;height:100%;object-fit:cover;}
-  .admin-content{padding:28px 32px 60px;flex:1;}
+  .admin-content{padding:28px 32px 60px;flex:1;min-width:0;}
+
+  /* ---------- marca (logo) no topbar: some no desktop (já existe na sidebar),
+     aparece no mobile, onde a sidebar vira uma gaveta escondida ---------- */
+  .admin-topbar-brand{
+    display:none;
+    width:34px;height:34px;border-radius:9px;overflow:hidden;flex-shrink:0;
+    background:#0b0b0c;border:1px solid var(--border);
+    align-items:center;justify-content:center;
+  }
+  .admin-topbar-brand img{width:100%;height:100%;object-fit:contain;padding:3px;}
+
+  /* ---------- botão hambúrguer: só existe (visualmente) no mobile ---------- */
+  .admin-hamburger{
+    display:none;
+    width:38px;height:38px;flex-shrink:0;border-radius:10px;
+    background:var(--hover-bg);border:1px solid var(--border);color:var(--text);
+    align-items:center;justify-content:center;font-size:16px;cursor:pointer;
+  }
+  .admin-sidebar-close{display:none;}
+
+  /* ---------- overlay atrás da gaveta de menu (mobile) ---------- */
+  .admin-sidebar-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;
+  }
+  .admin-sidebar-overlay.open{display:block;}
 
   /* ---------- PÁGINA AGENDAMENTOS ---------- */
   .admin-search-bar{
@@ -1125,15 +1189,101 @@
   .admin-modal-cancelar{background:transparent;border:1px solid var(--border) !important;color:var(--text-muted);}
   .admin-modal-salvar{background:var(--accent);color:#1a1305;}
 
+  /* =========================================================
+     ÁREA RESTRITA NO CELULAR — gaveta de menu (drawer), não
+     mais uma barra horizontal apertada. A logo passa a ficar
+     sempre visível no topo (no topbar), e o menu completo
+     (com a marca "Prieto Barbearia") abre em uma gaveta lateral.
+     ========================================================= */
   @media(max-width:860px){
-    #admin-panel.active{flex-direction:column;}
-    .admin-sidebar{width:100%;height:auto;position:relative;flex-direction:row;overflow-x:auto;padding:14px;}
-    .admin-sidebar-brand{display:none;}
-    .admin-menu{display:flex;gap:6px;flex:none;}
-    .admin-menu li{margin-bottom:0;}
-    .admin-menu button{white-space:nowrap;}
-    .admin-sidebar-footer{border-top:none;margin-top:0;margin-left:6px;padding-top:0;}
-    .admin-topbar,.admin-content{padding-left:18px;padding-right:18px;}
+    #admin-panel.active{position:relative;}
+
+    .admin-hamburger{display:flex;}
+    .admin-topbar-brand{display:flex;}
+
+    .admin-sidebar{
+      position:fixed;top:0;left:0;height:100vh;height:100dvh;
+      width:82vw;max-width:300px;
+      flex-direction:column;
+      overflow-x:hidden;overflow-y:auto;
+      transform:translateX(-100%);
+      transition:transform .28s cubic-bezier(.2,.8,.2,1);
+      z-index:200;
+      padding:20px 14px;
+    }
+    .admin-sidebar.open{transform:translateX(0);}
+    .admin-sidebar-brand{
+      display:flex;align-items:center;position:relative;
+    }
+    .admin-sidebar-close{
+      display:flex;align-items:center;justify-content:center;
+      margin-left:auto;width:34px;height:34px;border-radius:9px;
+      background:var(--hover-bg);border:1px solid var(--border);color:var(--text-muted);
+      font-size:15px;cursor:pointer;flex-shrink:0;
+    }
+    .admin-menu{display:flex;flex-direction:column;gap:2px;}
+    .admin-menu li{margin-bottom:2px;}
+    .admin-menu button{white-space:normal;padding:13px 12px;font-size:14px;min-height:44px;}
+    .admin-sidebar-footer button{min-height:44px;}
+
+    .admin-topbar{padding:14px 16px;gap:10px;}
+    .admin-topbar h2{font-size:20px;}
+    .admin-content{padding:18px 16px 60px;}
+    .admin-topbar .quem span{display:none;} /* nome completo escondido no celular, avatar já identifica */
+
+    /* ---------- cards de agendamento / equipe: empilhados, sem colunas lado a lado ---------- */
+    .agendamento-card, .item-card{
+      flex-direction:column;align-items:stretch;gap:12px;padding:16px;
+    }
+    .agendamento-info{min-width:0;}
+    .agendamento-info .meta{gap:8px 14px;}
+    .agendamento-status{align-self:flex-start;}
+    .agendamento-actions{width:100%;}
+    .agendamento-actions .ag-btn, .item-card .ag-btn{
+      flex:1 1 auto;justify-content:center;min-height:40px;padding:10px 12px;font-size:12.5px;
+    }
+    .item-card select{width:100%;}
+    .item-card .info{min-width:0;}
+
+    /* ---------- estatísticas: uma coluna, cards não muito espremidos ---------- */
+    .stat-grid{grid-template-columns:1fr 1fr;gap:10px;}
+
+    /* ---------- formulários / filtros: sempre em coluna, largura total ---------- */
+    .campos-linha{grid-template-columns:1fr;}
+    .admin-search-bar{flex-direction:column;align-items:stretch;}
+    .admin-search-bar input, .admin-search-bar select{width:100%;}
+    .dia-semana-row{flex-direction:column;align-items:flex-start;gap:10px;padding:16px 0;}
+    .dia-semana-row .campo-bloco{width:100% !important;}
+
+    /* ---------- toque adequado: inputs, selects e botões maiores no celular ---------- */
+    .admin-field input, .campo-bloco input, .campo-bloco select,
+    .admin-modal .campo input, .admin-modal .campo select,
+    .admin-search-bar input, .item-card select{
+      font-size:16px; /* evita zoom automático no iOS ao focar campo */
+      min-height:44px;
+    }
+    .admin-btn-primario, .ag-btn, .admin-sair-btn, .admin-login-btn{min-height:44px;}
+    .switch{width:46px;height:27px;}
+    .switch .slider::before{width:21px;height:21px;}
+    .switch input:checked + .slider::before{transform:translateX(19px);}
+
+    /* ---------- modal: ocupa a largura disponível, sem cortar texto ---------- */
+    .admin-modal{padding:22px 18px;max-width:100%;width:calc(100% - 8px);}
+    .admin-modal-actions{flex-direction:column;}
+
+    /* ---------- nenhum scroll horizontal indesejado ---------- */
+    .admin-content, .admin-topbar{max-width:100vw;}
+    .bar-chart{gap:5px;}
+  }
+
+  @media(max-width:400px){
+    .stat-grid{grid-template-columns:1fr;}
+  }
+
+  @media(max-width:480px){
+    .admin-topbar h2{font-size:17px;}
+    .admin-login-bottom{padding:22px 22px 32px;}
+    .admin-login-top{padding:32px 20px 20px;}
   }
 
   /* =========================================================
@@ -1862,6 +2012,7 @@
     <div class="admin-login-card">
       <div class="admin-login-top">
         <img src="logo.png" alt="Prieto Barbearia">
+        <div class="admin-login-kicker">Área Restrita</div>
       </div>
       <div class="admin-login-bottom">
         <h1>Área Restrita</h1>
@@ -1888,10 +2039,12 @@
 
   <!-- ============= PAINEL ============= -->
   <div id="admin-panel">
-    <aside class="admin-sidebar">
+    <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="fecharMenuAdminMobile()"></div>
+    <aside class="admin-sidebar" id="admin-sidebar">
       <div class="admin-sidebar-brand">
         <div class="mark"><img src="logo.png" alt="Prieto Barbearia"></div>
         <span>Prieto Barbearia</span>
+        <button class="admin-sidebar-close" onclick="fecharMenuAdminMobile()" aria-label="Fechar menu"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <ul class="admin-menu" id="admin-menu">
         <li><button data-page="dashboard" onclick="admin.irPara('dashboard')"><i class="fa-solid fa-gauge"></i>Dashboard</button></li>
@@ -1916,7 +2069,15 @@
 
     <main class="admin-main">
       <div class="admin-topbar">
-        <h2 id="admin-page-title">Agendamentos</h2>
+        <div class="admin-topbar-left">
+          <button class="admin-hamburger" id="admin-hamburger" onclick="abrirMenuAdminMobile()" aria-label="Abrir menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="admin-topbar-brand">
+            <img src="logo.png" alt="Prieto Barbearia">
+          </div>
+          <h2 id="admin-page-title">Agendamentos</h2>
+        </div>
         <div class="quem">
           <span id="admin-barbeiro-nome">—</span>
           <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="logo.png" alt="Prieto Barbearia"></div>
@@ -1966,6 +2127,7 @@ function showBooking(){
     // sempre reabrir o agendamento na tela de lista de barbeiros
     document.querySelectorAll('#booking-view .screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-list').classList.add('active');
+    atualizarBotaoVoltarGlobal();
 
     window.scrollTo(0,0);
 }
@@ -2025,8 +2187,14 @@ Poderia me informar os horários disponíveis?`;
    SISTEMA DE AGENDAMENTO (lógica original preservada)
    ========================================================= */
 
-/* ---------------- DADOS DOS BARBEIROS ---------------- */
-const barbers = [
+/* ---------------- DADOS DOS BARBEIROS ----------------
+   Esta lista começa com os 2 barbeiros originais (fallback, caso o
+   Supabase não responda) mas é substituída pelos barbeiros reais
+   cadastrados na Área Restrita assim que a página carrega — veja
+   carregarBarbeirosPublicos() mais abaixo. Isso é o que faz um barbeiro
+   novo, cadastrado em "Equipe", aparecer aqui automaticamente quando
+   estiver ativo. */
+let barbers = [
     {
         id: 1,
         name: "Barbeiro Tradicional",
@@ -2042,6 +2210,44 @@ const barbers = [
         phone: "+595983907072"
     }
 ];
+
+/* busca os barbeiros reais (ativos) direto da tabela "barbeiros" do Supabase —
+   a mesma tabela usada pela Área Restrita — e monta a lista pública com eles.
+   Assim, qualquer barbeiro cadastrado e ativado em Equipe passa a aparecer
+   automaticamente no Agendamento Online, sem precisar editar código. */
+async function carregarBarbeirosPublicos(){
+    const sbClient = getSb();
+    if(!sbClient) return;
+    try{
+        const { data, error } = await sbClient
+            .from('barbeiros')
+            .select('id, nome, especialidade, foto_url, whatsapp, telefone, ativo, recebe_agendamento_online')
+            .eq('ativo', true)
+            .order('nome');
+
+        if(error || !data || !data.length) return; // mantém o fallback acima se algo falhar
+
+        // "recebe_agendamento_online" pode não existir ainda no banco (é uma coluna nova
+        // e opcional); nesse caso, tratamos como visível por padrão (!== false cobre
+        // tanto true quanto undefined).
+        const ativosNoAgendamento = data.filter(b => b.recebe_agendamento_online !== false);
+        if(!ativosNoAgendamento.length) return;
+
+        barbers = ativosNoAgendamento.map((b, i) => ({
+            id: i + 1,
+            dbId: b.id,
+            name: b.nome,
+            specialty: b.especialidade || 'Barbeiro da Prieto Barbearia',
+            avatar: b.foto_url || (i % 2 === 0 ? 'barbeiro-tradicional.jpg' : 'barbeiro-experiente.jpg'),
+            phone: (b.whatsapp || b.telefone || '').replace(/[^\d+]/g,'')
+        }));
+
+        renderBarberList();
+    } catch(e){
+        console.error('Erro ao carregar barbeiros do Supabase:', e);
+        // qualquer erro aqui mantém a lista fixa original — o site nunca fica sem opções
+    }
+}
 
 const shopAddress = "Rua Sindoca Varques • Sanga Puitã, Ponta Porã - MS - CEP: 79909000";
 const DURACAO_PADRAO_MIN = 30; // duração padrão de cada horário, em minutos
@@ -2169,6 +2375,7 @@ async function openBooking(barberId){
     document.getElementById('screen-list').classList.remove('active');
     document.getElementById('screen-booking').classList.add('active');
     document.getElementById('screen-booking').scrollTop = 0;
+    atualizarBotaoVoltarGlobal();
 
     // carrega horários e bloqueios reais do barbeiro (cadastrados na Área Restrita)
     renderCalendar();
@@ -2182,11 +2389,24 @@ async function openBooking(barberId){
 function goToList(){
     document.querySelectorAll('#booking-view .screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-list').classList.add('active');
+    atualizarBotaoVoltarGlobal();
 }
 
 function goToBooking(){
     document.getElementById('screen-summary').classList.remove('active');
     document.getElementById('screen-booking').classList.add('active');
+    atualizarBotaoVoltarGlobal();
+}
+
+/* O botão fixo "Voltar" (sai do agendamento e volta pro site) só faz sentido na
+   tela 1 (lista de barbeiros). Nas telas 2 e 3, já existe o botão com seta
+   dentro do card, que volta um passo do fluxo — os dois nunca devem aparecer
+   juntos no mesmo canto, especialmente no celular. */
+function atualizarBotaoVoltarGlobal(){
+    const btn = document.querySelector('.voltar-btn');
+    if(!btn) return;
+    const naLista = document.getElementById('screen-list').classList.contains('active');
+    btn.classList.toggle('escondido', !naLista);
 }
 
 /* dia/mês/ano -> "23/07/2026" a partir de "YYYY-MM-DD" */
@@ -2210,6 +2430,7 @@ function openSummary(){
     document.getElementById('screen-booking').classList.remove('active');
     document.getElementById('screen-summary').classList.add('active');
     document.getElementById('screen-summary').scrollTop = 0;
+    atualizarBotaoVoltarGlobal();
     validateForm();
 }
 
@@ -2459,6 +2680,10 @@ function continuar(){
 
 /* ---------------- INIT ---------------- */
 renderBarberList();
+// carrega a lista real de barbeiros do Supabase assim que a página termina de
+// carregar (aqui já garantimos que o cliente "sb", criado no script mais abaixo,
+// já existe — por isso não chamamos isso direto, e sim após o DOMContentLoaded)
+window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
 </script>
 
 
@@ -2483,6 +2708,19 @@ function adminVoltarSite(){
     document.getElementById('admin-view').classList.remove('active');
     document.getElementById('home-view').style.display = 'block';
     window.scrollTo(0,0);
+    fecharMenuAdminMobile();
+}
+
+/* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
+function abrirMenuAdminMobile(){
+    document.getElementById('admin-sidebar').classList.add('open');
+    document.getElementById('admin-sidebar-overlay').classList.add('open');
+}
+function fecharMenuAdminMobile(){
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('admin-sidebar-overlay');
+    if(sidebar) sidebar.classList.remove('open');
+    if(overlay) overlay.classList.remove('open');
 }
 
 const TITULOS_PAGINA = {
@@ -2533,20 +2771,40 @@ const admin = {
 
         let { data, error } = await sb.from('barbeiros').select('*').eq('user_id', user.id).single();
 
-        // primeiro login de um funcionário/barbeiro cujo usuário já existe no Supabase Auth,
-        // mas ainda não tem registro na tabela "barbeiros": criamos automaticamente (nível
-        // mínimo, inativo p/ o site público até o administrador revisar e ativar).
+        // primeiro login de alguém cujo usuário já existe no Supabase Auth mas ainda não
+        // está vinculado a uma linha em "barbeiros":
+        // 1) primeiro tentamos achar um cadastro PRÉ-PROVISIONADO pelo administrador em
+        //    "Equipe" (mesmo e-mail, ainda sem user_id) e apenas vinculamos a esse login —
+        //    preservando nome, nível de acesso e status já definidos por quem cadastrou;
+        // 2) se não existir nenhum pré-cadastro com esse e-mail, criamos um novo registro
+        //    mínimo (comportamento original do sistema, preservado como fallback).
         if((error || !data) && error && error.code === 'PGRST116'){
-            const nomeSugerido = (user.user_metadata && user.user_metadata.nome) || user.email.split('@')[0];
-            const { data: novo, error: erroCriar } = await sb.from('barbeiros')
-                .insert({ user_id: user.id, nome: nomeSugerido, nivel_acesso: 'funcionario', ativo: true })
-                .select('*').single();
-            if(erroCriar || !novo){
-                this.mostrarErroLogin('Não encontramos um barbeiro vinculado a este login e não foi possível criar automaticamente. Fale com o administrador.');
-                await sb.auth.signOut();
-                return;
+            let preProvisionado = null;
+            try{
+                const resultado = await sb.from('barbeiros').select('*').is('user_id', null).ilike('email', user.email).maybeSingle();
+                preProvisionado = resultado.data;
+            } catch(e){ /* coluna "email" pode não existir ainda no banco — segue para o fallback */ }
+
+            if(preProvisionado){
+                const { data: vinculado, error: erroVincular } = await sb.from('barbeiros')
+                    .update({ user_id: user.id })
+                    .eq('id', preProvisionado.id)
+                    .select('*').single();
+                if(!erroVincular && vinculado){ data = vinculado; }
             }
-            data = novo;
+
+            if(!data){
+                const nomeSugerido = (user.user_metadata && user.user_metadata.nome) || user.email.split('@')[0];
+                const { data: novo, error: erroCriar } = await sb.from('barbeiros')
+                    .insert({ user_id: user.id, nome: nomeSugerido, nivel_acesso: 'funcionario', ativo: true })
+                    .select('*').single();
+                if(erroCriar || !novo){
+                    this.mostrarErroLogin('Não encontramos um barbeiro vinculado a este login e não foi possível criar automaticamente. Fale com o administrador.');
+                    await sb.auth.signOut();
+                    return;
+                }
+                data = novo;
+            }
         } else if(error || !data){
             this.mostrarErroLogin('Não encontramos um barbeiro vinculado a este login.');
             await sb.auth.signOut();
@@ -2672,6 +2930,7 @@ const admin = {
             b.classList.toggle('active', b.dataset.page === pagina);
         });
         document.getElementById('admin-page-title').textContent = TITULOS_PAGINA[pagina] || pagina;
+        fecharMenuAdminMobile(); // no celular, escolher uma página fecha a gaveta de menu automaticamente
 
         const rotas = {
             agendamentos: () => { this.renderAgendamentosPage(); this.carregarAgendamentos(); },
@@ -2756,11 +3015,11 @@ const admin = {
         const paraData = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
 
         if(this.filtroRapido === 'hoje'){
-            const hj = hoje.toISOString().slice(0,10);
+            const hj = this.paraChaveLocal(hoje);
             lista = lista.filter(a => a.data === hj);
         } else if(this.filtroRapido === 'amanha'){
             const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
-            const am = amanha.toISOString().slice(0,10);
+            const am = this.paraChaveLocal(amanha);
             lista = lista.filter(a => a.data === am);
         } else if(this.filtroRapido === 'semana'){
             const fimSemana = new Date(hoje); fimSemana.setDate(fimSemana.getDate()+7);
@@ -2772,6 +3031,14 @@ const admin = {
         }
 
         this.renderListaAgendamentos(lista);
+    },
+
+    /* data de hoje no formato YYYY-MM-DD usando o calendário LOCAL do dispositivo
+       (nunca usar toISOString() aqui: ele converte para UTC e pode voltar/adiantar
+       um dia dependendo do fuso horário do aparelho) */
+    paraChaveLocal(d){
+        const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dia = String(d.getDate()).padStart(2,'0');
+        return `${y}-${m}-${dia}`;
     },
 
     formatarDataBR(dataISO){
@@ -3653,12 +3920,17 @@ const admin = {
                     <div class="campo-bloco"><label>Tempo de experiência</label><input id="pf-experiencia" value="${b.tempo_experiencia||''}" placeholder="ex: 8 anos"></div>
                 </div>
                 <div class="campo-bloco" style="margin-bottom:16px;"><label>Biografia</label><input id="pf-bio" value="${b.biografia||''}"></div>
+                <div class="campo-bloco" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                    <label class="switch"><input type="checkbox" id="pf-recebe-agendamento" ${b.recebe_agendamento_online!==false?'checked':''}><span class="slider"></span></label>
+                    <span style="font-size:13.5px;">Aparecer como opção no Agendamento Online</span>
+                </div>
                 <button class="admin-btn-primario" onclick="admin.salvarPerfil()"><i class="fa-solid fa-floppy-disk"></i> Salvar perfil</button>
             </div>
         `;
     },
 
     async salvarPerfil(){
+        const recebeEl = document.getElementById('pf-recebe-agendamento');
         const payload = {
             foto_url: document.getElementById('pf-foto').value.trim(),
             nome: document.getElementById('pf-nome').value.trim(),
@@ -3667,9 +3939,16 @@ const admin = {
             whatsapp: document.getElementById('pf-whatsapp').value.trim(),
             instagram: document.getElementById('pf-instagram').value.trim(),
             tempo_experiencia: document.getElementById('pf-experiencia').value.trim(),
-            biografia: document.getElementById('pf-bio').value.trim()
+            biografia: document.getElementById('pf-bio').value.trim(),
+            recebe_agendamento_online: recebeEl ? recebeEl.checked : true
         };
-        const { error } = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
+        let { error } = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
+        if(error){
+            // fallback se a coluna "recebe_agendamento_online" ainda não existir no banco
+            delete payload.recebe_agendamento_online;
+            const retry = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
+            error = retry.error;
+        }
         if(error){ alert('Não foi possível salvar o perfil.'); return; }
         this.barbeiro = {...this.barbeiro, ...payload};
         document.getElementById('admin-barbeiro-nome').textContent = this.barbeiro.nome;
@@ -3691,24 +3970,29 @@ const admin = {
         const online = b => b.online && b.ultimo_acesso && (agora - new Date(b.ultimo_acesso).getTime()) < 90000;
 
         document.getElementById('admin-content').innerHTML = `
+            <button class="admin-btn-primario" style="margin-bottom:18px;" onclick="admin.formNovoMembro()"><i class="fa-solid fa-user-plus"></i> Adicionar funcionário</button>
             <div class="admin-empty" style="text-align:left;padding:0 0 18px;color:var(--text-muted);font-size:13px;">
-                Para adicionar alguém à equipe: crie o login da pessoa em
-                <strong>Supabase → Authentication → Users → Add user</strong> (e-mail + senha provisória).
-                No primeiro login dela na Área Restrita, o sistema cria o cadastro automaticamente aqui,
-                como <strong>Funcionário</strong> — depois é só ajustar o nível de acesso abaixo.
+                Ao adicionar alguém aqui, o cadastro fica com status <strong>"aguardando primeiro acesso"</strong>.
+                Combine uma senha provisória com a pessoa e crie o login dela em
+                <strong>Supabase → Authentication → Users → Add user</strong>, usando <u>o mesmo e-mail</u> informado abaixo.
+                No primeiro login na Área Restrita, o sistema reconhece esse e-mail e conecta automaticamente
+                a esse cadastro — sem duplicar e sem perder o nível de acesso já definido.
             </div>
             ${this.equipeCache.map(b => `
                 <div class="item-card">
                     <div class="info">
                         <div class="t">
-                            <span class="status-dot ${online(b)?'on':'off'}" title="${online(b)?'Online':'Offline'}"></span>
+                            <span class="status-dot ${online(b)?'on':(b.user_id?'off':'')}" style="${b.user_id?'':'background:#c9a463;'}" title="${online(b)?'Online':(b.user_id?'Offline':'Aguardando primeiro acesso')}"></span>
                             ${b.nome}
                             ${b.id === this.barbeiro.id ? ' <span style="color:var(--text-muted);font-size:12px;">(você)</span>' : ''}
+                            ${!b.user_id ? ' <span style="color:var(--accent);font-size:11.5px;">(aguardando 1º acesso)</span>' : ''}
                         </div>
                         <div class="s">
-                            ${online(b) ? 'Online agora' : (b.ultimo_acesso ? 'Último acesso: '+this.formatarDataHoraBR(b.ultimo_acesso) : 'Nunca acessou')}
+                            ${b.telefone ? b.telefone+' • ' : ''}${b.email ? b.email+' • ' : ''}
+                            ${b.user_id ? (online(b) ? 'Online agora' : (b.ultimo_acesso ? 'Último acesso: '+this.formatarDataHoraBR(b.ultimo_acesso) : 'Nunca acessou')) : 'Ainda não fez login'}
                             ${b.ultimo_login ? ' • Login: '+this.formatarDataHoraBR(b.ultimo_login) : ''}
                             ${b.ultimo_logout ? ' • Logout: '+this.formatarDataHoraBR(b.ultimo_logout) : ''}
+                            ${b.recebe_agendamento_online === false ? ' • <span style="color:var(--text-muted);">não aparece no Agendamento Online</span>' : ''}
                         </div>
                     </div>
                     <select onchange="admin.alterarNivel('${b.id}', this.value)" ${b.id===this.barbeiro.id?'disabled title="Você não pode alterar seu próprio nível"':''}>
@@ -3720,6 +4004,63 @@ const admin = {
                 </div>
             `).join('') || '<div class="admin-empty">Nenhum membro na equipe ainda.</div>'}
         `;
+    },
+
+    formNovoMembro(){
+        document.getElementById('admin-modal-body').innerHTML = `
+            <h3>Adicionar funcionário</h3>
+            <div class="campo"><label>Nome</label><input id="novo-nome" placeholder="Nome completo"></div>
+            <div class="campo"><label>Tipo / perfil</label>
+                <select id="novo-nivel">
+                    <option value="funcionario">Funcionário</option>
+                    <option value="barbeiro">Barbeiro</option>
+                    <option value="administrador">Administrador</option>
+                </select>
+            </div>
+            <div class="campo"><label>Telefone</label><input id="novo-telefone" placeholder="(67) 90000-0000"></div>
+            <div class="campo"><label>E-mail (o mesmo que a pessoa vai usar para logar)</label><input id="novo-email" type="email" placeholder="pessoa@exemplo.com"></div>
+            <div class="campo"><label>Status</label>
+                <select id="novo-ativo">
+                    <option value="true">Ativo</option>
+                    <option value="false">Inativo</option>
+                </select>
+            </div>
+            <div class="campo"><label>Aparece no Agendamento Online?</label>
+                <select id="novo-recebe">
+                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
+                </select>
+            </div>
+            <div class="admin-modal-actions">
+                <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
+                <button class="admin-modal-salvar" onclick="admin.salvarNovoMembro()">Adicionar</button>
+            </div>
+        `;
+        document.getElementById('admin-modal-overlay').classList.add('active');
+    },
+
+    async salvarNovoMembro(){
+        const nome = document.getElementById('novo-nome').value.trim();
+        const nivel_acesso = document.getElementById('novo-nivel').value;
+        const telefone = document.getElementById('novo-telefone').value.trim();
+        const email = document.getElementById('novo-email').value.trim().toLowerCase();
+        const ativo = document.getElementById('novo-ativo').value === 'true';
+        const recebe_agendamento_online = document.getElementById('novo-recebe').value === 'true';
+
+        if(!nome){ alert('Informe o nome.'); return; }
+        if(!email){ alert('Informe o e-mail — é por ele que o sistema vai reconhecer a pessoa no primeiro login.'); return; }
+
+        const { error } = await sb.from('barbeiros').insert({
+            nome, nivel_acesso, telefone: telefone || null, email, ativo, recebe_agendamento_online
+        });
+        if(error){
+            // se a coluna "email" ou "recebe_agendamento_online" ainda não existir no banco
+            // (projeto sem a migração aplicada), tenta de novo sem esses campos extras
+            const { error: erro2 } = await sb.from('barbeiros').insert({ nome, nivel_acesso, telefone: telefone || null, ativo });
+            if(erro2){ alert('Não foi possível adicionar o funcionário: ' + error.message); return; }
+        }
+        this.fecharModal();
+        await this.renderEquipe();
     },
 
     async alterarNivel(id, nivel){
