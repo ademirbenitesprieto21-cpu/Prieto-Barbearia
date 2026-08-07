@@ -1862,9 +1862,9 @@
     <div class="admin-login-card">
       <div class="admin-login-top">
         <img src="logo.png" alt="Prieto Barbearia">
-        <h1>Área Restrita</h1>
       </div>
       <div class="admin-login-bottom">
+        <h1>Área Restrita</h1>
         <p class="sub">Acesso exclusivo para barbeiros da Prieto Barbearia</p>
 
         <div class="admin-login-error" id="admin-login-error"></div>
@@ -2275,6 +2275,20 @@ async function finalizarAgendamento(){
                 horario: selectedTime,
                 origem: 'online'
             });
+
+            // notificações por e-mail (barbearia + confirmação do cliente).
+            // Nunca deve travar o fluxo do cliente nem exibir erro para ele:
+            // qualquer falha aqui fica só no console, o agendamento já foi salvo.
+            sb.functions.invoke('enviar-notificacoes-agendamento', {
+                body: {
+                    cliente_nome: nome,
+                    cliente_email: email || null,
+                    cliente_telefone: whats || null,
+                    barbeiro_nome: currentBarber.name,
+                    data: selectedDate,
+                    horario: selectedTime
+                }
+            }).catch(e => console.error('Erro ao enviar notificações por e-mail:', e));
         }
     } catch(e){
         console.error('Erro ao salvar agendamento no Supabase:', e);
