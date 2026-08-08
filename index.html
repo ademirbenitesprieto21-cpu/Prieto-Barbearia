@@ -1070,7 +1070,13 @@
     display:flex;align-items:center;gap:18px;flex-wrap:wrap;
   }
   .agendamento-info{flex:1;min-width:220px;}
-  .agendamento-info .nome{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .agendamento-info .nome{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .origem-tag{
+    font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:3px 9px;border-radius:20px;white-space:nowrap;
+  }
+  .origem-presencial{background:rgba(201,164,99,.15);color:var(--accent);border:1px solid rgba(201,164,99,.4);}
+  .origem-online{background:rgba(255,255,255,.08);color:var(--text-muted);border:1px solid var(--border);}
   .agendamento-info .meta{color:var(--text-muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:12px;}
   .agendamento-info .meta span{display:inline-flex;align-items:center;gap:5px;}
   .agendamento-status{
@@ -2226,17 +2232,24 @@ function selectBarberForWhatsapp(barberId){
 
     closeWhatsappModal();
 
-    const mensagem =
-`Olá!
-
-Gostaria de agendar um horário na Prieto Barbearia.
-
-Escolhi o barbeiro: ${barber.name}
-
-Poderia me informar os horários disponíveis?`;
-
-    const url = `https://wa.me/${barber.phone}?text=${encodeURIComponent(mensagem)}`;
+    const url = buildWhatsappUrl(barber.phone);
     window.open(url, '_blank');
+}
+
+/* =========================================================
+   MENSAGEM PADRÃO DE WHATSAPP (agendamento)
+   Usada em TODOS os botões de WhatsApp do Agendamento Online,
+   para não ter mensagens diferentes espalhadas pelo código.
+   ========================================================= */
+const WHATSAPP_BOOKING_MESSAGE =
+`Olá! 👋🏻
+
+Queria agendar um horário na 💈Prieto Barbearia💈.
+
+Aguardo a confirmação do meu agendamento.`;
+
+function buildWhatsappUrl(phone){
+    return `https://wa.me/${phone}?text=${encodeURIComponent(WHATSAPP_BOOKING_MESSAGE)}`;
 }
 
 /* =========================================================
@@ -2371,6 +2384,28 @@ async function carregarDisponibilidadeBarbeiro(){
     }
 }
 
+/* data/hora atual sempre no fuso de Brasília (America/Sao_Paulo), independente
+   do fuso configurado no aparelho do cliente ou do servidor. Usado para nunca
+   mostrar, no dia de hoje, horários que já passaram. */
+function getAgoraBrasil(){
+    const partes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+
+    const obj = {};
+    partes.forEach(p => { obj[p.type] = p.value; });
+
+    let hora = parseInt(obj.hour, 10);
+    if(hora === 24) hora = 0; // alguns navegadores retornam "24" para meia-noite
+
+    return {
+        dateKey: `${obj.year}-${obj.month}-${obj.day}`,
+        minutos: hora * 60 + parseInt(obj.minute, 10)
+    };
+}
+
 /* gera os horários (slots) de um dia a partir da configuração salva na Área Restrita,
    descontando o intervalo de almoço e os horários já agendados por outros clientes */
 async function gerarSlotsDoDia(dateKey){
@@ -2388,7 +2423,7 @@ async function gerarSlotsDoDia(dateKey){
     const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
     const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
 
-    const slots = [];
+    let slots = [];
     for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
         if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
         slots.push(paraHHMM(t));
@@ -2403,12 +2438,21 @@ async function gerarSlotsDoDia(dateKey){
                 .eq('barbeiro_id', currentBarber.dbId)
                 .eq('data', dateKey)
                 .neq('status', 'cancelado');
-            const horariosOcupados = new Set((ocupados||[]).map(a => a.horario.slice(0,5)));
-            return slots.filter(s => !horariosOcupados.has(s));
+            const horariosOcupados = new Set((ocupados||[]).filter(a => a.horario).map(a => a.horario.slice(0,5)));
+            slots = slots.filter(s => !horariosOcupados.has(s));
         } catch(e){
             console.error('Erro ao verificar horários ocupados:', e);
         }
     }
+
+    // se a data selecionada for HOJE (sempre no fuso de Brasília), esconde os
+    // horários que já passaram. Datas futuras (amanhã em diante) não sofrem
+    // essa filtragem e mostram todos os horários livres normalmente.
+    const agora = getAgoraBrasil();
+    if(dateKey === agora.dateKey){
+        slots = slots.filter(s => paraMin(s) > agora.minutos);
+    }
+
     return slots;
 }
 
@@ -2436,7 +2480,7 @@ async function openBooking(barberId){
     document.getElementById('bk-avatar').alt = currentBarber.name;
     document.getElementById('bk-name').textContent = currentBarber.name;
     document.getElementById('bk-address').textContent = shopAddress;
-    document.getElementById('bk-whatsapp').href = `https://wa.me/${currentBarber.phone}`;
+    document.getElementById('bk-whatsapp').href = buildWhatsappUrl(currentBarber.phone);
 
     const today = new Date();
     viewYear = today.getFullYear();
@@ -2515,7 +2559,7 @@ function openSummary(){
     document.getElementById('sm-avatar').alt = currentBarber.name;
     document.getElementById('sm-name').textContent = currentBarber.name;
     document.getElementById('sm-address').textContent = shopAddress;
-    document.getElementById('sm-whatsapp').href = `https://wa.me/${currentBarber.phone}`;
+    document.getElementById('sm-whatsapp').href = buildWhatsappUrl(currentBarber.phone);
 
     document.getElementById('sm-datetime').textContent =
         `${formatDateBR(selectedDate)} às ${formatarHoraExibicao(selectedTime)}`;
@@ -2641,7 +2685,7 @@ function openSuccess(){
     document.getElementById('sc-avatar').alt = currentBarber.name;
     document.getElementById('sc-name').textContent = currentBarber.name;
     document.getElementById('sc-address').textContent = shopAddress;
-    document.getElementById('sc-whatsapp').href = `https://wa.me/${currentBarber.phone}`;
+    document.getElementById('sc-whatsapp').href = buildWhatsappUrl(currentBarber.phone);
 
     document.getElementById('sc-datetime').textContent =
         `${formatDateShort(selectedDate)}, ${formatarHoraExibicao(selectedTime)}`;
@@ -3060,6 +3104,7 @@ const admin = {
             <div class="admin-search-bar">
                 <input type="text" id="admin-busca-texto" placeholder="Buscar por nome, telefone ou serviço..." oninput="admin.aplicarFiltro()">
                 <input type="date" id="admin-busca-data" oninput="admin.aplicarFiltro()">
+                <button class="admin-btn-primario" onclick="admin.formAdicionarCliente()"><i class="fa-solid fa-plus"></i> Adicionar Cliente</button>
             </div>
             <div class="admin-search-bar" id="admin-filtros-rapidos">
                 ${['todos','hoje','amanha','semana','mes','confirmado','pendente','cancelado'].map(f => `
@@ -3185,13 +3230,13 @@ const admin = {
         wrap.innerHTML = lista.map(a => `
             <div class="agendamento-card">
                 <div class="agendamento-info">
-                    <div class="nome">${a.cliente_nome}</div>
+                    <div class="nome">${a.cliente_nome || 'Cliente presencial'}${a.origem==='presencial' ? '<span class="origem-tag origem-presencial">PRESENCIAL</span>' : (a.origem==='online' ? '<span class="origem-tag origem-online">ONLINE</span>' : '')}</div>
                     <div class="meta">
                         <span><i class="fa-solid fa-phone"></i>${a.cliente_telefone || '—'}</span>
                         <span><i class="fa-solid fa-scissors"></i>${a.servicos ? a.servicos.nome : '—'}</span>
                         ${a.servico_valor != null ? `<span><i class="fa-solid fa-sack-dollar"></i>R$ ${Number(a.servico_valor).toFixed(2).replace('.',',')}</span>` : ''}
                         <span><i class="fa-solid fa-calendar"></i>${this.formatarDataBR(a.data)}</span>
-                        <span><i class="fa-solid fa-clock"></i>${a.horario ? this.formatarHora(a.horario) : ''}</span>
+                        ${a.horario ? `<span><i class="fa-solid fa-clock"></i>${this.formatarHora(a.horario)}</span>` : ''}
                     </div>
                 </div>
                 <div class="agendamento-status status-${a.status}">${statusLabel[a.status] || a.status}</div>
@@ -3210,7 +3255,7 @@ const admin = {
     async apagar(id){
         const a = this.agendamentos.find(x => x.id === id);
         if(!a) return;
-        if(!confirm(`Apagar o agendamento de ${a.cliente_nome} em ${this.formatarDataBR(a.data)} às ${a.horario ? a.horario.slice(0,5) : ''}? Essa ação libera o horário e não pode ser desfeita.`)) return;
+        if(!confirm(`Apagar o agendamento de ${a.cliente_nome || 'Cliente presencial'} em ${this.formatarDataBR(a.data)} às ${a.horario ? a.horario.slice(0,5) : ''}? Essa ação libera o horário e não pode ser desfeita.`)) return;
 
         const { error } = await sb.from('agendamentos').delete().eq('id', id);
         if(error){ alert('Não foi possível apagar o agendamento.'); return; }
@@ -3218,7 +3263,7 @@ const admin = {
         await sb.from('logs_acoes').insert({
             barbeiro_id: this.barbeiro.id,
             acao: 'apagar_agendamento',
-            detalhes: `Agendamento de ${a.cliente_nome} em ${a.data} às ${a.horario} foi apagado.`
+            detalhes: `Agendamento de ${a.cliente_nome || 'Cliente presencial'} em ${a.data} às ${a.horario || '—'} foi apagado.`
         });
 
         await this.carregarAgendamentos();
@@ -3237,7 +3282,7 @@ const admin = {
         const statusLabel = {pendente:'Pendente', confirmado:'Confirmado', finalizado:'Finalizado', cancelado:'Cancelado'};
         document.getElementById('admin-modal-body').innerHTML = `
             <h3>Detalhes do agendamento</h3>
-            <div class="campo"><label>Cliente</label><input value="${a.cliente_nome}" disabled></div>
+            <div class="campo"><label>Cliente</label><input value="${a.cliente_nome || 'Cliente presencial'}" disabled></div>
             <div class="campo"><label>Telefone</label><input value="${a.cliente_telefone || '—'}" disabled></div>
             <div class="campo"><label>Serviço</label><input value="${a.servicos ? a.servicos.nome : '—'}" disabled></div>
             <div class="campo"><label>Data e horário</label><input value="${this.formatarDataBR(a.data)} às ${a.horario ? this.formatarHora(a.horario) : ''}" disabled></div>
@@ -3307,6 +3352,106 @@ const admin = {
         if(error){ alert('Não foi possível salvar as alterações.'); return; }
         this.fecharModal();
         await this.carregarAgendamentos();
+    },
+
+    /* ============ ADICIONAR CLIENTE PRESENCIAL ============
+       Registra manualmente um atendimento que aconteceu na barbearia mas
+       não passou pelo Agendamento Online (sem e-mail, sem WhatsApp e sem
+       horário — só data, nome opcional, serviço e valor). Usa a mesma
+       tabela "agendamentos", marcando origem:'presencial' e status já
+       como 'finalizado' (o atendimento já ocorreu), para entrar
+       corretamente no faturamento e nos relatórios. */
+    async formAdicionarCliente(){
+        const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).order('nome');
+        const opcoesServico = (servicos || []).map(s =>
+            `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
+        ).join('');
+
+        document.getElementById('admin-modal-body').innerHTML = `
+            <h3>Adicionar cliente</h3>
+            <div class="campo"><label>Nome do cliente (opcional)</label><input type="text" id="pres-nome" placeholder="Ex: João Silva"></div>
+            <div class="campo"><label>Data</label><input type="date" id="pres-data" value="${this.hojeISO()}"></div>
+            <div class="campo">
+                <label>Serviço</label>
+                <select id="pres-servico" onchange="admin.preencherValorPresencial()">
+                    <option value="">Selecionar</option>
+                    ${opcoesServico}
+                </select>
+            </div>
+            <div class="campo"><label>Valor</label><input type="number" id="pres-valor" min="0" step="0.01" placeholder="0,00"></div>
+            <div class="admin-modal-actions">
+                <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
+                <button class="admin-modal-salvar" onclick="admin.salvarClientePresencial()">Adicionar Cliente</button>
+            </div>
+        `;
+        document.getElementById('admin-modal-overlay').classList.add('active');
+    },
+
+    /* ao escolher o serviço, sugere automaticamente o valor de tabela —
+       o barbeiro ainda pode ajustar o campo Valor manualmente */
+    preencherValorPresencial(){
+        const select = document.getElementById('pres-servico');
+        const opcao = select.options[select.selectedIndex];
+        const valorInput = document.getElementById('pres-valor');
+        if(opcao && opcao.dataset.valor && !valorInput.value){
+            valorInput.value = Number(opcao.dataset.valor).toFixed(2);
+        }
+    },
+
+    async salvarClientePresencial(){
+        const nome = document.getElementById('pres-nome').value.trim();
+        const data = document.getElementById('pres-data').value;
+        const servicoSelect = document.getElementById('pres-servico');
+        const servicoId = servicoSelect.value;
+        const opcaoSelecionada = servicoSelect.options[servicoSelect.selectedIndex];
+        const valor = document.getElementById('pres-valor').value;
+
+        if(!data || !servicoId || valor === '' || valor === null){
+            alert('Preencha data, serviço e valor.');
+            return;
+        }
+
+        const btn = document.querySelector('.admin-modal-salvar');
+        const textoOriginal = btn ? btn.textContent : '';
+        if(btn){ btn.disabled = true; btn.textContent = 'Adicionando...'; }
+
+        // se o nome foi informado, tenta vincular/criar o cliente (permite que
+        // "clientes recorrentes" identifique esse cliente presencial no futuro)
+        let clienteId = null;
+        if(nome){
+            try{
+                const { data: idCliente } = await sb.rpc('obter_ou_criar_cliente', {
+                    p_nome: nome, p_telefone: '', p_email: ''
+                });
+                clienteId = idCliente;
+            } catch(e){ console.error('Erro ao vincular cliente presencial:', e); }
+        }
+
+        const { error } = await sb.from('agendamentos').insert({
+            barbeiro_id: this.barbeiro.id,
+            cliente_id: clienteId,
+            cliente_nome: nome || null,
+            cliente_telefone: null,
+            cliente_email: null,
+            data: data,
+            horario: null,
+            servico_id: servicoId,
+            servico_valor: Number(valor),
+            servico_duracao_minutos: opcaoSelecionada.dataset.duracao ? Number(opcaoSelecionada.dataset.duracao) : null,
+            status: 'finalizado',
+            origem: 'presencial'
+        });
+
+        if(btn){ btn.disabled = false; btn.textContent = textoOriginal; }
+
+        if(error){
+            alert('Não foi possível adicionar o cliente.');
+            return;
+        }
+
+        this.fecharModal();
+        await this.carregarAgendamentos();
+        alert('Cliente adicionado com sucesso.');
     },
 
     fecharModal(){
@@ -3421,7 +3566,7 @@ const admin = {
                     <div class="dash-panel">
                         <h4>Últimos agendamentos</h4>
                         <div class="mini-list">
-                            ${ultimos5.length ? ultimos5.map(a => `<div class="mini-list-item"><span class="n">${a.cliente_nome}</span><span class="m">${this.formatarDataBR(a.data)} • ${this.formatarHora(a.horario)}</span></div>`).join('') : '<div class="mini-list-item">Nenhum agendamento ainda.</div>'}
+                            ${ultimos5.length ? ultimos5.map(a => `<div class="mini-list-item"><span class="n">${a.cliente_nome || 'Cliente presencial'}</span><span class="m">${this.formatarDataBR(a.data)} • ${this.formatarHora(a.horario)}</span></div>`).join('') : '<div class="mini-list-item">Nenhum agendamento ainda.</div>'}
                         </div>
                     </div>
                 </div>
@@ -3433,7 +3578,7 @@ const admin = {
                     <div class="dash-panel">
                         <h4>Próximos atendimentos</h4>
                         <div class="mini-list">
-                            ${proximos5.length ? proximos5.map(a => `<div class="mini-list-item"><span class="n">${a.cliente_nome}</span><span class="m">${this.formatarDataBR(a.data)} • ${this.formatarHora(a.horario)}</span></div>`).join('') : '<div class="mini-list-item">Nada agendado.</div>'}
+                            ${proximos5.length ? proximos5.map(a => `<div class="mini-list-item"><span class="n">${a.cliente_nome || 'Cliente presencial'}</span><span class="m">${this.formatarDataBR(a.data)} • ${this.formatarHora(a.horario)}</span></div>`).join('') : '<div class="mini-list-item">Nada agendado.</div>'}
                         </div>
                     </div>
                 </div>
@@ -3525,7 +3670,7 @@ const admin = {
                                <div class="mini-list">
                                 ${diaAtual.length ? diaAtual.map(a => `
                                     <div class="mini-list-item" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:4px;" onclick="admin.editar('${a.id}')">
-                                        <span class="n">${admin.formatarHora(a.horario)} — ${a.cliente_nome}</span>
+                                        <span class="n">${admin.formatarHora(a.horario)} — ${a.cliente_nome || 'Cliente presencial'}</span>
                                         <span class="m">${statusLabel[a.status]}${a.servicos ? ' • '+a.servicos.nome : ''}</span>
                                     </div>
                                 `).join('') : '<div class="mini-list-item">Nada agendado neste dia.</div>'}
@@ -3978,8 +4123,13 @@ const admin = {
 
         const contagemHorario = {}, contagemDia = {}, contagemServico = {};
         finalizados.forEach(a => {
-            const h = a.horario.slice(0,5);
-            contagemHorario[h] = (contagemHorario[h]||0)+1;
+            // "horários mais movimentados" só faz sentido para quem tem horário
+            // registrado — clientes presenciais (origem:'presencial') não têm
+            // horário e por isso não entram nessa contagem específica.
+            if(a.horario){
+                const h = a.horario.slice(0,5);
+                contagemHorario[h] = (contagemHorario[h]||0)+1;
+            }
             const diaLabel = this.formatarDataBR(a.data);
             contagemDia[diaLabel] = (contagemDia[diaLabel]||0)+1;
             if(a.servicos) contagemServico[a.servicos.nome] = (contagemServico[a.servicos.nome]||0)+1;
@@ -4058,11 +4208,11 @@ const admin = {
         (r.diasOrdenados.length ? r.diasOrdenados : [['Sem dados','']]).forEach(([k,v]) => linhas.push([k, v]));
         linhas.push([]);
         linhas.push(['DETALHAMENTO DOS AGENDAMENTOS DO PERÍODO']);
-        linhas.push(['Cliente','Telefone','Serviço','Valor','Data','Horário','Status']);
+        linhas.push(['Cliente','Telefone','Serviço','Valor','Data','Horário','Status','Origem']);
         r.lista.forEach(a => linhas.push([
-            a.cliente_nome, a.cliente_telefone||'', a.servicos?a.servicos.nome:'',
+            a.cliente_nome || 'Cliente presencial', a.cliente_telefone||'', a.servicos?a.servicos.nome:'',
             this.formatarMoeda(a.servico_valor||0), this.formatarDataBR(a.data),
-            this.formatarHora(a.horario), a.status
+            this.formatarHora(a.horario), a.status, a.origem==='presencial' ? 'Presencial' : 'Online'
         ]));
 
         const csv = linhas.map(l => l.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
