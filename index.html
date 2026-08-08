@@ -1661,6 +1661,47 @@
     .section{padding:90px 0;}
     .section-title{font-size:38px;}
   }
+  /* ================= ANIMAÇÕES AO ROLAR A PÁGINA =================
+     Elementos com a classe .reveal começam invisíveis e deslocados;
+     quando entram na tela (scroll, tanto no computador quanto no
+     celular), ganham a classe .in-view via JavaScript e fazem um
+     fade-in suave para cima. Não afeta o Agendamento Online nem a
+     Área Restrita — só a página inicial. */
+  .reveal{
+    opacity:0;
+    translate:0 40px;
+    transition:opacity .7s ease, translate .7s ease;
+    will-change:opacity, translate;
+  }
+  .reveal.in-view{
+    opacity:1;
+    translate:0 0;
+  }
+  /* preserva as transições de hover que esses elementos já tinham
+     (zoom da foto, sombra do card), somando-as à transição do reveal */
+  .service-card.reveal{
+    transition:opacity .7s ease, translate .7s ease, box-shadow .35s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .ambiente-gallery img.reveal{
+    transition:opacity .7s ease, translate .7s ease, transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s ease;
+  }
+  /* efeito cascata nos grupos de cards/imagens/colunas */
+  .services-grid .reveal:nth-child(1){transition-delay:.05s;}
+  .services-grid .reveal:nth-child(2){transition-delay:.15s;}
+  .services-grid .reveal:nth-child(3){transition-delay:.25s;}
+  .services-grid .reveal:nth-child(4){transition-delay:.35s;}
+  .ambiente-gallery .reveal:nth-child(1){transition-delay:.05s;}
+  .ambiente-gallery .reveal:nth-child(2){transition-delay:.15s;}
+  .ambiente-gallery .reveal:nth-child(3){transition-delay:.25s;}
+  .footer-grid .reveal:nth-child(1){transition-delay:.05s;}
+  .footer-grid .reveal:nth-child(2){transition-delay:.15s;}
+  .footer-grid .reveal:nth-child(3){transition-delay:.25s;}
+  @media(max-width:600px){
+    .reveal{translate:0 24px;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;translate:0 0;transition:none;}
+  }
 </style>
 </head>
 <body>
@@ -1729,30 +1770,30 @@
   <!-- SERVIÇOS -->
   <section class="section" id="servicos">
     <div class="container">
-      <h2 class="section-title">SERVIÇOS</h2>
+      <h2 class="section-title reveal">SERVIÇOS</h2>
       <div class="services-grid" style="margin-top:50px;">
-        <div class="service-card">
+        <div class="service-card reveal">
           <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
           <div class="service-overlay">
             <h3>CORTE MASCULINO</h3>
             <p>Cortes modernos e estilosos para todos os estilos</p>
           </div>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
           <div class="service-overlay">
             <h3>CORTE INFANTIL</h3>
             <p>Cortes divertidos e profissionais para crianças</p>
           </div>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
           <div class="service-overlay">
             <h3>BARBA</h3>
             <p>Barba alinhada com navalha e acabamento perfeito</p>
           </div>
         </div>
-        <div class="service-card">
+        <div class="service-card reveal">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
           <div class="service-overlay">
             <h3>SOBRANCELHA</h3>
@@ -1762,7 +1803,7 @@
       </div>
 
       <!-- SOBRE -->
-      <div class="about-card" id="sobre">
+      <div class="about-card reveal" id="sobre">
         <h2>SOBRE</h2>
         <div class="divider"></div>
         <p>A Barbearia Prieto foi criada para trazer cortes modernos e atendimento de qualidade para a região de Sanga Puitã em Ponta Porã. Nosso objetivo é oferecer estilo, confiança e um atendimento profissional para cada cliente.</p>
@@ -1778,17 +1819,17 @@
   <!-- AMBIENTE -->
   <section class="section" id="ambiente" style="padding-top:0;">
     <div class="container">
-      <h2 class="section-title">AMBIENTE</h2>
-      <p class="section-kicker">Conheça nosso espaço</p>
+      <h2 class="section-title reveal">AMBIENTE</h2>
+      <p class="section-kicker reveal">Conheça nosso espaço</p>
 
       <div class="ambiente-gallery">
-        <img src="fachada1.png" alt="Ambiente 1">
-        <img src="fachada2.png" alt="Ambiente 2">
-        <img src="fachada3.png" alt="Ambiente 3">
+        <img class="reveal" src="fachada1.png" alt="Ambiente 1">
+        <img class="reveal" src="fachada2.png" alt="Ambiente 2">
+        <img class="reveal" src="fachada3.png" alt="Ambiente 3">
       </div>
 
       <!-- ENDEREÇO -->
-      <div class="endereco" id="endereco">
+      <div class="endereco reveal" id="endereco">
         <h2 class="section-title">ENDEREÇO</h2>
         <p>Estamos prontos pra te atender com estilo, conforto e aquele atendimento que faz a diferença. Escolha a nossa barbearia, agende seu horário e viva a experiência de quem leva o cuidado masculino a sério.</p>
 
@@ -1811,7 +1852,7 @@
   <footer>
     <div class="container">
       <div class="footer-grid">
-        <div class="footer-col">
+        <div class="footer-col reveal">
           <div class="contact-item">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
             <a href="mailto:barbeariaprieto@gmail.com">barbeariaprieto@gmail.com</a>
@@ -1831,11 +1872,11 @@
           </div>
         </div>
 
-        <div class="footer-logo">
+        <div class="footer-logo reveal">
           <img src="logo.png" alt="Barbearia Prieto">
         </div>
 
-        <div class="footer-right">
+        <div class="footer-right reveal">
           <h4>Prieto Barbearia</h4>
           <p><em>Tradição, estilo e cuidado em cada detalhe.</em></p>
           <p class="slogan">Mais que um corte, uma identidade.</p>
@@ -4579,5 +4620,32 @@ async function handleAdminLogin(event){
 }
 </script>
 
+<!-- ================= ANIMAÇÕES AO ROLAR A PÁGINA =================
+     Script isolado (não mexe em nenhuma outra função do site). Observa
+     os elementos com a classe .reveal na página inicial e adiciona
+     .in-view quando eles entram na tela, disparando o fade-in via CSS.
+     Funciona igual no computador e no celular. ================= -->
+<script>
+(function(){
+  var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reveals = document.querySelectorAll('#home-view .reveal');
+
+  if(prefersReduced || !('IntersectionObserver' in window)){
+    reveals.forEach(function(el){ el.classList.add('in-view'); });
+    return;
+  }
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(function(el){ observer.observe(el); });
+})();
+</script>
 </body>
 </html>
