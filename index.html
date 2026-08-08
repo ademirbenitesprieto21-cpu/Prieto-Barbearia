@@ -56,13 +56,24 @@
   .logo-mini{display:flex;align-items:center;gap:8px;}
   .logo-mini img{height:58px;width:auto;}
   /* No computador (acima de 960px, mesma largura em que o menu completo aparece
-     e o botão de menu some), a logo da barbearia vai para o canto superior
-     esquerdo do cabeçalho, e o ícone do Instagram vai para o canto superior
-     direito — exatamente onde a logo ficava antes. No celular/tablet o
-     cabeçalho continua exatamente como estava (nada muda de lugar). */
+     e o botão de menu some), o cabeçalho vira um grid de 3 colunas simétricas:
+     a logo fica na extremidade esquerda, o Instagram na extremidade direita,
+     e o menu de links fica perfeitamente centralizado no meio da tela.
+     No celular/tablet o cabeçalho continua exatamente como estava
+     (nada muda de lugar; o menu hambúrguer segue funcionando normalmente). */
   @media(min-width:961px){
-    .logo-principal{ order:-2; }
-    .logo-instagram{ order:3; }
+    /* Cabeçalho centralizado no desktop: grid de 3 colunas simétricas
+       (logo | menu | instagram) faz o menu ficar exatamente no centro
+       da tela, com logo e Instagram organizados nas extremidades. */
+    .nav-wrap{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+    }
+    .logo-principal{ grid-column:1; grid-row:1; justify-self:start; }
+    nav.links{ grid-column:2; grid-row:1; justify-self:center; }
+    .logo-instagram{ grid-column:3; grid-row:1; justify-self:end; }
+    .nav-right{ grid-column:3; grid-row:1; justify-self:end; }
   }
   nav.links{display:flex;gap:32px;}
   nav.links a{
