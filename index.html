@@ -2442,14 +2442,14 @@ function atualizarBotaoVoltarGlobal(){
    new Date(dateKey), para não sofrer conversão de timezone. */
 function formatDateBR(dateKey){
     const [y,m,d] = dateKey.split('-');
-    if(configFormato.formato_data === 'AAAA-MM-DD') return `${y}-${m}-${d}`;
+    if(configFormato.formato_data === 'AAAA-MM-DD') return `${y}/${m}/${d}`;
     return `${d}/${m}/${y}`;
 }
 
 /* versão curta (sem ano), usada na tela de confirmação */
 function formatDateShort(dateKey){
     const [y,m,d] = dateKey.split('-');
-    if(configFormato.formato_data === 'AAAA-MM-DD') return `${m}-${d}`;
+    if(configFormato.formato_data === 'AAAA-MM-DD') return `${m}/${d}`;
     return `${d}/${m}`;
 }
 
@@ -3110,7 +3110,7 @@ const admin = {
         if(!dataISO) return '';
         const [y,m,d] = dataISO.split('-');
         const formato = (this.configFormato && this.configFormato.formato_data) || 'DD/MM/AAAA';
-        if(formato === 'AAAA-MM-DD') return `${y}-${m}-${d}`;
+        if(formato === 'AAAA-MM-DD') return `${y}/${m}/${d}`;
         return `${d}/${m}/${y}`;
     },
 
@@ -4475,7 +4475,7 @@ const admin = {
                 <div class="campos-linha">
                     <div class="campo-bloco"><label>Tema</label><input value="Escuro" disabled title="O sistema utiliza somente o tema escuro."></div>
                     <div class="campo-bloco"><label>Idioma</label><select id="cfg-idioma"><option value="pt-BR" ${cfg.idioma==='pt-BR'?'selected':''}>Português (Brasil)</option></select></div>
-                    <div class="campo-bloco"><label>Formato de data</label><select id="cfg-formato-data"><option value="DD/MM/AAAA" ${cfg.formato_data==='DD/MM/AAAA'?'selected':''}>DD/MM/AAAA</option><option value="AAAA-MM-DD" ${cfg.formato_data==='AAAA-MM-DD'?'selected':''}>AAAA-MM-DD</option></select></div>
+                    <div class="campo-bloco"><label>Formato de data</label><select id="cfg-formato-data"><option value="DD/MM/AAAA" ${cfg.formato_data==='DD/MM/AAAA'?'selected':''}>DD/MM/AAAA</option><option value="AAAA-MM-DD" ${cfg.formato_data==='AAAA-MM-DD'?'selected':''}>AAAA/MM/DD</option></select></div>
                     <div class="campo-bloco"><label>Formato de horário</label><select id="cfg-formato-horario"><option value="24h" ${cfg.formato_horario==='24h'?'selected':''}>24 horas</option><option value="12h" ${cfg.formato_horario==='12h'?'selected':''}>12 horas</option></select></div>
                 </div>
                 <div class="campos-linha">
