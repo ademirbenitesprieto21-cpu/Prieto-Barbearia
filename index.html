@@ -1696,8 +1696,11 @@
   .footer-grid .reveal:nth-child(1){transition-delay:.05s;}
   .footer-grid .reveal:nth-child(2){transition-delay:.15s;}
   .footer-grid .reveal:nth-child(3){transition-delay:.25s;}
-  @media(max-width:600px){
-    .reveal{translate:0 24px;}
+  @media(max-width:960px){
+    /* No celular/tablet a animação de scroll fica desativada: os elementos
+       aparecem direto, sem fade nem deslocamento. No computador continua
+       normalmente (regra acima). */
+    .reveal{opacity:1 !important;translate:0 0 !important;transition:none !important;}
   }
   @media(prefers-reduced-motion:reduce){
     .reveal{opacity:1;translate:0 0;transition:none;}
@@ -4628,9 +4631,10 @@ async function handleAdminLogin(event){
 <script>
 (function(){
   var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.matchMedia && window.matchMedia('(max-width: 960px)').matches;
   var reveals = document.querySelectorAll('#home-view .reveal');
 
-  if(prefersReduced || !('IntersectionObserver' in window)){
+  if(prefersReduced || isMobile || !('IntersectionObserver' in window)){
     reveals.forEach(function(el){ el.classList.add('in-view'); });
     return;
   }
