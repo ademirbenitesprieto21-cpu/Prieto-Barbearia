@@ -1122,6 +1122,25 @@
   .mini-cal .dcell.tem::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px;}
   .mini-cal .dcell.hoje{border:1px solid var(--accent);}
 
+  /* ---------- AGENDA DE HOJE (grade de horários disponíveis/ocupados) ---------- */
+  .slot-grid{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;}
+  .slot-item{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;
+    background:var(--input-bg);border-radius:10px;border:1px solid transparent;
+  }
+  .slot-item.ocupado{border-color:rgba(220,80,80,.25);}
+  .slot-item.disponivel{border-color:rgba(94,200,120,.2);}
+  .slot-item.passou{opacity:.5;}
+  .slot-item .slot-hora{font-weight:700;font-size:13.5px;min-width:48px;}
+  .slot-item .slot-cliente{flex:1;color:var(--text-muted);font-size:12.5px;}
+  .slot-badge{
+    font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:4px 10px;border-radius:20px;white-space:nowrap;
+  }
+  .slot-badge.disponivel{background:rgba(94,200,120,.15);color:#7ee6a0;}
+  .slot-badge.ocupado{background:rgba(220,80,80,.15);color:#e6a3a3;}
+  .slot-badge.passou{background:rgba(150,150,150,.15);color:var(--text-muted);}
+
   /* ---------- CARDS GENÉRICOS (Clientes, Serviços, Horários...) ---------- */
   .admin-btn-primario{
     background:var(--accent);color:#1a1305;border:none;border-radius:9px;
@@ -2116,9 +2135,8 @@
         <li><button data-page="notificacoes" onclick="admin.irPara('notificacoes')"><i class="fa-solid fa-bell"></i>Notificações</button></li>
         <li><button data-page="financeiro" onclick="admin.irPara('financeiro')"><i class="fa-solid fa-sack-dollar"></i>Financeiro</button></li>
         <li><button data-page="relatorios" onclick="admin.irPara('relatorios')"><i class="fa-solid fa-chart-line"></i>Relatórios</button></li>
-        <li><button data-page="perfil" onclick="admin.irPara('perfil')"><i class="fa-solid fa-id-badge"></i>Perfil</button></li>
         <li><button data-page="configuracoes" onclick="admin.irPara('configuracoes')"><i class="fa-solid fa-gear"></i>Configurações</button></li>
-        <li id="menu-item-equipe" style="display:none;"><button data-page="equipe" onclick="admin.irPara('equipe')"><i class="fa-solid fa-user-shield"></i>Equipe</button></li>
+        <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
       <div class="admin-sidebar-footer">
         <button class="admin-sair-btn" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
@@ -2330,6 +2348,7 @@ let currentBarber = null;
 let viewYear, viewMonth; // mês exibido no calendário
 let selectedDate = null; // "YYYY-MM-DD"
 let selectedTime = null;
+let hojeIndisponivel = false; // true quando não sobra nenhum horário livre hoje pra esse barbeiro (bloqueia o dia no calendário)
 
 /* horários de funcionamento e bloqueios do barbeiro selecionado,
    carregados do Supabase (mesma fonte que a Área Restrita usa) */
@@ -2404,6 +2423,32 @@ function getAgoraBrasil(){
         dateKey: `${obj.year}-${obj.month}-${obj.day}`,
         minutos: hora * 60 + parseInt(obj.minute, 10)
     };
+}
+
+/* calcula os horários de HOJE ainda disponíveis (abertura/fechamento, intervalo
+   de almoço, horários já ocupados e horários que já passaram no fuso de
+   Brasília). Usada pela Área Restrita (Dashboard e Gestão do Barbeiro) para o
+   número de "horários disponíveis hoje" bater exatamente com o que aparece
+   pro cliente no Agendamento Online (gerarSlotsDoDia usa a mesma regra). */
+function calcularSlotsHojeDisponiveis(h, horariosOcupadosSet){
+    if(!h || h.ativo === false || !h.hora_abertura || !h.hora_fechamento) return [];
+
+    const paraMin = hhmm => { const [hh,mm] = hhmm.slice(0,5).split(':').map(Number); return hh*60+mm; };
+    const abertura = paraMin(h.hora_abertura);
+    const fechamento = paraMin(h.hora_fechamento);
+    const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
+    const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
+    const agora = getAgoraBrasil();
+
+    let slots = [];
+    for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
+        if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
+        if(t <= agora.minutos) continue; // já passou
+        const hhmm = `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        if(horariosOcupadosSet && horariosOcupadosSet.has(hhmm)) continue;
+        slots.push(hhmm);
+    }
+    return slots;
 }
 
 /* gera os horários (slots) de um dia a partir da configuração salva na Área Restrita,
@@ -2498,6 +2543,13 @@ async function openBooking(barberId){
     renderSlots();
     updateContinueButton();
     await carregarDisponibilidadeBarbeiro();
+
+    // verifica se hoje ainda tem algum horário livre pra esse barbeiro; se não
+    // tiver (expediente encerrado, dia todo ocupado, etc.), o dia de hoje fica
+    // bloqueado no calendário, igual a um dia fechado
+    const agoraAbertura = getAgoraBrasil();
+    hojeIndisponivel = (await gerarSlotsDoDia(agoraAbertura.dateKey)).length === 0;
+
     renderCalendar();
     renderSlots();
 }
@@ -2719,6 +2771,7 @@ function renderCalendar(){
 
     const today = new Date();
     today.setHours(0,0,0,0);
+    const agoraHoje = getAgoraBrasil(); // dateKey de hoje no fuso de Brasília
 
     for(let i=0;i<firstDay;i++){
         grid.appendChild(document.createElement('div'));
@@ -2734,15 +2787,17 @@ function renderCalendar(){
         const h = horariosPorDia[diaSemana];
         const diaFechado = !h || h.ativo === false;
         const diaBloqueado = dataBloqueada(dateKey);
+        // hoje sem nenhum horário livre (expediente encerrado ou dia lotado): trata como bloqueado
+        const diaSemVagasHoje = hojeIndisponivel && dateKey === agoraHoje.dateKey;
 
         const btn = document.createElement('button');
         btn.className = 'day-cell';
         btn.textContent = d;
 
-        const disabled = isPast || diaFechado || diaBloqueado;
+        const disabled = isPast || diaFechado || diaBloqueado || diaSemVagasHoje;
         if(disabled){
             btn.disabled = true;
-            if(diaBloqueado) btn.classList.add('bloqueado');
+            if(diaBloqueado || diaSemVagasHoje) btn.classList.add('bloqueado');
         } else {
             btn.innerHTML = `${d}<span class="dot"></span>`;
             btn.onclick = () => selectDate(dateKey, btn);
@@ -2873,7 +2928,7 @@ const TITULOS_PAGINA = {
     relatorios: 'Relatórios',
     perfil: 'Perfil',
     configuracoes: 'Configurações',
-    equipe: 'Equipe'
+    'gestao-barbeiro': 'Gestão do Barbeiro'
 };
 
 /* chip do topo, ao lado do nome do usuário logado: por pedido, sempre exibe
@@ -2894,6 +2949,9 @@ const admin = {
     barbeiro: null,
     paginaAtual: 'agendamentos',
     agendamentos: [],
+    usuarioEmail: '',
+    barbeiroGestao: null,
+    gestaoFiltro: 'mes',
     filtro: {texto:'', data:''},
 
     async checarSessao(){
@@ -2959,6 +3017,7 @@ const admin = {
         }
 
         this.barbeiro = data;
+        this.usuarioEmail = (user.email || '').trim().toLowerCase();
         document.getElementById('admin-login').classList.add('hidden');
         document.getElementById('admin-panel').classList.add('active');
         document.getElementById('admin-barbeiro-nome').textContent = data.nome;
@@ -2973,15 +3032,16 @@ const admin = {
     },
 
     /* ============ CONTROLE DE ACESSO ============ */
-    ehAdmin(){ return this.barbeiro && this.barbeiro.nivel_acesso === 'administrador'; },
+    ehDono(){ return this.usuarioEmail === 'ademirbenitesprieto063@gmail.com'; },
+    ehAdmin(){ return this.ehDono() || (this.barbeiro && this.barbeiro.nivel_acesso === 'administrador'); },
 
     // páginas que cada nível pode acessar. Barbeiro mantém acesso total (comportamento
     // já existente, para não quebrar nada para quem já usa o sistema hoje).
     paginasPermitidas(){
         const nivel = this.barbeiro ? this.barbeiro.nivel_acesso : 'barbeiro';
-        if(nivel === 'administrador') return null; // null = todas + Equipe
-        if(nivel === 'funcionario') return ['dashboard','agendamentos','agenda','clientes','perfil','configuracoes'];
-        return null; // barbeiro: todas as páginas normais (exceto Equipe, só admin)
+        if(nivel === 'administrador') return null; // null = todas as páginas
+        if(nivel === 'funcionario') return ['dashboard','agendamentos','agenda','clientes','configuracoes'];
+        return null; // barbeiro: todas as páginas normais
     },
 
     aplicarPermissoes(){
@@ -2991,8 +3051,8 @@ const admin = {
             const permitido = permitidas === null || permitidas.includes(pagina);
             btn.style.display = permitido ? '' : 'none';
         });
-        const itemEquipe = document.getElementById('menu-item-equipe');
-        if(itemEquipe) itemEquipe.style.display = this.ehAdmin() ? '' : 'none';
+        const itemGestao = document.getElementById('menu-item-gestao-barbeiro');
+        if(itemGestao) itemGestao.style.display = this.ehAdmin() ? '' : 'none';
     },
 
     /* ============ STATUS ONLINE ============ */
@@ -3072,7 +3132,7 @@ const admin = {
         // mesmo chamando a função diretamente (ex: link antigo salvo)
         const permitidas = this.paginasPermitidas();
         if(permitidas !== null && !permitidas.includes(pagina)){ pagina = 'dashboard'; }
-        if(pagina === 'equipe' && !this.ehAdmin()){ pagina = 'dashboard'; }
+        if(pagina === 'gestao-barbeiro' && !this.ehAdmin()){ pagina = 'dashboard'; }
 
         this.paginaAtual = pagina;
         document.querySelectorAll('.admin-menu button').forEach(b => {
@@ -3092,9 +3152,8 @@ const admin = {
             notificacoes: () => this.renderNotificacoes(),
             financeiro: () => this.renderFinanceiro(),
             relatorios: () => this.renderRelatorios(),
-            perfil: () => this.renderPerfil(),
             configuracoes: () => this.renderConfiguracoes(),
-            equipe: () => this.renderEquipe()
+            'gestao-barbeiro': () => this.renderGestaoBarbeiro()
         };
         if(rotas[pagina]) rotas[pagina]();
     },
@@ -3126,12 +3185,18 @@ const admin = {
 
     async carregarAgendamentos(){
         if(!this.barbeiro) return;
-        const { data, error } = await sb
+        // administradores/dono enxergam os agendamentos de TODOS os barbeiros
+        // (necessário para poder corrigir/escolher quem realmente atendeu);
+        // um barbeiro comum continua vendo somente a própria agenda
+        let query = sb
             .from('agendamentos')
-            .select('*, servicos(nome)')
-            .eq('barbeiro_id', this.barbeiro.id)
+            .select('*, servicos(nome), barbeiros(nome)')
             .order('data', {ascending:true})
             .order('horario', {ascending:true});
+        if(!this.ehAdmin()){
+            query = query.eq('barbeiro_id', this.barbeiro.id);
+        }
+        const { data, error } = await query;
 
         if(error){
             document.getElementById('admin-lista-agendamentos').innerHTML =
@@ -3285,6 +3350,7 @@ const admin = {
             <div class="campo"><label>Cliente</label><input value="${a.cliente_nome || 'Cliente presencial'}" disabled></div>
             <div class="campo"><label>Telefone</label><input value="${a.cliente_telefone || '—'}" disabled></div>
             <div class="campo"><label>Serviço</label><input value="${a.servicos ? a.servicos.nome : '—'}" disabled></div>
+            ${this.ehAdmin() ? `<div class="campo"><label>Barbeiro que realizou o atendimento</label><input value="${a.barbeiros ? a.barbeiros.nome : '—'}" disabled></div>` : ''}
             <div class="campo"><label>Data e horário</label><input value="${this.formatarDataBR(a.data)} às ${a.horario ? this.formatarHora(a.horario) : ''}" disabled></div>
             <div class="campo"><label>Status</label><input value="${statusLabel[a.status] || a.status}" disabled></div>
             <div class="admin-modal-actions">
@@ -3303,8 +3369,43 @@ const admin = {
             `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}" ${a.servico_id===s.id?'selected':''}>${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
         ).join('');
 
+        // somente administradores podem corrigir/escolher qual barbeiro realmente
+        // atendeu o cliente — não deve ser confundido com o usuário logado
+        let campoBarbeiro = '';
+        if(this.ehAdmin()){
+            // busca TODOS os barbeiros ativos cadastrados no sistema (mesma fonte
+            // de dados usada na Gestão de Barbeiro), sem excluir nenhum cargo —
+            // qualquer um dos barbeiros cadastrados pode ter realizado o atendimento
+            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo,nivel_acesso').eq('ativo', true).order('nome');
+            if(erroEquipe){
+                // não engole o erro: se a política de acesso (RLS) da tabela "barbeiros"
+                // estiver bloqueando essa leitura, ou a tabela estiver vazia, mostra
+                // exatamente o motivo em vez de deixar a caixa de seleção em branco
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <div style="color:#e6a3a3;font-size:12.5px;">Não foi possível carregar os barbeiros: ${erroEquipe.message}</div>
+                    </div>`;
+            } else if(!equipe || !equipe.length){
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <div style="color:#e6a3a3;font-size:12.5px;">Nenhum barbeiro ativo foi encontrado na tabela "barbeiros".</div>
+                    </div>`;
+            } else {
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <select id="edit-barbeiro">
+                            ${equipe.map(b => `<option value="${b.id}" ${b.id===a.barbeiro_id?'selected':''}>${b.nome}</option>`).join('')}
+                        </select>
+                    </div>`;
+            }
+        }
+
         document.getElementById('admin-modal-body').innerHTML = `
             <h3>Editar agendamento</h3>
+            ${campoBarbeiro}
             <div class="campo"><label>Data</label><input type="date" id="edit-data" value="${a.data}"></div>
             <div class="campo"><label>Horário</label><input type="time" id="edit-horario" value="${a.horario ? a.horario.slice(0,5) : ''}"></div>
             <div class="campo">
@@ -3339,7 +3440,7 @@ const admin = {
         const servicoId = servicoSelect.value || null;
         const opcaoSelecionada = servicoSelect.options[servicoSelect.selectedIndex];
 
-        const payload = { data, horario, status, servico_id: servicoId };
+        const payload = { data, horario: horario || null, status, servico_id: servicoId };
         if(servicoId){
             payload.servico_valor = Number(opcaoSelecionada.dataset.valor);
             payload.servico_duracao_minutos = Number(opcaoSelecionada.dataset.duracao);
@@ -3348,8 +3449,19 @@ const admin = {
             payload.servico_duracao_minutos = null;
         }
 
+        // só administradores enviam esse campo — o select só existe no modal
+        // quando ehAdmin() é verdadeiro; barbeiros comuns nunca alteram esse valor
+        const campoBarbeiro = document.getElementById('edit-barbeiro');
+        if(this.ehAdmin() && campoBarbeiro){
+            payload.barbeiro_id = campoBarbeiro.value;
+        }
+
         const { error } = await sb.from('agendamentos').update(payload).eq('id', id);
-        if(error){ alert('Não foi possível salvar as alterações.'); return; }
+        if(error){
+            console.error('Erro ao salvar edição do agendamento:', error);
+            alert('Não foi possível salvar as alterações.' + (error.message ? '\n\nMotivo: ' + error.message : ''));
+            return;
+        }
         this.fecharModal();
         await this.carregarAgendamentos();
     },
@@ -3360,25 +3472,60 @@ const admin = {
        horário — só data, nome opcional, serviço e valor). Usa a mesma
        tabela "agendamentos", marcando origem:'presencial' e status já
        como 'finalizado' (o atendimento já ocorreu), para entrar
-       corretamente no faturamento e nos relatórios. */
+       corretamente no faturamento e nos relatórios. Disponível para
+       qualquer barbeiro logado; só o administrador/dono vê o campo extra
+       "Barbeiro que realizou o atendimento" (pode registrar em nome de
+       qualquer um da equipe). */
     async formAdicionarCliente(){
+        if(!this.barbeiro){ alert('Não foi possível identificar o barbeiro logado.'); return; }
+
         const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).order('nome');
         const opcoesServico = (servicos || []).map(s =>
             `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
         ).join('');
 
+        // o dono pode registrar o atendimento em nome de qualquer barbeiro;
+        // os demais usuários só registram para si mesmos (comportamento original)
+        let campoBarbeiro = '';
+        if(this.ehAdmin()){
+            // mesma fonte de dados usada nos outros seletores de barbeiro —
+            // todos os barbeiros ativos cadastrados, sem excluir nenhum cargo
+            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo,nivel_acesso').eq('ativo', true).order('nome');
+            if(erroEquipe){
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <div style="color:#e6a3a3;font-size:12.5px;">Não foi possível carregar os barbeiros: ${erroEquipe.message}</div>
+                    </div>`;
+            } else if(!equipe || !equipe.length){
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <div style="color:#e6a3a3;font-size:12.5px;">Nenhum barbeiro ativo foi encontrado na tabela "barbeiros".</div>
+                    </div>`;
+            } else {
+                campoBarbeiro = `
+                    <div class="campo">
+                        <label>Barbeiro que realizou o atendimento</label>
+                        <select id="pres-barbeiro">
+                            ${equipe.map(b => `<option value="${b.id}" ${b.id===this.barbeiro.id?'selected':''}>${b.nome}</option>`).join('')}
+                        </select>
+                    </div>`;
+            }
+        }
+
         document.getElementById('admin-modal-body').innerHTML = `
-            <h3>Adicionar cliente</h3>
+            <h3>Adicionar cliente presencial</h3>
+            ${campoBarbeiro}
             <div class="campo"><label>Nome do cliente (opcional)</label><input type="text" id="pres-nome" placeholder="Ex: João Silva"></div>
             <div class="campo"><label>Data</label><input type="date" id="pres-data" value="${this.hojeISO()}"></div>
             <div class="campo">
                 <label>Serviço</label>
-                <select id="pres-servico" onchange="admin.preencherValorPresencial()">
+                <select id="pres-servico">
                     <option value="">Selecionar</option>
                     ${opcoesServico}
                 </select>
             </div>
-            <div class="campo"><label>Valor</label><input type="number" id="pres-valor" min="0" step="0.01" placeholder="0,00"></div>
             <div class="admin-modal-actions">
                 <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
                 <button class="admin-modal-salvar" onclick="admin.salvarClientePresencial()">Adicionar Cliente</button>
@@ -3387,27 +3534,20 @@ const admin = {
         document.getElementById('admin-modal-overlay').classList.add('active');
     },
 
-    /* ao escolher o serviço, sugere automaticamente o valor de tabela —
-       o barbeiro ainda pode ajustar o campo Valor manualmente */
-    preencherValorPresencial(){
-        const select = document.getElementById('pres-servico');
-        const opcao = select.options[select.selectedIndex];
-        const valorInput = document.getElementById('pres-valor');
-        if(opcao && opcao.dataset.valor && !valorInput.value){
-            valorInput.value = Number(opcao.dataset.valor).toFixed(2);
-        }
-    },
-
     async salvarClientePresencial(){
+        if(!this.barbeiro){ alert('Não foi possível identificar o barbeiro logado.'); return; }
+
         const nome = document.getElementById('pres-nome').value.trim();
         const data = document.getElementById('pres-data').value;
         const servicoSelect = document.getElementById('pres-servico');
         const servicoId = servicoSelect.value;
         const opcaoSelecionada = servicoSelect.options[servicoSelect.selectedIndex];
-        const valor = document.getElementById('pres-valor').value;
+        const barbeiroSelecionado = this.ehAdmin() && document.getElementById('pres-barbeiro')
+            ? document.getElementById('pres-barbeiro').value
+            : this.barbeiro.id;
 
-        if(!data || !servicoId || valor === '' || valor === null){
-            alert('Preencha data, serviço e valor.');
+        if(!data || !servicoId){
+            alert('Preencha a data e o serviço.');
             return;
         }
 
@@ -3428,15 +3568,15 @@ const admin = {
         }
 
         const { error } = await sb.from('agendamentos').insert({
-            barbeiro_id: this.barbeiro.id,
+            barbeiro_id: barbeiroSelecionado,
             cliente_id: clienteId,
-            cliente_nome: nome || null,
+            cliente_nome: nome || 'Cliente presencial',
             cliente_telefone: null,
             cliente_email: null,
             data: data,
             horario: null,
             servico_id: servicoId,
-            servico_valor: Number(valor),
+            servico_valor: Number(opcaoSelecionada.dataset.valor || 0),
             servico_duracao_minutos: opcaoSelecionada.dataset.duracao ? Number(opcaoSelecionada.dataset.duracao) : null,
             status: 'finalizado',
             origem: 'presencial'
@@ -3445,7 +3585,8 @@ const admin = {
         if(btn){ btn.disabled = false; btn.textContent = textoOriginal; }
 
         if(error){
-            alert('Não foi possível adicionar o cliente.');
+            console.error('Erro ao adicionar cliente presencial:', error);
+            alert('Não foi possível adicionar o cliente.' + (error.message ? '\n\nMotivo: ' + error.message : ''));
             return;
         }
 
@@ -3459,14 +3600,70 @@ const admin = {
     },
 
     /* ============ HELPERS COMPARTILHADOS ============ */
+    /* sempre no fuso de Brasília (America/Sao_Paulo), igual ao resto do
+       sistema — evita que "hoje" fique deslocado se o navegador/servidor
+       estiver rodando em outro fuso horário */
     hojeISO(){
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return getAgoraBrasil().dateKey;
     },
     paraData(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); },
     formatarMoeda(v){ return 'R$ ' + Number(v||0).toFixed(2).replace('.', ','); },
 
     /* ============ 1. DASHBOARD ============ */
+    /* Monta a grade de horários de HOJE para o barbeiro logado, usando a
+       MESMA lógica de geração de slots do Agendamento Online (ver
+       gerarSlotsDoDia, mais acima no arquivo): horário de abertura/fechamento
+       e intervalo de almoço vêm de "horarios_funcionamento" (linha do dia da
+       semana atual), o passo de cada horário é DURACAO_PADRAO_MIN, e um
+       horário só aparece como OCUPADO se já existir, para ESTE barbeiro
+       (this.barbeiro.id), um agendamento real (não cancelado) naquele
+       horário exato hoje. Não inventa horários nem mistura barbeiros. */
+    montarAgendaHojeHtml(h, agendamentosHoje, bloqueioHoje){
+        if(bloqueioHoje){
+            return `<div class="admin-empty">Hoje está bloqueado para agendamentos${bloqueioHoje.tipo ? ' ('+bloqueioHoje.tipo+')' : ''}.</div>`;
+        }
+        if(!h || h.ativo === false || !h.hora_abertura || !h.hora_fechamento){
+            return `<div class="admin-empty">Nenhum horário de funcionamento configurado para hoje.</div>`;
+        }
+
+        const paraMin = hhmm => { const [hh,mm] = hhmm.slice(0,5).split(':').map(Number); return hh*60+mm; };
+        const paraHHMM = min => `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+        const abertura = paraMin(h.hora_abertura);
+        const fechamento = paraMin(h.hora_fechamento);
+        const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
+        const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
+
+        // mapa horário -> nome do cliente, só com os agendamentos de HOJE
+        // deste barbeiro (agendamentosHoje já vem filtrado por barbeiro_id
+        // e por status != 'cancelado' lá no renderDashboard)
+        const ocupados = new Map();
+        agendamentosHoje.forEach(a => { if(a.horario) ocupados.set(a.horario.slice(0,5), a.cliente_nome || 'Cliente presencial'); });
+
+        // mesmo corte de horário do Agendamento Online: um horário que já passou
+        // não pode aparecer como "Disponível" aqui
+        const agora = getAgoraBrasil();
+
+        let linhas = '';
+        for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
+            if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
+            const hhmm = paraHHMM(t);
+            const cliente = ocupados.get(hhmm);
+            const ocupado = !!cliente;
+            const jaPassou = !ocupado && t <= agora.minutos;
+            const estado = ocupado ? 'ocupado' : (jaPassou ? 'passou' : 'disponivel');
+            const rotulo = ocupado ? 'Ocupado' : (jaPassou ? 'Passou' : 'Disponível');
+            linhas += `
+                <div class="slot-item ${estado}">
+                    <span class="slot-hora">${hhmm}</span>
+                    <span class="slot-badge ${estado}">${rotulo}</span>
+                    <span class="slot-cliente">${ocupado ? cliente : '—'}</span>
+                </div>`;
+        }
+
+        if(!linhas) return `<div class="admin-empty">Nenhum horário dentro do expediente de hoje.</div>`;
+        return `<div class="slot-grid">${linhas}</div>`;
+    },
+
     async renderDashboard(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando dashboard...</div>';
 
@@ -3474,12 +3671,13 @@ const admin = {
         const hojeDate = this.paraData(hoje);
         const semanaFim = new Date(hojeDate); semanaFim.setDate(semanaFim.getDate()+6);
         const mesAtual = hojeDate.getMonth(), anoAtual = hojeDate.getFullYear();
-        const diaSemanaHoje = new Date().getDay();
+        const diaSemanaHoje = hojeDate.getDay();
 
-        const [{data: ags}, {count: naoLidas}, {data: horariosHoje}] = await Promise.all([
+        const [{data: ags}, {count: naoLidas}, {data: horariosHoje}, {data: bloqueiosHoje}] = await Promise.all([
             sb.from('agendamentos').select('*, servicos(nome)').eq('barbeiro_id', this.barbeiro.id).order('data',{ascending:true}).order('horario',{ascending:true}),
             sb.from('notificacoes').select('id', {count:'exact', head:true}).eq('barbeiro_id', this.barbeiro.id).eq('lida', false),
-            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', this.barbeiro.id).eq('dia_semana', diaSemanaHoje).eq('ativo', true)
+            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', this.barbeiro.id).eq('dia_semana', diaSemanaHoje).eq('ativo', true),
+            sb.from('bloqueios_data').select('data_inicio, data_fim, tipo').eq('barbeiro_id', this.barbeiro.id)
         ]);
 
         const lista = ags || [];
@@ -3496,14 +3694,18 @@ const admin = {
         const receitaMensal = lista.filter(a => { const d=this.paraData(a.data); return d.getMonth()===mesAtual && d.getFullYear()===anoAtual && a.status==='finalizado'; }).reduce((s,a) => s+Number(a.servico_valor||0), 0);
         const servicosRealizados = lista.filter(a => a.status==='finalizado').length;
 
-        let totalSlotsHoje = 0;
-        if(horariosHoje && horariosHoje[0] && horariosHoje[0].hora_abertura && horariosHoje[0].hora_fechamento){
-            const [ha,ma] = horariosHoje[0].hora_abertura.split(':').map(Number);
-            const [hf,mf] = horariosHoje[0].hora_fechamento.split(':').map(Number);
-            totalSlotsHoje = Math.max(Math.floor(((hf*60+mf)-(ha*60+ma))/30), 0);
-        }
         const ocupadosHoje = agendamentosHoje.length;
-        const disponiveisHoje = Math.max(totalSlotsHoje - ocupadosHoje, 0);
+        // mesmo cálculo usado no Agendamento Online: desconta intervalo de almoço,
+        // horários já ocupados e horários que já passaram no fuso de Brasília
+        const ocupadosSetHoje = new Set(agendamentosHoje.filter(a => a.horario).map(a => a.horario.slice(0,5)));
+        const disponiveisHoje = calcularSlotsHojeDisponiveis(horariosHoje && horariosHoje[0], ocupadosSetHoje).length;
+
+        // ---- Agenda de hoje, horário a horário (mesma lógica de geração de
+        // slots do Agendamento Online: abertura/fechamento + intervalo de
+        // almoço da tabela "horarios_funcionamento", descontando os horários
+        // já ocupados por agendamentos reais deste barbeiro em "agendamentos") ----
+        const bloqueioHoje = (bloqueiosHoje||[]).find(b => hoje >= b.data_inicio && hoje <= b.data_fim);
+        const agendaHojeHtml = this.montarAgendaHojeHtml(horariosHoje && horariosHoje[0], agendamentosHoje, bloqueioHoje);
 
         // últimos 7 dias para os gráficos
         const dias7 = [];
@@ -3547,6 +3749,11 @@ const admin = {
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-coins"></i>Receita mensal</div><div class="value">${this.formatarMoeda(receitaMensal)}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Serviços realizados</div><div class="value">${servicosRealizados}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-bell"></i>Notificações não lidas</div><div class="value">${naoLidas || 0}</div></div>
+            </div>
+
+            <div class="dash-panel">
+                <h4><i class="fa-solid fa-calendar-day"></i> Agenda de hoje — ${this.formatarDataBR(hoje)}</h4>
+                ${agendaHojeHtml}
             </div>
 
             <div class="dash-columns">
@@ -3819,7 +4026,8 @@ const admin = {
     servicosCache: [],
     async renderServicos(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando serviços...</div>';
-        const { data } = await sb.from('servicos').select('*').order('nome');
+        // cada barbeiro só vê e gerencia os próprios serviços
+        const { data } = await sb.from('servicos').select('*').eq('barbeiro_id', this.barbeiro.id).order('nome');
         this.servicosCache = data || [];
         this.desenharServicos();
     },
@@ -3871,21 +4079,21 @@ const admin = {
         if(!payload.nome || !payload.valor){ alert('Preencha nome e valor.'); return; }
 
         const { error } = id
-            ? await sb.from('servicos').update(payload).eq('id', id)
-            : await sb.from('servicos').insert({...payload, ativo:true});
+            ? await sb.from('servicos').update(payload).eq('id', id).eq('barbeiro_id', this.barbeiro.id)
+            : await sb.from('servicos').insert({...payload, ativo:true, barbeiro_id: this.barbeiro.id});
         if(error){ alert('Não foi possível salvar o serviço.'); return; }
         this.fecharModal();
         await this.renderServicos();
     },
 
     async alternarServico(id, novoStatus){
-        await sb.from('servicos').update({ativo: novoStatus}).eq('id', id);
+        await sb.from('servicos').update({ativo: novoStatus}).eq('id', id).eq('barbeiro_id', this.barbeiro.id);
         await this.renderServicos();
     },
 
     async excluirServico(id){
         if(!confirm('Excluir este serviço? Agendamentos antigos mantêm o valor já registrado.')) return;
-        await sb.from('servicos').delete().eq('id', id);
+        await sb.from('servicos').delete().eq('id', id).eq('barbeiro_id', this.barbeiro.id);
         await this.renderServicos();
     },
 
@@ -4381,260 +4589,286 @@ const admin = {
         doc.save(`relatorio-prieto-barbearia-${this.hojeISO()}.pdf`);
     },
 
-    /* ============ 10. PERFIL ============ */
-    renderPerfil(){
-        const b = this.barbeiro;
-        document.getElementById('admin-content').innerHTML = `
-            <div class="dash-panel" style="max-width:520px;">
-                <div class="campo" style="margin-bottom:16px;"><label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:7px;">URL da foto</label><input class="campo-bloco" id="pf-foto" value="${b.foto_url||''}" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);"></div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Nome</label><input id="pf-nome" value="${b.nome||''}"></div>
-                    <div class="campo-bloco"><label>Especialidade</label><input id="pf-especialidade" value="${b.especialidade||''}"></div>
-                </div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Telefone</label><input id="pf-telefone" value="${b.telefone||''}"></div>
-                    <div class="campo-bloco"><label>WhatsApp</label><input id="pf-whatsapp" value="${b.whatsapp||''}"></div>
-                </div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Instagram</label><input id="pf-instagram" value="${b.instagram||''}"></div>
-                    <div class="campo-bloco"><label>Tempo de experiência</label><input id="pf-experiencia" value="${b.tempo_experiencia||''}" placeholder="ex: 8 anos"></div>
-                </div>
-                <div class="campo-bloco" style="margin-bottom:16px;"><label>Biografia</label><input id="pf-bio" value="${b.biografia||''}"></div>
-                <div class="campo-bloco" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-                    <label class="switch"><input type="checkbox" id="pf-recebe-agendamento" ${b.recebe_agendamento_online!==false?'checked':''}><span class="slider"></span></label>
-                    <span style="font-size:13.5px;">Aparecer como opção no Agendamento Online</span>
-                </div>
-                <button class="admin-btn-primario" onclick="admin.salvarPerfil()"><i class="fa-solid fa-floppy-disk"></i> Salvar perfil</button>
-            </div>
-        `;
-    },
-
-    async salvarPerfil(){
-        const recebeEl = document.getElementById('pf-recebe-agendamento');
-        const payload = {
-            foto_url: document.getElementById('pf-foto').value.trim(),
-            nome: document.getElementById('pf-nome').value.trim(),
-            especialidade: document.getElementById('pf-especialidade').value.trim(),
-            telefone: document.getElementById('pf-telefone').value.trim(),
-            whatsapp: document.getElementById('pf-whatsapp').value.trim(),
-            instagram: document.getElementById('pf-instagram').value.trim(),
-            tempo_experiencia: document.getElementById('pf-experiencia').value.trim(),
-            biografia: document.getElementById('pf-bio').value.trim(),
-            recebe_agendamento_online: recebeEl ? recebeEl.checked : true
-        };
-        let { error } = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
-        if(error){
-            // fallback se a coluna "recebe_agendamento_online" ainda não existir no banco
-            delete payload.recebe_agendamento_online;
-            const retry = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
-            error = retry.error;
-        }
-        if(error){ alert('Não foi possível salvar o perfil.'); return; }
-        this.barbeiro = {...this.barbeiro, ...payload};
-        document.getElementById('admin-barbeiro-nome').textContent = this.barbeiro.nome;
-        atualizarAvatarChip(this.barbeiro);
-        alert('Perfil atualizado! Essas informações já aparecem no Agendamento Online.');
-    },
-
-    /* ============ EQUIPE (somente administrador) ============ */
-    nivelLabel: {administrador:'Administrador', barbeiro:'Barbeiro', funcionario:'Funcionário'},
-
-    async renderEquipe(){
+    /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
+    async renderGestaoBarbeiro(){
         if(!this.ehAdmin()){ this.irPara('dashboard'); return; }
-        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando equipe...</div>';
-
-        const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('*').order('nome');
-        if(erroEquipe){
-            // RLS pode estar bloqueando corretamente um não-administrador que chegou até
-            // aqui por algum outro caminho, ou a política ainda não foi aplicada no banco.
-            document.getElementById('admin-content').innerHTML =
-                `<div class="admin-empty">Não foi possível carregar a equipe (${erroEquipe.message}). Verifique as políticas de acesso (RLS) da tabela "barbeiros".</div>`;
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando gestão do barbeiro...</div>';
+        const { data: equipe, error } = await sb.from('barbeiros').select('*').eq('ativo', true).order('nome');
+        if(error){
+            document.getElementById('admin-content').innerHTML = `<div class="admin-empty">Não foi possível carregar os barbeiros.<br>${error.message||''}</div>`;
             return;
         }
-        this.equipeCache = equipe || [];
+        // trava fixo: só o Barbeiro Experiente aparece nesse select, independente
+        // de quem estiver logado ou de quantos outros barbeiros existirem
+        const barbeiros = (equipe||[]).filter(b => b.nome === 'Barbeiro Experiente');
+        if(!barbeiros.length){
+            document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Nenhum barbeiro ativo encontrado.</div>';
+            return;
+        }
+        if(!this.barbeiroGestao || !barbeiros.some(b => b.id === this.barbeiroGestao.id)) this.barbeiroGestao = barbeiros[0];
+        await this.desenharGestaoBarbeiro(barbeiros);
+    },
 
-        const agora = Date.now();
-        const online = b => b.online && b.ultimo_acesso && (agora - new Date(b.ultimo_acesso).getTime()) < 90000;
+    async trocarBarbeiroGestao(id){
+        if(!this.ehAdmin()) return;
+        const { data: b } = await sb.from('barbeiros').select('*').eq('id', id).maybeSingle();
+        if(!b) return;
+        this.barbeiroGestao = b;
+        await this.renderGestaoBarbeiro();
+    },
+
+    async desenharGestaoBarbeiro(barbeiros){
+        const b = this.barbeiroGestao;
+        if(!b) return;
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando dados de '+b.nome+'...</div>';
+        const hoje = this.hojeISO();
+        const hojeDate = this.paraData(hoje);
+        const semanaIni = new Date(hojeDate); semanaIni.setDate(semanaIni.getDate()-6);
+        const semanaFim = new Date(hojeDate); semanaFim.setDate(semanaFim.getDate()+6);
+
+        const [{data: ags, error: agError}, {data: horariosHoje}] = await Promise.all([
+            sb.from('agendamentos').select('*, servicos(nome), clientes(nome,created_at)').eq('barbeiro_id', b.id).order('data',{ascending:true}).order('horario',{ascending:true}),
+            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', b.id).eq('dia_semana', hojeDate.getDay()).eq('ativo', true)
+        ]);
+        if(agError){
+            document.getElementById('admin-content').innerHTML = `<div class="admin-empty">Não foi possível carregar os dados de ${b.nome}.<br>${agError.message||''}</div>`;
+            return;
+        }
+        const lista = ags || [];
+        const hojeAg = lista.filter(a => a.data===hoje && a.status!=='cancelado');
+        const semanaAg = lista.filter(a => { const d=this.paraData(a.data); return d>=semanaIni && d<=semanaFim && a.status!=='cancelado'; });
+        const finalizados = lista.filter(a => a.status==='finalizado');
+        const receitaDiaria = hojeAg.filter(a=>a.status==='finalizado').reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaSemanal = lista.filter(a => a.status==='finalizado' && this.paraData(a.data)>=semanaIni && this.paraData(a.data)<=hojeDate).reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaMensal = lista.filter(a => { const d=this.paraData(a.data); return a.status==='finalizado' && d.getMonth()===hojeDate.getMonth() && d.getFullYear()===hojeDate.getFullYear(); }).reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaTotal = finalizados.reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const clientesCadastrados = new Set(lista.filter(a=>a.cliente_id).map(a=>a.cliente_id)).size;
+        const proximo = lista.find(a => a.data>=hoje && ['pendente','confirmado'].includes(a.status));
+        const ultimo = [...finalizados].sort((a,c) => (c.data+' '+(c.horario||'')).localeCompare(a.data+' '+(a.horario||'')))[0];
+        const ocupadosHoje = hojeAg.length;
+        // mesmo cálculo usado no Agendamento Online e no Dashboard: desconta
+        // intervalo de almoço, horários ocupados e horários já passados
+        const ocupadosSetGestaoHoje = new Set(hojeAg.filter(a => a.horario).map(a => a.horario.slice(0,5)));
+        const disponiveisHoje = calcularSlotsHojeDisponiveis(horariosHoje && horariosHoje[0], ocupadosSetGestaoHoje).length;
+        const proximos5 = lista.filter(a=>a.data>=hoje && ['pendente','confirmado'].includes(a.status)).slice(0,5);
+        const ultimo5 = [...lista].sort((a,c)=>new Date(c.created_at||0)-new Date(a.created_at||0)).slice(0,5);
 
         document.getElementById('admin-content').innerHTML = `
-            <button class="admin-btn-primario" style="margin-bottom:18px;" onclick="admin.formNovoMembro()"><i class="fa-solid fa-user-plus"></i> Adicionar funcionário</button>
-            <div class="admin-empty" style="text-align:left;padding:0 0 18px;color:var(--text-muted);font-size:13px;">
-                Ao adicionar alguém aqui, o sistema já cria o acesso dessa pessoa automaticamente e envia um
-                e-mail de convite para ela definir a própria senha. Não é preciso criar nada manualmente no Supabase.
+            <div class="admin-search-bar">
+                <button class="ag-btn" onclick="admin.gestaoFiltro='dia';admin.renderGestaoBarbeiro()">Hoje</button>
+                <button class="ag-btn" onclick="admin.gestaoFiltro='semana';admin.renderGestaoBarbeiro()">Semana</button>
+                <button class="ag-btn" onclick="admin.gestaoFiltro='mes';admin.renderGestaoBarbeiro()">Mês</button>
+                <button class="ag-btn" onclick="admin.gestaoFiltro='ano';admin.renderGestaoBarbeiro()">Ano</button>
+                <button class="ag-btn" onclick="admin.exportarGestaoCSV()"><i class="fa-solid fa-file-csv"></i> Relatório CSV</button>
+                <button class="admin-btn-primario" onclick="admin.exportarGestaoPDF()"><i class="fa-solid fa-file-pdf"></i> Relatório PDF</button>
             </div>
-            ${this.equipeCache.map(b => `
-                <div class="item-card">
-                    <div class="info">
-                        <div class="t">
-                            <span class="status-dot ${online(b)?'on':(b.user_id?'off':'')}" style="${b.user_id?'':'background:#c9a463;'}" title="${online(b)?'Online':(b.user_id?'Offline':'Convite enviado, aguardando 1º acesso')}"></span>
-                            ${b.nome}
-                            ${b.id === this.barbeiro.id ? ' <span style="color:var(--text-muted);font-size:12px;">(você)</span>' : ''}
-                            ${!b.user_id ? ' <span style="color:var(--accent);font-size:11.5px;">(convite enviado, aguardando 1º acesso)</span>' : ''}
-                        </div>
-                        <div class="s">
-                            ${b.telefone ? b.telefone+' • ' : ''}${b.email ? b.email+' • ' : ''}
-                            ${b.user_id ? (online(b) ? 'Online agora' : (b.ultimo_acesso ? 'Último acesso: '+this.formatarDataHoraBR(b.ultimo_acesso) : 'Nunca acessou')) : 'Ainda não fez login'}
-                            ${b.ultimo_login ? ' • Login: '+this.formatarDataHoraBR(b.ultimo_login) : ''}
-                            ${b.ultimo_logout ? ' • Logout: '+this.formatarDataHoraBR(b.ultimo_logout) : ''}
-                            ${b.recebe_agendamento_online === false ? ' • <span style="color:var(--text-muted);">não aparece no Agendamento Online</span>' : ''}
-                        </div>
-                    </div>
-                    <select onchange="admin.alterarNivel('${b.id}', this.value)" ${b.id===this.barbeiro.id?'disabled title="Você não pode alterar seu próprio nível"':''}>
-                        ${Object.entries(this.nivelLabel).map(([v,l]) => `<option value="${v}" ${b.nivel_acesso===v?'selected':''}>${l}</option>`).join('')}
-                    </select>
-                    <button class="ag-btn" onclick="admin.formEditarMembro('${b.id}')">
-                        <i class="fa-solid fa-pen"></i>Editar
-                    </button>
-                    <button class="ag-btn ${b.ativo?'cancelar':''}" ${b.id===this.barbeiro.id?'disabled':''} onclick="admin.alternarAtivo('${b.id}', ${!b.ativo})">
-                        <i class="fa-solid ${b.ativo?'fa-user-slash':'fa-user-check'}"></i>${b.ativo?'Desativar':'Ativar'}
-                    </button>
+            <div class="dash-panel" style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                    <div class="admin-avatar-chip" style="width:48px;height:48px;border-radius:14px;">${b.foto_url?`<img src="${b.foto_url}" alt="${b.nome}">`:'<i class="fa-solid fa-user"></i>'}</div>
+                    <div><h3 style="margin-bottom:2px;">${b.nome}</h3><div style="color:var(--text-muted);font-size:12.5px;">Visão administrativa completa do profissional</div></div>
                 </div>
-            `).join('') || '<div class="admin-empty">Nenhum membro na equipe ainda.</div>'}
-        `;
+            </div>
+            <div class="stat-grid">
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-sack-dollar"></i>Faturamento total</div><div class="value">${this.formatarMoeda(receitaTotal)}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-users"></i>Clientes cadastrados</div><div class="value">${clientesCadastrados}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-day"></i>Agendamentos hoje</div><div class="value">${hojeAg.length}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-week"></i>Agendamentos na semana</div><div class="value">${semanaAg.length}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-user-clock"></i>Próximo agendamento</div><div class="value" style="font-size:15px;">${proximo?`${this.formatarDataBR(proximo.data)} ${this.formatarHora(proximo.horario)}<br><small style="font-family:Inter;color:var(--text-muted);">${proximo.cliente_nome||'Cliente'}</small>`:'—'}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-user-check"></i>Último atendimento</div><div class="value" style="font-size:15px;">${ultimo?`${this.formatarDataBR(ultimo.data)}${ultimo.horario?' '+this.formatarHora(ultimo.horario):''}<br><small style="font-family:Inter;color:var(--text-muted);">${ultimo.cliente_nome||'Cliente'}</small>`:'—'}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-square-check"></i>Horários disponíveis hoje</div><div class="value">${disponiveisHoje}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-square-xmark"></i>Horários ocupados hoje</div><div class="value">${ocupadosHoje}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-coins"></i>Receita diária</div><div class="value">${this.formatarMoeda(receitaDiaria)}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-money-bill-trend-up"></i>Receita semanal</div><div class="value">${this.formatarMoeda(receitaSemanal)}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar"></i>Receita mensal</div><div class="value">${this.formatarMoeda(receitaMensal)}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Atendimentos finalizados</div><div class="value">${finalizados.length}</div></div>
+            </div>
+            <div class="dash-columns">
+                <div>
+                    <div class="dash-panel"><h4>Próximos agendamentos</h4><div class="mini-list">${proximos5.length?proximos5.map(a=>`<div class="mini-list-item"><span class="n">${a.cliente_nome||'Cliente'}</span><span class="m">${this.formatarDataBR(a.data)} • ${a.horario?this.formatarHora(a.horario):'sem horário'} • ${a.servicos?a.servicos.nome:'—'}</span></div>`).join(''):'<div class="mini-list-item">Nenhum próximo agendamento.</div>'}</div></div>
+                    <div class="dash-panel"><h4>Últimos atendimentos/agendamentos</h4><div class="mini-list">${ultimo5.length?ultimo5.map(a=>`<div class="mini-list-item"><span class="n">${a.cliente_nome||'Cliente'}</span><span class="m">${this.formatarDataBR(a.data)} • ${a.status}</span></div>`).join(''):'<div class="mini-list-item">Nenhum atendimento.</div>'}</div></div>
+                </div>
+                <div>
+                    <div class="dash-panel"><h4>Resumo de produção</h4><div class="mini-list">
+                        <div class="mini-list-item"><span class="n">Hoje</span><span class="m">${hojeAg.filter(a=>a.status==='finalizado').length} finalizado(s)</span></div>
+                        <div class="mini-list-item"><span class="n">Últimos 7 dias</span><span class="m">${semanaAg.filter(a=>a.status==='finalizado').length} finalizado(s)</span></div>
+                        <div class="mini-list-item"><span class="n">Faturamento total</span><span class="m">${this.formatarMoeda(receitaTotal)}</span></div>
+                    </div></div>
+                </div>
+            </div>`;
     },
 
-    formNovoMembro(){
-        document.getElementById('admin-modal-body').innerHTML = `
-            <h3>Adicionar funcionário</h3>
-            <div class="campo"><label>Nome</label><input id="novo-nome" placeholder="Nome completo"></div>
-            <div class="campo"><label>Tipo / perfil</label>
-                <select id="novo-nivel">
-                    <option value="barbeiro">Barbeiro</option>
-                    <option value="funcionario">Funcionário</option>
-                    <option value="administrador">Administrador</option>
-                </select>
-            </div>
-            <div class="campo"><label>Telefone</label><input id="novo-telefone" placeholder="(67) 90000-0000"></div>
-            <div class="campo"><label>E-mail (para onde vai o convite de acesso)</label><input id="novo-email" type="email" placeholder="pessoa@exemplo.com"></div>
-            <div class="campo"><label>Status</label>
-                <select id="novo-ativo">
-                    <option value="true">Ativo</option>
-                    <option value="false">Inativo</option>
-                </select>
-            </div>
-            <div class="campo"><label>Aparece no Agendamento Online?</label>
-                <select id="novo-recebe">
-                    <option value="true">Sim</option>
-                    <option value="false">Não</option>
-                </select>
-            </div>
-            <div id="novo-membro-erro" style="display:none;color:#e6a3a3;font-size:12.5px;margin-top:6px;"></div>
-            <div class="admin-modal-actions">
-                <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
-                <button class="admin-modal-salvar" id="novo-membro-btn" onclick="admin.salvarNovoMembro()">Adicionar</button>
-            </div>
-        `;
-        document.getElementById('admin-modal-overlay').classList.add('active');
+    async obterDadosRelatorioGestao(){
+        if(!this.ehAdmin() || !this.barbeiroGestao) return null;
+        const { data } = await sb.from('agendamentos').select('*, servicos(nome), clientes(nome,created_at)').eq('barbeiro_id', this.barbeiroGestao.id).order('data',{ascending:false}).order('horario',{ascending:false});
+        const lista=data||[];
+        const hoje=this.paraData(this.hojeISO());
+        const filtro=this.gestaoFiltro||'mes';
+        const dentro=d=>{
+            if(filtro==='dia') return d.toDateString()===hoje.toDateString();
+            if(filtro==='semana'){const ini=new Date(hoje);ini.setDate(ini.getDate()-6);return d>=ini&&d<=hoje;}
+            if(filtro==='mes') return d.getMonth()===hoje.getMonth()&&d.getFullYear()===hoje.getFullYear();
+            if(filtro==='ano') return d.getFullYear()===hoje.getFullYear();
+            return true;
+        };
+        const periodo=lista.filter(a=>dentro(this.paraData(a.data)));
+        const finalizados=periodo.filter(a=>a.status==='finalizado');
+        const faturamento=finalizados.reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const clientes=new Set(periodo.filter(a=>a.cliente_id).map(a=>a.cliente_id));
+        return {lista:periodo,finalizados,faturamento,clientes,periodoLabel:{dia:'Hoje',semana:'Últimos 7 dias',mes:'Este mês',ano:'Este ano'}[filtro]||filtro};
     },
 
-    async salvarNovoMembro(){
-        const nome = document.getElementById('novo-nome').value.trim();
-        const nivel_acesso = document.getElementById('novo-nivel').value;
-        const telefone = document.getElementById('novo-telefone').value.trim();
-        const email = document.getElementById('novo-email').value.trim().toLowerCase();
-        const ativo = document.getElementById('novo-ativo').value === 'true';
-        const recebe_agendamento_online = document.getElementById('novo-recebe').value === 'true';
-        const erroBox = document.getElementById('novo-membro-erro');
-        const mostrarErro = (msg) => { erroBox.textContent = msg; erroBox.style.display = 'block'; };
+    async exportarGestaoCSV(){
+        if(!this.ehAdmin()) return;
+        const r=await this.obterDadosRelatorioGestao(); if(!r) return;
+        const linhas=[['PRIETO BARBEARIA - RELATÓRIO DO BARBEIRO'],[`Barbeiro: ${this.barbeiroGestao.nome}`],[`Período: ${r.periodoLabel}`],[],['RESUMO'],['Faturamento',this.formatarMoeda(r.faturamento)],['Atendimentos finalizados',r.finalizados.length],['Clientes atendidos',r.clientes.size],[],['DETALHAMENTO'],['Cliente','Telefone','Serviço','Valor','Data','Horário','Status','Origem']];
+        r.lista.forEach(a=>linhas.push([a.cliente_nome||'Cliente presencial',a.cliente_telefone||'',a.servicos?a.servicos.nome:'',this.formatarMoeda(a.servico_valor||0),this.formatarDataBR(a.data),this.formatarHora(a.horario),a.status,a.origem==='presencial'?'Presencial':'Online']));
+        const csv=linhas.map(l=>l.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
+        const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+        const a=document.createElement('a');a.href=url;a.download=`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.csv`;a.click();URL.revokeObjectURL(url);
+    },
 
-        // -------- validações (item 15): nada de falha silenciosa --------
-        if(!nome){ mostrarErro('Informe o nome.'); return; }
-        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        if(!email || !emailValido){ mostrarErro('Informe um e-mail válido — é para ele que vai o convite de acesso.'); return; }
-        if(!nivel_acesso){ mostrarErro('Selecione o cargo.'); return; }
-        if(telefone && telefone.replace(/\D/g,'').length < 10){ mostrarErro('Informe um telefone válido, com DDD.'); return; }
-
-        const btn = document.getElementById('novo-membro-btn');
-        btn.disabled = true; btn.textContent = 'Adicionando...';
-        erroBox.style.display = 'none';
-
-        // A criação do LOGIN (Supabase Auth) não pode acontecer no frontend — exigiria
-        // expor a service_role key. Por isso chamamos a Edge Function "criar-funcionario",
-        // que roda no backend com privilégios de admin, confirma que quem está chamando
-        // é de fato um administrador, cria o usuário no Supabase Auth (convite por e-mail,
-        // sem senha em texto puro) e grava/atualiza a linha correspondente na tabela
-        // "barbeiros" já vinculada ao novo user_id — sem duplicar estrutura.
-        const { data, error } = await sb.functions.invoke('criar-funcionario', {
-            body: { nome, nivel_acesso, telefone: telefone || null, email, ativo, recebe_agendamento_online }
-        });
-
-        btn.disabled = false; btn.textContent = 'Adicionar';
-
-        if(error || !data || data.ok === false){
-            const msg = (data && data.error) || error?.message || 'Erro desconhecido.';
-            mostrarErro('Não foi possível cadastrar o funcionário: ' + msg);
+    /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
+       estrutural do PDF de Relatórios já existente no sistema (mesmo fundo,
+       logo, título com linha dourada, cartão de período/geração, cartões de
+       resumo, tabelas no mesmo estilo e rodapé com numeração de página).
+       Só o conteúdo muda: aqui é o desempenho de UM barbeiro específico. */
+    async exportarGestaoPDF(){
+        if(!this.ehAdmin()){ return; }
+        if(!window.jspdf || !window.jspdf.jsPDF){
+            alert('Não foi possível carregar o gerador de PDF. Verifique sua conexão com a internet e tente novamente.');
             return;
         }
+        const r = await this.obterDadosRelatorioGestao();
+        if(!r) return;
 
-        this.fecharModal();
-        await this.renderEquipe();
-        alert('Funcionário cadastrado com sucesso. Um e-mail de convite foi enviado para ' + email + '.');
-    },
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({unit:'mm', format:'a4'});
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margem = 14;
 
-    formEditarMembro(id){
-        const b = (this.equipeCache || []).find(x => String(x.id) === String(id));
-        if(!b){ alert('Não foi possível carregar este funcionário.'); return; }
-        document.getElementById('admin-modal-body').innerHTML = `
-            <h3>Editar funcionário</h3>
-            <div class="campo"><label>Nome</label><input id="edit-nome" value="${(b.nome||'').replace(/"/g,'&quot;')}"></div>
-            <div class="campo"><label>Telefone</label><input id="edit-telefone" value="${(b.telefone||'').replace(/"/g,'&quot;')}" placeholder="(67) 90000-0000"></div>
-            <div class="campo"><label>E-mail</label><input id="edit-email" type="email" value="${(b.email||'').replace(/"/g,'&quot;')}"></div>
-            <div class="campo"><label>Status</label>
-                <select id="edit-ativo">
-                    <option value="true" ${b.ativo?'selected':''}>Ativo</option>
-                    <option value="false" ${!b.ativo?'selected':''}>Inativo</option>
-                </select>
-            </div>
-            <div class="campo"><label>Aparece no Agendamento Online?</label>
-                <select id="edit-recebe">
-                    <option value="true" ${b.recebe_agendamento_online !== false ? 'selected' : ''}>Sim</option>
-                    <option value="false" ${b.recebe_agendamento_online === false ? 'selected' : ''}>Não</option>
-                </select>
-            </div>
-            <div id="edit-membro-erro" style="display:none;color:#e6a3a3;font-size:12.5px;margin-top:6px;"></div>
-            <div class="admin-modal-actions">
-                <button class="admin-modal-cancelar" onclick="admin.fecharModal()">Cancelar</button>
-                <button class="admin-modal-salvar" onclick="admin.salvarEdicaoMembro('${id}')">Salvar</button>
-            </div>
-        `;
-        document.getElementById('admin-modal-overlay').classList.add('active');
-    },
+        const C = {
+            bg: [11,11,12], card: [24,24,27], border: [40,40,44],
+            texto: [242,241,238], muted: [154,154,158],
+            dourado: [201,164,99], douradoEscuro: [138,117,80]
+        };
 
-    async salvarEdicaoMembro(id){
-        const nome = document.getElementById('edit-nome').value.trim();
-        const telefone = document.getElementById('edit-telefone').value.trim();
-        const email = document.getElementById('edit-email').value.trim().toLowerCase();
-        const ativo = document.getElementById('edit-ativo').value === 'true';
-        const recebe_agendamento_online = document.getElementById('edit-recebe').value === 'true';
-        const erroBox = document.getElementById('edit-membro-erro');
-        const mostrarErro = (msg) => { erroBox.textContent = msg; erroBox.style.display = 'block'; };
+        const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
 
-        if(!nome){ mostrarErro('Informe o nome.'); return; }
-        const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        if(!email || !emailValido){ mostrarErro('Informe um e-mail válido.'); return; }
-        if(telefone && telefone.replace(/\D/g,'').length < 10){ mostrarErro('Informe um telefone válido, com DDD.'); return; }
+        const rodape = (numero) => {
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.35);
+            doc.line(margem, pageH-14, pageW-margem, pageH-14);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.muted);
+            doc.text('PRIETO BARBEARIA', margem, pageH-9);
+            doc.text(`Página ${numero}`, pageW-margem, pageH-9, {align:'right'});
+        };
 
-        const { error } = await sb.from('barbeiros').update({
-            nome, telefone: telefone || null, email, ativo, recebe_agendamento_online
-        }).eq('id', id);
+        // página 1: fundo escuro + cabeçalho com a logo original (sem alterar cores/recorte)
+        fundo();
+        let y = 20;
 
-        if(error){ mostrarErro('Não foi possível salvar: ' + error.message); return; }
+        const logoData = await this.carregarLogoBase64();
+        if(logoData){
+            try{
+                const props = doc.getImageProperties(logoData);
+                const larguraLogo = 64;
+                const alturaLogo = (props.height/props.width)*larguraLogo;
+                doc.addImage(logoData, props.fileType || 'PNG', (pageW-larguraLogo)/2, y, larguraLogo, alturaLogo);
+                y += alturaLogo + 9;
+            }catch(e){ /* segue sem logo se a imagem não puder ser lida */ }
+        }
 
-        this.fecharModal();
-        await this.renderEquipe();
-    },
+        doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
+        doc.text('RELATÓRIO DO BARBEIRO', pageW/2, y, {align:'center'}); y += 7;
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
+        doc.text(this.barbeiroGestao.nome, pageW/2, y, {align:'center'}); y += 5;
+        doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
+        doc.line(pageW/2-16, y, pageW/2+16, y); y += 10;
 
-    async alterarNivel(id, nivel){
-        const { error } = await sb.from('barbeiros').update({nivel_acesso: nivel}).eq('id', id);
-        if(error){ alert('Não foi possível alterar o nível de acesso: ' + error.message); return; }
-        await this.renderEquipe();
-    },
+        // cartão: período analisado / gerado em
+        const altInfo = 18;
+        doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+        doc.roundedRect(margem, y, pageW-margem*2, altInfo, 2, 2, 'FD');
+        doc.setDrawColor(...C.border);
+        doc.line(pageW/2, y+3, pageW/2, y+altInfo-3);
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C.muted);
+        doc.text('PERÍODO ANALISADO', margem+6, y+7);
+        doc.text('GERADO EM', pageW/2+6, y+7);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...C.texto);
+        doc.text(r.periodoLabel, margem+6, y+13.5);
+        doc.text(this.formatarDataHoraBR(new Date().toISOString()), pageW/2+6, y+13.5);
+        y += altInfo + 11;
 
-    async alternarAtivo(id, novoAtivo){
-        if(!novoAtivo && !confirm('Desativar este acesso? A pessoa não conseguirá mais logar nem aparecer no site. O histórico de agendamentos dela é mantido.')) return;
-        const { error } = await sb.from('barbeiros').update({ativo: novoAtivo}).eq('id', id);
-        if(error){ alert('Não foi possível atualizar: ' + error.message); return; }
-        await this.renderEquipe();
+        // resumo do período
+        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...C.texto);
+        doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
+
+        const cartoes = [
+            {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
+            {valor: String(r.finalizados.length), label: 'ATENDIMENTOS FINALIZADOS'},
+            {valor: String(r.clientes.size), label: 'CLIENTES ATENDIDOS'}
+        ];
+        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
+        cartoes.forEach((c,i) => {
+            const x = margem + i*(largCartao+gap);
+            doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+            doc.roundedRect(x, y, largCartao, altCartao, 2, 2, 'FD');
+            doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...C.dourado);
+            doc.text(c.valor, x+largCartao/2, y+11, {align:'center'});
+            doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(...C.muted);
+            doc.text(c.label, x+largCartao/2, y+17.5, {align:'center', maxWidth: largCartao-3});
+        });
+        y += altCartao + 12;
+
+        // paginação manual (entre seções, quando o título+tabela não cabem mais na página)
+        const garantirEspaco = (alturaMinima) => {
+            if(y + alturaMinima > pageH - 22){
+                doc.addPage(); fundo(); y = 20;
+            }
+        };
+
+        const secao = (titulo, corpo, colunas) => {
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text(titulo, margem, y); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: {left: margem, right: margem, bottom: 20},
+                head: [colunas],
+                body: corpo.length ? corpo : [['Sem dados no período', '', '', '', '', '', '']],
+                theme: 'grid',
+                styles: { fontSize: 8.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                // só repinta o fundo em páginas NOVAS criadas pela própria tabela
+                // (pageNumber > 1 dentro desta chamada) — a página atual já está pintada.
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        };
+
+        secao(
+            'DETALHAMENTO DOS ATENDIMENTOS',
+            r.lista.map(a => [
+                a.cliente_nome || 'Cliente presencial',
+                a.servicos ? a.servicos.nome : '—',
+                this.formatarMoeda(a.servico_valor||0),
+                this.formatarDataBR(a.data),
+                a.horario ? this.formatarHora(a.horario) : '—',
+                a.status,
+                a.origem === 'presencial' ? 'Presencial' : 'Online'
+            ]),
+            ['CLIENTE','SERVIÇO','VALOR','DATA','HORÁRIO','STATUS','ORIGEM']
+        );
+
+        // rodapé com linha dourada e numeração em todas as páginas do documento
+        const totalPaginas = doc.internal.getNumberOfPages();
+        for(let p = 1; p <= totalPaginas; p++){
+            doc.setPage(p);
+            rodape(p);
+        }
+
+        doc.save(`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`);
     },
 
     formatarDataHoraBR(iso){
@@ -4642,7 +4876,7 @@ const admin = {
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
 
-    /* ============ 11. CONFIGURAÇÕES ============ */
+    /* ============ 10. CONFIGURAÇÕES ============ */
     async renderConfiguracoes(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando configurações...</div>';
         const { data: { user } } = await sb.auth.getUser();
@@ -4741,6 +4975,8 @@ const admin = {
         await this.marcarOffline();
         await sb.auth.signOut();
         this.barbeiro = null;
+        this.usuarioEmail = '';
+        this.barbeiroGestao = null;
         document.getElementById('admin-panel').classList.remove('active');
         document.getElementById('admin-login').classList.remove('hidden');
         document.getElementById('admin-email').value = '';
