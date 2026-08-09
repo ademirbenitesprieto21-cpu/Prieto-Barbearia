@@ -3479,10 +3479,10 @@ const admin = {
     async formAdicionarCliente(){
         if(!this.barbeiro){ alert('Não foi possível identificar o barbeiro logado.'); return; }
 
-        const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).order('nome');
-        const opcoesServico = (servicos || []).map(s =>
-            `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
-        ).join('');
+        // por padrão, mostra só os serviços do próprio barbeiro logado —
+        // se for admin e trocar quem atendeu, a lista se atualiza sozinha
+        // (ver atualizarServicosPresencial)
+        const opcoesServico = await this.opcoesServicoDoBarbeiro(this.barbeiro.id);
 
         // o dono pode registrar o atendimento em nome de qualquer barbeiro;
         // os demais usuários só registram para si mesmos (comportamento original)
@@ -3507,7 +3507,7 @@ const admin = {
                 campoBarbeiro = `
                     <div class="campo">
                         <label>Barbeiro que realizou o atendimento</label>
-                        <select id="pres-barbeiro">
+                        <select id="pres-barbeiro" onchange="admin.atualizarServicosPresencial(this.value)">
                             ${equipe.map(b => `<option value="${b.id}" ${b.id===this.barbeiro.id?'selected':''}>${b.nome}</option>`).join('')}
                         </select>
                     </div>`;
@@ -3532,6 +3532,27 @@ const admin = {
             </div>
         `;
         document.getElementById('admin-modal-overlay').classList.add('active');
+    },
+
+    /* busca só os serviços ATIVOS de um barbeiro específico, já formatados
+       como <option> — usado no formulário de Adicionar Cliente pra manter
+       a lista de serviços sempre de acordo com o barbeiro selecionado */
+    async opcoesServicoDoBarbeiro(barbeiroId){
+        const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).eq('barbeiro_id', barbeiroId).order('nome');
+        return (servicos || []).map(s =>
+            `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
+        ).join('');
+    },
+
+    /* chamado quando o admin troca o "Barbeiro que realizou o atendimento"
+       no formulário de Adicionar Cliente: recarrega o select de Serviço
+       pra mostrar só os serviços do barbeiro escolhido */
+    async atualizarServicosPresencial(barbeiroId){
+        const select = document.getElementById('pres-servico');
+        if(!select) return;
+        select.innerHTML = '<option value="">Carregando...</option>';
+        const opcoesServico = await this.opcoesServicoDoBarbeiro(barbeiroId);
+        select.innerHTML = `<option value="">Selecionar</option>${opcoesServico}`;
     },
 
     async salvarClientePresencial(){
