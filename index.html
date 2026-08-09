@@ -4322,10 +4322,29 @@ const admin = {
 
     /* ============ 9. RELATÓRIOS ============ */
     relatorioFiltro: 'mes',
+    // false = relatório do próprio barbeiro logado; true = relatório consolidado
+    // da barbearia inteira (todos os barbeiros juntos) — disponível para qualquer
+    // barbeiro logado (Tradicional e Experiente), não só o dono/admin
+    relatorioModoBarbearia: false,
     async renderRelatorios(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando relatórios...</div>';
-        const { data: ags } = await sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at)').eq('barbeiro_id', this.barbeiro.id);
+        const [{data: ags}, {data: agsGeral}] = await Promise.all([
+            sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at)').eq('barbeiro_id', this.barbeiro.id),
+            sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at), barbeiros(nome)')
+        ]);
         this.relatorioCache = ags || [];
+        this.relatorioCacheBarbearia = agsGeral || [];
+        this.desenharRelatorios();
+    },
+
+    /* lista de agendamentos usada pelo relatório em tela, no CSV e no PDF —
+       alterna entre "meus agendamentos" e "todos os barbeiros" conforme o modo */
+    dadosRelatorioAtivos(){
+        return (this.relatorioModoBarbearia && this.relatorioCacheBarbearia) ? this.relatorioCacheBarbearia : this.relatorioCache;
+    },
+
+    alternarModoRelatorio(){
+        this.relatorioModoBarbearia = !this.relatorioModoBarbearia;
         this.desenharRelatorios();
     },
 
@@ -4346,7 +4365,8 @@ const admin = {
        exatamente os mesmos números. Nada aqui é recalculado de forma diferente
        na hora de exportar. */
     calcularRelatorio(){
-        const lista = this.filtrarPorPeriodo(this.relatorioCache);
+        const modoBarbearia = this.relatorioModoBarbearia && this.relatorioCacheBarbearia;
+        const lista = this.filtrarPorPeriodo(this.dadosRelatorioAtivos());
         const finalizados = lista.filter(a => a.status === 'finalizado');
         const cancelados = lista.filter(a => a.status === 'cancelado');
 
@@ -4372,10 +4392,27 @@ const admin = {
 
         const periodoLabels = {dia:'Hoje', semana:'Últimos 7 dias', mes:'Este mês', ano:'Este ano'};
 
+        // no modo consolidado, também soma faturamento/atendimentos/clientes por
+        // barbeiro individualmente — é o que diferencia o "relatório da barbearia"
+        // de simplesmente juntar os números de todo mundo numa pilha só
+        let porBarbeiro = [];
+        if(modoBarbearia){
+            const grupos = {};
+            lista.forEach(a => {
+                const nome = a.barbeiros ? a.barbeiros.nome : 'Sem barbeiro';
+                if(!grupos[nome]) grupos[nome] = { nome, finalizados:0, faturamento:0, clientes:new Set() };
+                if(a.status === 'finalizado'){ grupos[nome].finalizados++; grupos[nome].faturamento += Number(a.servico_valor||0); }
+                if(a.cliente_id) grupos[nome].clientes.add(a.cliente_id);
+            });
+            porBarbeiro = Object.values(grupos)
+                .map(g => ({ nome:g.nome, finalizados:g.finalizados, faturamento:g.faturamento, clientes:g.clientes.size }))
+                .sort((a,b) => b.faturamento - a.faturamento);
+        }
+
         return {
-            lista, finalizados, cancelados,
+            lista, finalizados, cancelados, modoBarbearia,
             periodoLabel: periodoLabels[this.relatorioFiltro] || this.relatorioFiltro,
-            clientesNovos, clientesRecorrentes, faturamento,
+            clientesNovos, clientesRecorrentes, faturamento, porBarbeiro,
             horariosOrdenados: ordenado(contagemHorario),
             diasOrdenados: ordenado(contagemDia),
             servicosOrdenados: ordenado(contagemServico)
@@ -4389,15 +4426,18 @@ const admin = {
         document.getElementById('admin-content').innerHTML = `
             <div class="admin-search-bar" id="admin-filtros-rapidos">
                 ${['dia','semana','mes','ano'].map(f => `<button class="ag-btn filtro-rapido${this.relatorioFiltro===f?' active':''}" onclick="admin.setFiltroRelatorio('${f}')">${{dia:'Hoje',semana:'Semana',mes:'Mês',ano:'Ano'}[f]}</button>`).join('')}
+                <button class="ag-btn filtro-rapido${this.relatorioModoBarbearia?' active':''}" onclick="admin.alternarModoRelatorio()"><i class="fa-solid fa-store"></i> ${this.relatorioModoBarbearia?'Ver meu relatório':'Relatório da barbearia'}</button>
                 <button class="admin-btn-primario" onclick="admin.exportarCSV()"><i class="fa-solid fa-file-csv"></i> Exportar Excel (CSV)</button>
                 <button class="admin-btn-primario" onclick="admin.exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
             </div>
+            ${r.modoBarbearia ? `<div class="dash-panel" style="border-color:var(--accent);margin-bottom:16px;"><h4><i class="fa-solid fa-store"></i> Visão consolidada — todos os barbeiros (${r.periodoLabel})</h4><div style="color:var(--text-muted);font-size:12.5px;margin-top:-6px;margin-bottom:4px;">Os números abaixo somam os atendimentos de todos os profissionais da Prieto Barbearia neste período.</div></div>` : ''}
             <div class="stat-grid">
                 <div class="stat-card"><div class="label">Clientes novos</div><div class="value">${r.clientesNovos}</div></div>
                 <div class="stat-card"><div class="label">Clientes recorrentes</div><div class="value">${r.clientesRecorrentes}</div></div>
                 <div class="stat-card"><div class="label">Faturamento no período</div><div class="value">${this.formatarMoeda(r.faturamento)}</div></div>
                 <div class="stat-card"><div class="label">Cancelamentos</div><div class="value">${r.cancelados.length}</div></div>
             </div>
+            ${r.modoBarbearia ? `<div class="dash-panel"><h4>Faturamento por barbeiro</h4><div class="mini-list">${r.porBarbeiro.length ? r.porBarbeiro.map(b=>`<div class="mini-list-item"><span class="n">${b.nome}</span><span class="m">${this.formatarMoeda(b.faturamento)} • ${b.finalizados} atendimento(s) • ${b.clientes} cliente(s)</span></div>`).join('') : '<div class="mini-list-item">Sem dados.</div>'}</div></div>` : ''}
             <div class="dash-columns">
                 <div class="dash-panel"><h4>Horários mais movimentados</h4><div class="mini-list">${top5(r.horariosOrdenados).map(([k,v])=>`<div class="mini-list-item"><span class="n">${this.formatarHora(k)}</span><span class="m">${v} atendimento(s)</span></div>`).join('') || '<div class="mini-list-item">Sem dados.</div>'}</div></div>
                 <div class="dash-panel"><h4>Dias mais movimentados</h4><div class="mini-list">${top5(r.diasOrdenados).map(([k,v])=>`<div class="mini-list-item"><span class="n">${k}</span><span class="m">${v} atendimento(s)</span></div>`).join('') || '<div class="mini-list-item">Sem dados.</div>'}</div></div>
@@ -4414,7 +4454,7 @@ const admin = {
     exportarCSV(){
         const r = this.calcularRelatorio();
         const linhas = [];
-        linhas.push(['PRIETO BARBEARIA - RELATÓRIO']);
+        linhas.push([r.modoBarbearia ? 'PRIETO BARBEARIA - RELATÓRIO CONSOLIDADO (TODOS OS BARBEIROS)' : 'PRIETO BARBEARIA - RELATÓRIO']);
         linhas.push([`Período analisado: ${r.periodoLabel}`]);
         linhas.push([]);
         linhas.push(['RESUMO']);
@@ -4424,6 +4464,12 @@ const admin = {
         linhas.push(['Faturamento no período', this.formatarMoeda(r.faturamento)]);
         linhas.push(['Cancelamentos', r.cancelados.length]);
         linhas.push([]);
+        if(r.modoBarbearia){
+            linhas.push(['FATURAMENTO POR BARBEIRO']);
+            linhas.push(['Barbeiro','Atendimentos','Clientes','Faturamento']);
+            (r.porBarbeiro.length ? r.porBarbeiro : [['Sem dados','','','']]).forEach(b => linhas.push([b.nome, b.finalizados, b.clientes, this.formatarMoeda(b.faturamento)]));
+            linhas.push([]);
+        }
         linhas.push(['HORÁRIOS MAIS MOVIMENTADOS']);
         linhas.push(['Horário','Quantidade']);
         (r.horariosOrdenados.length ? r.horariosOrdenados : [['Sem dados','']]).forEach(([k,v]) => linhas.push([this.formatarHora(k), v]));
@@ -4437,9 +4483,13 @@ const admin = {
         (r.diasOrdenados.length ? r.diasOrdenados : [['Sem dados','']]).forEach(([k,v]) => linhas.push([k, v]));
         linhas.push([]);
         linhas.push(['DETALHAMENTO DOS AGENDAMENTOS DO PERÍODO']);
-        linhas.push(['Cliente','Telefone','Serviço','Valor','Data','Horário','Status','Origem']);
+        linhas.push([
+            'Cliente','Telefone', ...(r.modoBarbearia ? ['Barbeiro'] : []), 'Serviço','Valor','Data','Horário','Status','Origem'
+        ]);
         r.lista.forEach(a => linhas.push([
-            a.cliente_nome || 'Cliente presencial', a.cliente_telefone||'', a.servicos?a.servicos.nome:'',
+            a.cliente_nome || 'Cliente presencial', a.cliente_telefone||'',
+            ...(r.modoBarbearia ? [a.barbeiros ? a.barbeiros.nome : '—'] : []),
+            a.servicos?a.servicos.nome:'',
             this.formatarMoeda(a.servico_valor||0), this.formatarDataBR(a.data),
             this.formatarHora(a.horario), a.status, a.origem==='presencial' ? 'Presencial' : 'Online'
         ]));
@@ -4448,7 +4498,7 @@ const admin = {
         const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `relatorio-prieto-barbearia-${this.hojeISO()}.csv`;
+        a.href = url; a.download = `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     },
@@ -4527,7 +4577,7 @@ const admin = {
         }
 
         doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
-        doc.text('RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
+        doc.text(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
         doc.text('PRIETO BARBEARIA', pageW/2, y, {align:'center'}); y += 5;
         doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
@@ -4576,6 +4626,26 @@ const admin = {
             }
         };
 
+        // no modo consolidado, tabela extra logo após os cartões de resumo mostrando
+        // o desempenho de cada barbeiro separadamente dentro do total da barbearia
+        if(r.modoBarbearia && r.porBarbeiro.length){
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text('FATURAMENTO POR BARBEIRO', margem, y); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: {left: margem, right: margem, bottom: 20},
+                head: [['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO']],
+                body: r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
+                theme: 'grid',
+                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        }
+
         const secao = (titulo, corpo, colunas) => {
             garantirEspaco(30);
             doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
@@ -4607,7 +4677,7 @@ const admin = {
             rodape(p);
         }
 
-        doc.save(`relatorio-prieto-barbearia-${this.hojeISO()}.pdf`);
+        doc.save(`relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.pdf`);
     },
 
     /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
