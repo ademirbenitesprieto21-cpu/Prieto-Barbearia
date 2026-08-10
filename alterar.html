@@ -20,8 +20,8 @@
     --border: #262629;
     --text: #f2f1ee;
     --text-muted: #9a9a9e;
-    --accent: #c9a463;
-    --accent-soft: #8a7550;
+    --accent: #bdbdbd;
+    --accent-soft: #8f8f8f;
     --whatsapp: #ffffff;
     --input-bg: #0f0f10;
     --hover-bg: rgba(255,255,255,.05);
@@ -141,9 +141,9 @@
   .btn-dark{background:#1d1d1f;color:var(--text);border:1px solid rgba(255,255,255,0.15);}
   .btn-dark:hover{background:#28282b;}
   .btn-light{background:#ffffff;color:#0b0b0c;}
-  .btn-light:hover{background:#e9e6de;}
+  .btn-light:hover{background:#e9e9e9;}
   .btn-gold{background:var(--accent);color:#1a1305;}
-  .btn-gold:hover{background:#d9b578;}
+  .btn-gold:hover{background:#d4d4d4;}
 
   /* Botão "Agendamento Online" do hero: mesma função e texto de sempre.
      Fundo branco, texto escuro com bom contraste, acabamento elegante e
@@ -1030,10 +1030,10 @@
   .admin-field input:focus{border-color:var(--accent);}
   .admin-login-btn{
     width:100%;padding:13px;border:none;border-radius:10px;
-    background:var(--accent);color:#1a1305;font-weight:700;font-size:14px;
+    background:#ffffff;color:#111111;font-weight:700;font-size:14px;
     font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;margin-top:6px;
   }
-  .admin-login-btn:hover{background:#d9b578;}
+  .admin-login-btn:hover{background:#e8e8e8;}
   .admin-login-btn:disabled{opacity:.55;cursor:not-allowed;}
   .admin-login-error{
     display:none;background:rgba(220,80,80,.1);border:1px solid rgba(220,80,80,.35);
@@ -1083,7 +1083,7 @@
   }
   .admin-menu button i{width:16px;text-align:center;font-size:14px;}
   .admin-menu button:hover{background:var(--hover-bg);color:var(--text);}
-  .admin-menu button.active{background:rgba(201,164,99,.12);color:var(--accent);}
+  .admin-menu button.active{background:rgba(189,189,189,.12);color:var(--accent);}
   .admin-sidebar-footer{border-top:1px solid var(--border);padding-top:14px;margin-top:10px;}
   .admin-sair-btn{
     width:100%;display:flex;align-items:center;gap:10px;justify-content:center;
@@ -1159,7 +1159,7 @@
     font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
     padding:3px 9px;border-radius:20px;white-space:nowrap;
   }
-  .origem-presencial{background:rgba(201,164,99,.15);color:var(--accent);border:1px solid rgba(201,164,99,.4);}
+  .origem-presencial{background:rgba(189,189,189,.15);color:var(--accent);border:1px solid rgba(189,189,189,.4);}
   .origem-online{background:rgba(255,255,255,.08);color:var(--text-muted);border:1px solid var(--border);}
   .agendamento-info .meta{color:var(--text-muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:12px;}
   .agendamento-info .meta span{display:inline-flex;align-items:center;gap:5px;}
@@ -1167,7 +1167,7 @@
     font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
     padding:5px 12px;border-radius:20px;white-space:nowrap;
   }
-  .status-pendente{background:rgba(201,164,99,.15);color:var(--accent);}
+  .status-pendente{background:rgba(189,189,189,.15);color:var(--accent);}
   .status-confirmado{background:rgba(94,158,224,.15);color:#7cb8ff;}
   .status-finalizado{background:rgba(94,200,120,.15);color:#7ee6a0;}
   .status-cancelado{background:rgba(220,80,80,.15);color:#e6a3a3;}
@@ -1181,7 +1181,7 @@
   .ag-btn.confirmar:hover{border-color:#7cb8ff;color:#7cb8ff;}
   .ag-btn.finalizar:hover{border-color:#7ee6a0;color:#7ee6a0;}
   .ag-btn.cancelar:hover{border-color:#e6a3a3;color:#e6a3a3;}
-  .filtro-rapido.active{border-color:var(--accent);color:var(--accent);background:rgba(201,164,99,.1);}
+  .filtro-rapido.active{border-color:var(--accent);color:var(--accent);background:rgba(189,189,189,.1);}
 
   /* ---------- DASHBOARD ---------- */
   .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:26px;}
@@ -1201,16 +1201,41 @@
   .pdf-preview-panel h4{display:flex;align-items:center;gap:8px;}
   .pdf-preview-frame-wrap{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:75vh;min-height:420px;}
   .pdf-preview-frame{width:100%;height:100%;border:0;display:block;}
-  @media(max-width:600px){ .pdf-preview-frame-wrap{height:65vh;min-height:360px;} }
+  /* No celular muitos navegadores não exibem PDF dentro de iframe (tela em
+     branco). Em vez de depender só do iframe, mostramos um bloco alternativo
+     com um botão bem visível para abrir o PDF em uma nova aba — o "Baixar PDF"
+     já existe fixo no topo da tela. No desktop esse bloco fica oculto e o
+     iframe continua sendo usado normalmente. */
+  .pdf-preview-mobile-fallback{display:none;}
+  @media(max-width:600px){
+    .pdf-preview-frame-wrap{display:none;}
+    .pdf-preview-mobile-fallback{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+      text-align:center;padding:48px 20px;background:var(--input-bg);
+      border:1px solid var(--border);border-radius:10px;min-height:280px;
+    }
+    .pdf-preview-mobile-fallback i{font-size:38px;color:var(--text-muted);}
+    .pdf-preview-mobile-fallback p{color:var(--text-muted);font-size:13px;max-width:280px;}
+  }
+  /* Pré-visualização de CSV (Gerar CSV / Histórico de Relatórios → Visualizar):
+     mesmo cartão escuro (.pdf-preview-panel), mas com uma tabela real em vez de
+     iframe — a tabela mostra exatamente as mesmas linhas/colunas do arquivo CSV. */
+  .csv-preview-table-wrap{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;overflow:auto;-webkit-overflow-scrolling:touch;max-height:75vh;min-height:200px;max-width:100%;}
+  .csv-preview-table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
+  .csv-preview-table td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+  .csv-preview-table tr:hover td{background:rgba(255,255,255,.04);}
+  @media(max-width:600px){ .csv-preview-table-wrap{max-height:65vh;} }
   /* Histórico de PDFs Gerados: reaproveita o .mini-list-item, só ajusta os botões */
   .pdf-historico-item{align-items:center;gap:12px;}
   .pdf-historico-item .n{line-height:1.5;}
   .pdf-historico-meta{color:var(--text-muted);font-weight:400;}
   .pdf-historico-acoes{display:flex;gap:8px;flex-shrink:0;}
   @media(max-width:600px){
-    .pdf-historico-item{flex-direction:column;align-items:flex-start;}
-    .pdf-historico-acoes{width:100%;}
-    .pdf-historico-acoes .ag-btn{flex:1;justify-content:center;}
+    .pdf-historico-item{flex-direction:column;align-items:stretch;}
+    /* empilhados na ordem Visualizar → Baixar → Apagar (mesma ordem do DOM),
+       largura total do card e espaçamento confortável entre os três */
+    .pdf-historico-acoes{width:100%;flex-direction:column;gap:8px;}
+    .pdf-historico-acoes .ag-btn{width:100%;justify-content:center;padding:11px 12px;font-size:13px;}
   }
   .bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;}
   .bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;}
@@ -1246,7 +1271,7 @@
     background:var(--accent);color:#1a1305;border:none;border-radius:9px;
     padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
   }
-  .admin-btn-primario:hover{background:#d9b578;}
+  .admin-btn-primario:hover{background:#d4d4d4;}
   .item-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
   .item-card .info{flex:1;min-width:180px;}
   .item-card .info .t{font-weight:700;font-size:14.5px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
@@ -1426,7 +1451,7 @@
   html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
   body{letter-spacing:.1px;}
   h1,h2,h3{letter-spacing:1.2px;}
-  ::selection{background:rgba(201,164,99,.28);color:#fff;}
+  ::selection{background:rgba(189,189,189,.28);color:#fff;}
 
   /* ---------- scrollbar discreta e premium ---------- */
   ::-webkit-scrollbar{width:10px;height:10px;}
@@ -1436,7 +1461,7 @@
 
   /* ---------- foco acessível, sem mudar cor de botão ---------- */
   a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
-    outline:2px solid rgba(201,164,99,.55);
+    outline:2px solid rgba(189,189,189,.55);
     outline-offset:2px;
     border-radius:4px;
   }
@@ -1470,7 +1495,7 @@
   .ambiente-gallery img{transition:transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s ease;box-shadow:0 6px 20px rgba(0,0,0,.25);}
   .ambiente-gallery img:hover{transform:scale(1.03);box-shadow:0 14px 34px rgba(0,0,0,.4);}
   .tag{transition:border-color .2s ease, transform .2s ease;}
-  .tag:hover{transform:translateY(-1px);border-color:rgba(201,164,99,.5);}
+  .tag:hover{transform:translateY(-1px);border-color:rgba(189,189,189,.5);}
   .map-frame{box-shadow:0 14px 40px rgba(0,0,0,.3);}
 
   /* ---------- footer: leve refinamento de espaçamento ---------- */
@@ -1497,11 +1522,11 @@
     opacity:.6;
   }
   .admin-field input{transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease;}
-  .admin-field input:focus{box-shadow:0 0 0 3px rgba(201,164,99,.12);background:var(--input-bg);}
+  .admin-field input:focus{box-shadow:0 0 0 3px rgba(189,189,189,.12);background:var(--input-bg);}
 
   /* ---------- Área Restrita: sidebar ---------- */
   .admin-sidebar{box-shadow:4px 0 24px rgba(0,0,0,.25);}
-  .admin-sidebar-brand .mark{box-shadow:0 4px 14px rgba(201,164,99,.25);}
+  .admin-sidebar-brand .mark{box-shadow:0 4px 14px rgba(189,189,189,.25);}
   .admin-menu button{position:relative;overflow:hidden;}
   .admin-menu button::before{
     content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;
@@ -1513,7 +1538,7 @@
 
   /* ---------- Área Restrita: topbar e conteúdo ---------- */
   .admin-topbar{box-shadow:0 1px 0 rgba(255,255,255,.02), 0 10px 24px -18px rgba(0,0,0,.5);}
-  .admin-avatar-chip{box-shadow:0 4px 12px rgba(201,164,99,.3);}
+  .admin-avatar-chip{box-shadow:0 4px 12px rgba(189,189,189,.3);}
 
   /* ---------- Área Restrita: cards, listas e tabelas ---------- */
   .agendamento-card, .item-card, .stat-card, .dash-panel, .admin-modal, .mini-list-item{
@@ -1548,7 +1573,7 @@
     transition:border-color .2s ease, box-shadow .2s ease;
   }
   .campo input:focus, .campo select:focus, .admin-search-bar input:focus{
-    box-shadow:0 0 0 3px rgba(201,164,99,.12);
+    box-shadow:0 0 0 3px rgba(189,189,189,.12);
   }
 
   /* ---------- modal de edição / visualização ---------- */
@@ -1705,19 +1730,19 @@
   .hero::after{
     content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
     background:
-      radial-gradient(560px 380px at 18% 15%, rgba(201,164,99,.16), transparent 65%),
-      radial-gradient(620px 420px at 85% 80%, rgba(201,164,99,.10), transparent 65%);
+      radial-gradient(560px 380px at 18% 15%, rgba(189,189,189,.16), transparent 65%),
+      radial-gradient(620px 420px at 85% 80%, rgba(189,189,189,.10), transparent 65%);
   }
   .about-card{position:relative;isolation:isolate;}
   .about-card::before{
     content:'';position:absolute;inset:-1px;z-index:-1;border-radius:inherit;pointer-events:none;
-    background:radial-gradient(420px 260px at 15% 0%, rgba(201,164,99,.12), transparent 70%);
+    background:radial-gradient(420px 260px at 15% 0%, rgba(189,189,189,.12), transparent 70%);
   }
   #admin-view .admin-login::before{
     content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     background:
-      radial-gradient(520px 360px at 20% 10%, rgba(201,164,99,.14), transparent 65%),
-      radial-gradient(600px 400px at 90% 90%, rgba(201,164,99,.08), transparent 65%);
+      radial-gradient(520px 360px at 20% 10%, rgba(189,189,189,.14), transparent 65%),
+      radial-gradient(600px 400px at 90% 90%, rgba(189,189,189,.08), transparent 65%);
   }
   .admin-login-card{position:relative;z-index:1;}
 
@@ -1740,7 +1765,7 @@
 
   /* ---------- botões: mesma cor, presença mais refinada ---------- */
   .btn, .btn-outline{border-radius:12px !important;padding-top:15px;padding-bottom:15px;}
-  .btn-gold{box-shadow:0 10px 30px rgba(201,164,99,.25);}
+  .btn-gold{box-shadow:0 10px 30px rgba(189,189,189,.25);}
   .btn-dark{box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 10px 26px rgba(0,0,0,.4);}
   .btn-light{box-shadow:0 10px 26px rgba(0,0,0,.3);}
 
@@ -1751,7 +1776,7 @@
   /* ---------- app do Agendamento Online: mais presença ---------- */
   #booking-view{
     background:
-      radial-gradient(600px 420px at 20% 10%, rgba(201,164,99,.08), transparent 65%),
+      radial-gradient(600px 420px at 20% 10%, rgba(189,189,189,.08), transparent 65%),
       radial-gradient(circle at top,#2c2c2c 0%,#171717 35%,#101010 100%) !important;
   }
   #booking-view .app{
@@ -4685,9 +4710,12 @@ const admin = {
 
     setFiltroRelatorio(f){ this.relatorioFiltro = f; this.desenharRelatorios(); },
 
-    /* Exportação em CSV real (linhas e colunas, dados exatos do relatório em tela).
+    /* Geração do CSV real (linhas e colunas, dados exatos do relatório em tela).
        Ponto e vírgula como separador + BOM UTF-8, para abrir corretamente no Excel
-       em português do Brasil (acentos e "R$" preservados, decimal com vírgula). */
+       em português do Brasil (acentos e "R$" preservados, decimal com vírgula).
+       NÃO baixa mais automaticamente: monta a MESMA matriz "linhas" que depois é
+       usada tanto na pré-visualização quanto no arquivo efetivamente baixado
+       (ver finalizarGeracaoCSV) — garantindo que os dados nunca divirjam. */
     exportarCSV(){
         const r = this.calcularRelatorio();
         const linhas = [];
@@ -4730,13 +4758,128 @@ const admin = {
             this.formatarHora(a.horario), a.status, a.origem==='presencial' ? 'Presencial' : 'Online'
         ]));
 
+        this.finalizarGeracaoCSV(linhas, {
+            nomeArquivo: `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.csv`,
+            titulo: r.modoBarbearia ? 'Relatório Consolidado da Barbearia (CSV)' : 'Relatório de Desempenho (CSV)',
+            tipo: 'relatorios',
+            periodoLabel: r.periodoLabel
+        });
+    },
+
+    /* Constrói o Blob real do CSV a partir da MESMA matriz "linhas" (array de
+       arrays) usada na pré-visualização em tela — nunca gera um conteúdo
+       diferente do que já foi mostrado ao usuário. */
+    construirArquivoCSV(linhas){
         const csv = linhas.map(l => l.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
-        const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-        const url = URL.createObjectURL(blob);
+        return new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+    },
+
+    /* Fluxo do CSV (Relatórios e Gestão do Barbeiro):
+       Gerar CSV → Pré-visualizar (tabela com os dados exatos) → o usuário confere
+       → só então "Baixar CSV" dispara o download. Nunca baixa sozinho ao gerar.
+       Chamado no lugar do download direto: gera o Blob uma única vez a partir de
+       "linhas", abre a pré-visualização com esse mesmo Blob e, em paralelo,
+       registra o relatório no Histórico (mesmo sistema usado pelos PDFs). */
+    finalizarGeracaoCSV(linhas, meta){
+        let blob;
+        try{
+            blob = this.construirArquivoCSV(linhas);
+        }catch(e){
+            alert('Não foi possível gerar o arquivo do relatório em CSV. Tente novamente.');
+            return;
+        }
+        this.abrirPreviewCSV({ linhas, blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
+        this.registrarRelatorioNoHistorico({ ...meta, blob, formato: 'csv' });
+    },
+
+    csvPreview: null,
+
+    /* Pré-visualização real do CSV em formato de tabela — representa EXATAMENTE
+       os dados que estão (ou estarão) no arquivo CSV, nunca dados fictícios.
+       Aceita OU "linhas" (matriz recém-gerada, ainda em memória, com o Blob já
+       pronto) OU a "visualizarUrl" de um CSV já salvo no Histórico (Visualizar):
+       nesse segundo caso, baixa o arquivo já existente e reconstrói a mesma
+       matriz a partir dele (nunca gera um CSV novo nem duplica nada). Em ambos
+       os casos, "Baixar CSV" sempre baixa o mesmíssimo arquivo mostrado na tabela. */
+    async abrirPreviewCSV({ linhas, blob, visualizarUrl, nomeArquivo, titulo }){
+        this.fecharObjectUrlPreviewCsvAnterior();
+        let matriz = linhas, blobFinal = blob;
+        if(!matriz){
+            try{
+                const resp = await fetch(visualizarUrl);
+                blobFinal = await resp.blob();
+                matriz = this.parsearCSV(await blobFinal.text());
+            }catch(e){
+                alert('Não foi possível carregar a pré-visualização deste relatório em CSV.');
+                return;
+            }
+        }
+        const urlBaixar = URL.createObjectURL(blobFinal);
+        this.csvPreview = { nomeArquivo: nomeArquivo || 'relatorio.csv', baixarUrl: urlBaixar };
+
+        const tituloEl = document.getElementById('admin-page-title');
+        if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
+
+        const maxCol = matriz.reduce((m,l) => Math.max(m, l.length), 1);
+        const escapar = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="admin-search-bar">
+                <button class="ag-btn" onclick="admin.fecharPreviewCSV()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                <button class="admin-btn-primario" onclick="admin.baixarCsvPreview()"><i class="fa-solid fa-file-arrow-down"></i> Baixar CSV</button>
+            </div>
+            <div class="dash-panel pdf-preview-panel">
+                <h4><i class="fa-solid fa-file-csv"></i> Pré-visualização do Relatório${titulo ? ' — '+titulo : ''}</h4>
+                <div class="csv-preview-table-wrap">
+                    <table class="csv-preview-table"><tbody>
+                        ${matriz.map(linha => `<tr>${Array.from({length:maxCol}).map((_,i)=>`<td>${escapar(linha[i])}</td>`).join('')}</tr>`).join('')}
+                    </tbody></table>
+                </div>
+            </div>
+        `;
+        fecharMenuAdminMobile();
+    },
+
+    /* fecha a pré-visualização do CSV e volta para a página de onde ela foi aberta */
+    fecharPreviewCSV(){
+        this.fecharObjectUrlPreviewCsvAnterior();
+        this.csvPreview = null;
+        this.irPara(this.paginaAtual);
+    },
+
+    fecharObjectUrlPreviewCsvAnterior(){
+        if(this.csvPreview && this.csvPreview.baixarUrl){
+            try{ URL.revokeObjectURL(this.csvPreview.baixarUrl); }catch(e){}
+        }
+    },
+
+    /* único ponto do sistema em que um CSV é efetivamente baixado — só acontece
+       quando o usuário clica em "Baixar CSV" na pré-visualização, nunca antes */
+    baixarCsvPreview(){
+        if(!this.csvPreview) return;
         const a = document.createElement('a');
-        a.href = url; a.download = `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        a.href = this.csvPreview.baixarUrl;
+        a.download = this.csvPreview.nomeArquivo;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    },
+
+    /* reconstrói a matriz de linhas a partir do texto de um CSV já salvo,
+       revertendo exatamente o formato usado em construirArquivoCSV (campos entre
+       aspas, separados por ";", aspas duplicadas "" como escape de aspas) */
+    parsearCSV(texto){
+        const semBOM = texto.replace(/^\uFEFF/, '');
+        const linhasTexto = semBOM.split(/\r\n|\n/);
+        if(linhasTexto.length && linhasTexto[linhasTexto.length-1] === '') linhasTexto.pop();
+        return linhasTexto.map(linha => {
+            if(linha === '') return [];
+            const campos = [];
+            const regex = /"((?:[^"]|"")*)"(;|$)/g;
+            let m;
+            while((m = regex.exec(linha)) !== null){
+                campos.push(m[1].replace(/""/g,'"'));
+            }
+            return campos;
+        });
     },
 
     /* Devolve a logo oficial da Prieto Barbearia (já embutida em base64 na
@@ -4784,7 +4927,7 @@ const admin = {
         const C = {
             bg: [11,11,12], card: [24,24,27], border: [40,40,44],
             texto: [242,241,238], muted: [154,154,158],
-            dourado: [201,164,99], douradoEscuro: [138,117,80]
+            dourado: [189,189,189], douradoEscuro: [143,143,143]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
@@ -5099,9 +5242,12 @@ const admin = {
         const r=await this.obterDadosRelatorioGestao(); if(!r) return;
         const linhas=[['PRIETO BARBEARIA - RELATÓRIO DO BARBEIRO'],[`Barbeiro: ${this.barbeiroGestao.nome}`],[`Período: ${r.periodoLabel}`],[],['RESUMO'],['Faturamento',this.formatarMoeda(r.faturamento)],['Atendimentos finalizados',r.finalizados.length],['Clientes atendidos',r.clientes.size],[],['DETALHAMENTO'],['Cliente','Telefone','Serviço','Valor','Data','Horário','Status','Origem']];
         r.lista.forEach(a=>linhas.push([a.cliente_nome||'Cliente presencial',a.cliente_telefone||'',a.servicos?a.servicos.nome:'',this.formatarMoeda(a.servico_valor||0),this.formatarDataBR(a.data),this.formatarHora(a.horario),a.status,a.origem==='presencial'?'Presencial':'Online']));
-        const csv=linhas.map(l=>l.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\r\n');
-        const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
-        const a=document.createElement('a');a.href=url;a.download=`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.csv`;a.click();URL.revokeObjectURL(url);
+        this.finalizarGeracaoCSV(linhas, {
+            nomeArquivo: `relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.csv`,
+            titulo: `Relatório do Barbeiro (CSV) — ${this.barbeiroGestao.nome}`,
+            tipo: 'gestao-barbeiro',
+            periodoLabel: r.periodoLabel
+        });
     },
 
     /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
@@ -5127,7 +5273,7 @@ const admin = {
         const C = {
             bg: [11,11,12], card: [24,24,27], border: [40,40,44],
             texto: [242,241,238], muted: [154,154,158],
-            dourado: [201,164,99], douradoEscuro: [138,117,80]
+            dourado: [189,189,189], douradoEscuro: [143,143,143]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
@@ -5259,26 +5405,37 @@ const admin = {
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
 
-    /* ============ HISTÓRICO DE PDFs GERADOS ============
-       Substitui o download automático de "Emitir PDF" por um fluxo de
-       pré-visualização real (Emitir → Gerar → Registrar no Histórico → Abrir
-       Pré-visualização → o usuário decide "Baixar PDF" ou "Voltar"). O mesmo
-       arquivo PDF gerado (mesmo blob) é usado tanto na pré-visualização quanto
+    /* ============ HISTÓRICO DE RELATÓRIOS GERADOS (CSV + PDF) ============
+       Substitui o download automático de "Emitir PDF"/"Gerar CSV" por um fluxo de
+       pré-visualização real (Gerar → Registrar no Histórico → Abrir
+       Pré-visualização → o usuário decide "Baixar" ou "Voltar"). O mesmo
+       arquivo gerado (mesmo blob) é usado tanto na pré-visualização quanto
        no download — nunca é gerado um segundo arquivo diferente.
 
        Depende de dois recursos no Supabase (documentados junto ao código-fonte
        entregue, precisam ser criados uma única vez no projeto):
-       - bucket de Storage "relatorios-pdfs" (ver BUCKET_RELATORIOS_PDF)
+       - bucket de Storage "relatorios-pdfs" (ver BUCKET_RELATORIOS_PDF) — guarda
+         tanto os PDFs quanto os CSVs gerados, cada um com seu content-type
        - tabela "relatorios_gerados" (colunas: id, barbeiro_id, barbeiro_nome,
-         tipo, titulo, periodo_label, arquivo_path, nome_arquivo, created_at)
+         tipo, titulo, periodo_label, arquivo_path, nome_arquivo, created_at,
+         formato). A coluna "formato" ('pdf' ou 'csv') é a única novidade de
+         estrutura em relação ao histórico que já existia só para PDFs — se a
+         coluna não existir ainda no projeto, basta criá-la (text, default
+         'pdf') para não perder nenhum registro já salvo anteriormente.
+
+       O histórico é organizado em duas seções dinâmicas — "RELATÓRIOS DE CSV"
+       e "RELATÓRIOS PDF" — que só aparecem quando existe pelo menos um
+       relatório daquele formato (ver renderHistoricoRelatorios). Elas não são
+       itens novos do menu lateral: continuam dentro da mesma página "Histórico
+       de Relatórios" que já existia.
 
        Cada registro do histórico é salvo com o barbeiro_id de quem estava
-       logado no momento em que o PDF foi emitido — tanto o relatório emitido
-       pelo próprio barbeiro em "Relatórios" quanto o relatório emitido pelo
-       dono/administrador em "Gestão do Barbeiro" (tela que já é restrita ao
-       administrador). Isso mantém, sem criar nenhuma permissão nova, a mesma
-       separação de acesso que o sistema já tinha: cada barbeiro só enxerga em
-       seu próprio Histórico os PDFs que ele mesmo emitiu. */
+       logado no momento em que o relatório foi emitido — tanto o relatório
+       emitido pelo próprio barbeiro em "Relatórios" quanto o relatório emitido
+       pelo dono/administrador em "Gestão do Barbeiro" (tela que já é restrita
+       ao administrador). Isso mantém, sem criar nenhuma permissão nova, a
+       mesma separação de acesso que o sistema já tinha: cada barbeiro só
+       enxerga em seu próprio Histórico os relatórios que ele mesmo emitiu. */
     pdfPreview: null,
 
     /* chamado ao final de exportarPDF() / exportarGestaoPDF() no lugar de doc.save():
@@ -5295,7 +5452,7 @@ const admin = {
             return;
         }
         this.abrirPreviewPDF({ blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
-        this.registrarPdfNoHistorico({ ...meta, blob });
+        this.registrarRelatorioNoHistorico({ ...meta, blob, formato: 'pdf' });
     },
 
     /* pré-visualização do PDF real (não é imagem nem HTML fingindo ser PDF):
@@ -5325,9 +5482,21 @@ const admin = {
                 <div class="pdf-preview-frame-wrap">
                     <iframe src="${urlVisualizar}" class="pdf-preview-frame" title="Pré-visualização do relatório em PDF"></iframe>
                 </div>
+                <div class="pdf-preview-mobile-fallback">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <p>A pré-visualização dentro da página nem sempre funciona no celular. Abra o PDF em uma nova aba para visualizá-lo.</p>
+                    <button class="admin-btn-primario" onclick="admin.abrirPdfEmNovaAba()"><i class="fa-solid fa-up-right-from-square"></i> Abrir PDF</button>
+                </div>
             </div>
         `;
         fecharMenuAdminMobile();
+    },
+
+    /* usado pelo botão "Abrir PDF" do bloco alternativo mobile: abre o mesmíssimo
+       arquivo já mostrado no iframe/baixado, em uma nova aba/janela do navegador */
+    abrirPdfEmNovaAba(){
+        if(!this.pdfPreview) return;
+        window.open(this.pdfPreview.visualizarUrl, '_blank');
     },
 
     /* fecha a pré-visualização e volta para a página de onde ela foi aberta
@@ -5353,43 +5522,53 @@ const admin = {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     },
 
-    /* envia o PDF já gerado (mesmo blob mostrado na pré-visualização) para o
-       Storage do Supabase e registra a linha correspondente no histórico.
-       Só entra aqui quando o PDF foi realmente gerado com sucesso — se o
+    /* envia o arquivo (PDF ou CSV) já gerado — mesmo blob mostrado na
+       pré-visualização — para o Storage do Supabase e registra a linha
+       correspondente no histórico, com o "formato" certo ('pdf' ou 'csv').
+       Só entra aqui quando o arquivo foi realmente gerado com sucesso — se o
        upload ou o registro falharem, o relatório NÃO aparece no histórico
        (não fica um registro "quebrado" apontando para um arquivo inexistente),
        mas a pré-visualização já aberta continua funcionando normalmente. */
-    async registrarPdfNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo }){
+    async registrarRelatorioNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo, formato }){
         if(!this.barbeiro || !blob) return;
         try{
             const caminho = `${this.barbeiro.id}/${Date.now()}-${nomeArquivo}`;
+            const contentType = formato === 'csv' ? 'text/csv;charset=utf-8;' : 'application/pdf';
             const { error: erroUpload } = await sb.storage.from(BUCKET_RELATORIOS_PDF)
-                .upload(caminho, blob, { contentType: 'application/pdf', upsert: false });
+                .upload(caminho, blob, { contentType, upsert: false });
             if(erroUpload){
-                console.warn('Não foi possível salvar o PDF no Histórico de PDFs Gerados:', erroUpload.message);
+                console.warn('Não foi possível salvar o relatório no Histórico:', erroUpload.message);
                 return;
             }
             const { error: erroInsert } = await sb.from('relatorios_gerados').insert({
                 barbeiro_id: this.barbeiro.id,
                 barbeiro_nome: this.barbeiro.nome,
                 tipo, titulo, periodo_label: periodoLabel,
-                arquivo_path: caminho, nome_arquivo: nomeArquivo
+                arquivo_path: caminho, nome_arquivo: nomeArquivo,
+                formato: formato || 'pdf'
             });
             if(erroInsert){
-                console.warn('Não foi possível registrar o PDF no Histórico de PDFs Gerados:', erroInsert.message);
+                console.warn('Não foi possível registrar o relatório no Histórico:', erroInsert.message);
                 return;
             }
             // se a tela de histórico já estiver aberta (em outra aba/momento), atualiza a lista
-            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview) this.renderHistoricoPdfs();
+            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview && !this.csvPreview) this.renderHistoricoRelatorios();
         }catch(e){
-            console.warn('Falha inesperada ao registrar o PDF no Histórico de PDFs Gerados:', e);
+            console.warn('Falha inesperada ao registrar o relatório no Histórico:', e);
         }
     },
 
-    /* lista, para o barbeiro logado, somente os PDFs que ele mesmo emitiu —
-       nunca mistura com o histórico de outro barbeiro */
-    async renderHistoricoPdfs(){
-        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando histórico de PDFs...</div>';
+    /* lista, para o barbeiro logado, somente os relatórios (CSV e PDF) que ele
+       mesmo emitiu — nunca mistura com o histórico de outro barbeiro.
+
+       Organiza o resultado em duas seções DINÂMICAS: "RELATÓRIOS DE CSV" e
+       "RELATÓRIOS PDF". Cada uma só aparece na tela quando existe pelo menos
+       um relatório daquele formato — nunca mostra um título de seção vazio.
+       Se não houver nenhum relatório de nenhum formato, mostra a mensagem de
+       estado inicial ("Nenhum relatório gerado ainda."). */
+    async renderHistoricoPdfs(){ return this.renderHistoricoRelatorios(); }, // alias de compatibilidade
+    async renderHistoricoRelatorios(){
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando histórico de relatórios...</div>';
         if(!this.barbeiro) return;
         const { data, error } = await sb.from('relatorios_gerados')
             .select('*')
@@ -5398,25 +5577,31 @@ const admin = {
 
         if(error){
             document.getElementById('admin-content').innerHTML =
-                `<div class="admin-empty">Não foi possível carregar o histórico de PDFs.<br>${error.message||''}</div>`;
+                `<div class="admin-empty">Não foi possível carregar o histórico de relatórios.<br>${error.message||''}</div>`;
             return;
         }
 
-        this._historicoPdfsCache = data || [];
-        if(!this._historicoPdfsCache.length){
-            document.getElementById('admin-content').innerHTML =
-                '<div class="admin-empty">Nenhum PDF gerado ainda.<br>Os relatórios emitidos em PDF (em "Relatórios"'+(this.ehAdmin()?' ou "Gestão do Barbeiro"':'')+') aparecerão aqui automaticamente.</div>';
+        this._historicoRelatoriosCache = data || [];
+        // registros salvos antes desta atualização não têm a coluna "formato"
+        // preenchida — como até então só existiam PDFs no histórico, tratamos a
+        // ausência de "formato" como 'pdf', para não perder nada do que já existia
+        const itensCsv = this._historicoRelatoriosCache.filter(i => i.formato === 'csv');
+        const itensPdf = this._historicoRelatoriosCache.filter(i => (i.formato || 'pdf') === 'pdf');
+
+        if(!itensCsv.length && !itensPdf.length){
+            document.getElementById('admin-content').innerHTML = `
+                <div class="dash-panel">
+                    <h4>Relatórios</h4>
+                    <div class="admin-empty">Nenhum relatório gerado ainda.<br>Os relatórios emitidos em CSV ou PDF (em "Relatórios"${this.ehAdmin()?' ou "Gestão do Barbeiro"':''}) aparecerão aqui automaticamente.</div>
+                </div>`;
             return;
         }
 
-        document.getElementById('admin-content').innerHTML = `
+        const secao = (titulo, icone, itens) => !itens.length ? '' : `
             <div class="dash-panel">
-                <div class="admin-search-bar" style="justify-content:space-between;">
-                    <h4 style="margin:0;"><i class="fa-solid fa-file-pdf"></i> Histórico de Relatórios</h4>
-                    <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoPdfs()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
-                </div>
+                <h4><i class="fa-solid ${icone}"></i> ${titulo}</h4>
                 <div class="mini-list">
-                    ${this._historicoPdfsCache.map(item => `
+                    ${itens.map(item => `
                         <div class="mini-list-item pdf-historico-item">
                             <span class="n">
                                 ${item.titulo || 'Relatório'}
@@ -5425,29 +5610,49 @@ const admin = {
                                 </small>
                             </span>
                             <span class="m pdf-historico-acoes">
-                                <button class="ag-btn" onclick="admin.visualizarPdfHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
-                                <button class="ag-btn" onclick="admin.baixarPdfHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
-                                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarPdfDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
+                                <button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                                <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
+                                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarRelatorioDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
                             </span>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
+
+        // um único botão "Apagar tudo" acima das seções: remove TODOS os relatórios
+        // (CSV + PDF) do barbeiro logado de uma vez só — não é mais separado por formato
+        const cabecalho = `
+            <div class="admin-search-bar" style="justify-content:flex-end;">
+                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoRelatorios()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
+            </div>
+        `;
+
+        // ordem: CSV primeiro, PDF depois — cada seção só é impressa quando tem conteúdo
+        document.getElementById('admin-content').innerHTML =
+            cabecalho +
+            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv) +
+            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf);
     },
 
-    /* reabre a pré-visualização de um PDF já existente — reaproveita o arquivo
-       já salvo no Storage, nunca gera um novo PDF nem duplica o registro */
-    visualizarPdfHistorico(id){
-        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+    /* reabre a pré-visualização de um relatório já existente — reaproveita o
+       arquivo já salvo no Storage, nunca gera um novo relatório nem duplica o
+       registro. Direciona para a pré-visualização certa conforme o formato. */
+    visualizarRelatorioHistorico(id){
+        const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item) return;
+        const formato = item.formato || 'pdf';
         const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
-        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
-        this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+        if(formato === 'csv'){
+            this.abrirPreviewCSV({ visualizarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+        }else{
+            const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+            this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+        }
     },
 
-    baixarPdfHistorico(id){
-        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+    baixarRelatorioHistorico(id){
+        const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item) return;
         const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
         const a = document.createElement('a');
@@ -5455,19 +5660,21 @@ const admin = {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
     },
 
-    /* apaga somente UM PDF do histórico: remove o arquivo do Storage e, em seguida,
-       o registro correspondente. Nunca mexe em agendamentos, clientes, barbeiros,
-       configurações, serviços ou no histórico de outro barbeiro — o próprio filtro
-       por barbeiro_id (aqui e na policy do banco) garante isso. */
-    async apagarPdfDoHistorico(id){
-        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+    /* apaga somente UM relatório (CSV ou PDF) do histórico: remove o arquivo do
+       Storage e, em seguida, o registro correspondente. Nunca mexe em
+       agendamentos, clientes, barbeiros, configurações, serviços ou no
+       histórico de outro barbeiro — o próprio filtro por barbeiro_id (aqui e
+       na policy do banco) garante isso. Se essa era a última linha daquele
+       formato, a seção correspondente desaparece sozinha no próximo render. */
+    async apagarRelatorioDoHistorico(id){
+        const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item || !this.barbeiro) return;
         if(!confirm('Deseja apagar este relatório do histórico?')) return;
 
         if(item.arquivo_path){
             const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove([item.arquivo_path]);
             if(erroStorage){
-                alert('Não foi possível apagar o arquivo do PDF: ' + erroStorage.message);
+                alert('Não foi possível apagar o arquivo do relatório: ' + erroStorage.message);
                 return;
             }
         }
@@ -5479,31 +5686,41 @@ const admin = {
             alert('Não foi possível apagar o registro do histórico: ' + erroDelete.message);
             return;
         }
-        this.renderHistoricoPdfs();
+        this.renderHistoricoRelatorios();
     },
 
-    /* apaga TODOS os PDFs do histórico do barbeiro logado — nunca de outro barbeiro */
-    async apagarTodoHistoricoPdfs(){
+    /* apaga TODOS os relatórios do histórico do barbeiro logado, independente do
+       formato (CSV e PDF juntos) — nunca apaga relatórios de outro barbeiro.
+       "barbeiro.id" é usado como filtro de segurança tanto para selecionar quais
+       itens entram na exclusão quanto na cláusula .eq() enviada ao Supabase (além
+       da policy do banco), então mesmo que o barbeiro tenha só CSVs, só PDFs, ou
+       os dois, tudo que for dele é removido do Storage e da tabela de uma vez. */
+    async apagarTodoHistoricoRelatorios(){
         if(!this.barbeiro) return;
-        const itens = this._historicoPdfsCache || [];
+        const itens = (this._historicoRelatoriosCache || []).filter(i => i.barbeiro_id === this.barbeiro.id);
         if(!itens.length) return;
-        if(!confirm('Tem certeza que deseja apagar todo o histórico de PDFs? Essa ação não poderá ser desfeita.')) return;
+        if(!confirm('Tem certeza que deseja apagar todo o histórico de relatórios? Todos os arquivos PDF e CSV serão excluídos permanentemente. Essa ação não poderá ser desfeita.')) return;
 
+        // Parte 1 — Storage: apaga os arquivos (PDF e CSV) do bucket relatorios-pdfs
         const caminhos = itens.map(i => i.arquivo_path).filter(Boolean);
         if(caminhos.length){
             const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove(caminhos);
             if(erroStorage){
-                alert('Não foi possível apagar os arquivos dos PDFs: ' + erroStorage.message);
+                alert('Não foi possível apagar os arquivos dos relatórios: ' + erroStorage.message);
                 return;
             }
         }
+        // Parte 2 — banco: apaga os registros correspondentes, só do barbeiro logado
         const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
-            .eq('barbeiro_id', this.barbeiro.id);
+            .eq('barbeiro_id', this.barbeiro.id).in('id', itens.map(i => i.id));
         if(erroDelete){
-            alert('Não foi possível apagar o histórico: ' + erroDelete.message);
+            alert('Não foi possível apagar os registros do histórico: ' + erroDelete.message);
             return;
         }
-        this.renderHistoricoPdfs();
+        // sucesso nas duas partes: atualiza o cache local e recarrega a tela, que
+        // volta a mostrar "Nenhum relatório gerado ainda." quando não sobra nada
+        this._historicoRelatoriosCache = this._historicoRelatoriosCache.filter(i => i.barbeiro_id !== this.barbeiro.id);
+        this.renderHistoricoRelatorios();
     },
 
     /* ============ 10. CONFIGURAÇÕES ============ */
