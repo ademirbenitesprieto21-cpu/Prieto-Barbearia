@@ -1196,6 +1196,22 @@
   .mini-list-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 12px;background:var(--input-bg);border-radius:10px;}
   .mini-list-item .n{font-weight:600;}
   .mini-list-item .m{color:var(--text-muted);font-size:12px;}
+  /* Pré-visualização de PDF (Emitir PDF / Histórico de PDFs Gerados): segue o
+     mesmo cartão escuro usado em .dash-panel, só acrescenta a área do iframe. */
+  .pdf-preview-panel h4{display:flex;align-items:center;gap:8px;}
+  .pdf-preview-frame-wrap{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:75vh;min-height:420px;}
+  .pdf-preview-frame{width:100%;height:100%;border:0;display:block;}
+  @media(max-width:600px){ .pdf-preview-frame-wrap{height:65vh;min-height:360px;} }
+  /* Histórico de PDFs Gerados: reaproveita o .mini-list-item, só ajusta os botões */
+  .pdf-historico-item{align-items:center;gap:12px;}
+  .pdf-historico-item .n{line-height:1.5;}
+  .pdf-historico-meta{color:var(--text-muted);font-weight:400;}
+  .pdf-historico-acoes{display:flex;gap:8px;flex-shrink:0;}
+  @media(max-width:600px){
+    .pdf-historico-item{flex-direction:column;align-items:flex-start;}
+    .pdf-historico-acoes{width:100%;}
+    .pdf-historico-acoes .ag-btn{flex:1;justify-content:center;}
+  }
   .bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;}
   .bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;}
   .bar-chart .bar{width:100%;background:var(--accent);border-radius:5px 5px 0 0;min-height:3px;transition:height .3s;}
@@ -2257,6 +2273,7 @@
         <li><button data-page="notificacoes" onclick="admin.irPara('notificacoes')"><i class="fa-solid fa-bell"></i>Notificações</button></li>
         <li><button data-page="financeiro" onclick="admin.irPara('financeiro')"><i class="fa-solid fa-sack-dollar"></i>Financeiro</button></li>
         <li><button data-page="relatorios" onclick="admin.irPara('relatorios')"><i class="fa-solid fa-chart-line"></i>Relatórios</button></li>
+        <li><button data-page="historico-pdfs" onclick="admin.irPara('historico-pdfs')"><i class="fa-solid fa-file-pdf"></i>Histórico de Relatórios</button></li>
         <li><button data-page="configuracoes" onclick="admin.irPara('configuracoes')"><i class="fa-solid fa-gear"></i>Configurações</button></li>
         <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
@@ -3085,6 +3102,13 @@ const SUPABASE_URL = 'https://suxzplbcesapowoppwhf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1eHpwbGJjZXNhcG93b3Bwd2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTk2NzEsImV4cCI6MjEwMTE3NTY3MX0.61503msT-pGNLnbJCNbzTJ2vyN2Y20U8ZYWBBFD3jE0';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* Nome do bucket do Supabase Storage usado para guardar os arquivos PDF reais
+   dos relatórios emitidos (ver PARTE "HISTÓRICO DE PDFs GERADOS" mais abaixo).
+   Esse bucket + a tabela "relatorios_gerados" precisam existir no projeto do
+   Supabase — o SQL de criação de ambos está documentado junto com o código
+   dessa funcionalidade. */
+const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
+
 function showAdmin(){
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('booking-view').classList.remove('active');
@@ -3124,6 +3148,7 @@ const TITULOS_PAGINA = {
     notificacoes: 'Notificações',
     financeiro: 'Financeiro',
     relatorios: 'Relatórios',
+    'historico-pdfs': 'Histórico de Relatórios',
     perfil: 'Perfil',
     configuracoes: 'Configurações',
     'gestao-barbeiro': 'Gestão do Barbeiro'
@@ -3251,6 +3276,20 @@ const admin = {
         });
         const itemGestao = document.getElementById('menu-item-gestao-barbeiro');
         if(itemGestao) itemGestao.style.display = this.ehAdmin() ? '' : 'none';
+
+        // Reordena o menu SOMENTE para o Barbeiro Tradicional (admin/dono): "Configurações"
+        // passa a ficar imediatamente abaixo de "Gestão de Barbeiros" (menu-item-gestao-barbeiro).
+        // O Barbeiro Experiente nunca é admin, então esse bloco não altera a ordem dele —
+        // sua navegação permanece exatamente como já está hoje.
+        if(this.ehAdmin() && itemGestao){
+            const btnConfig = document.querySelector('#admin-menu button[data-page="configuracoes"]');
+            const itemConfig = btnConfig ? btnConfig.closest('li') : null;
+            // só move se ainda não estiver na posição correta (evita mexer no DOM à toa
+            // se aplicarPermissoes() for chamada mais de uma vez na mesma sessão)
+            if(itemConfig && itemGestao.nextElementSibling !== itemConfig){
+                itemGestao.insertAdjacentElement('afterend', itemConfig);
+            }
+        }
     },
 
     /* ============ STATUS ONLINE ============ */
@@ -3350,6 +3389,7 @@ const admin = {
             notificacoes: () => this.renderNotificacoes(),
             financeiro: () => this.renderFinanceiro(),
             relatorios: () => this.renderRelatorios(),
+            'historico-pdfs': () => this.renderHistoricoPdfs(),
             configuracoes: () => this.renderConfiguracoes(),
             'gestao-barbeiro': () => this.renderGestaoBarbeiro()
         };
@@ -4630,7 +4670,6 @@ const admin = {
             </div>
             ${r.modoBarbearia ? `<div class="dash-panel" style="border-color:var(--accent);margin-bottom:16px;"><h4><i class="fa-solid fa-store"></i> Visão consolidada — todos os barbeiros (${r.periodoLabel})</h4><div style="color:var(--text-muted);font-size:12.5px;margin-top:-6px;margin-bottom:4px;">Os números abaixo somam os atendimentos de todos os profissionais da Prieto Barbearia neste período.</div></div>` : ''}
             <div class="stat-grid">
-                <div class="stat-card"><div class="label">Clientes novos</div><div class="value">${r.clientesNovos}</div></div>
                 <div class="stat-card"><div class="label">Clientes recorrentes</div><div class="value">${r.clientesRecorrentes}</div></div>
                 <div class="stat-card"><div class="label">Faturamento no período</div><div class="value">${this.formatarMoeda(r.faturamento)}</div></div>
                 <div class="stat-card"><div class="label">Cancelamentos</div><div class="value">${r.cancelados.length}</div></div>
@@ -4657,7 +4696,6 @@ const admin = {
         linhas.push([]);
         linhas.push(['RESUMO']);
         linhas.push(['Categoria','Valor']);
-        linhas.push(['Clientes novos', r.clientesNovos]);
         linhas.push(['Clientes recorrentes', r.clientesRecorrentes]);
         linhas.push(['Faturamento no período', this.formatarMoeda(r.faturamento)]);
         linhas.push(['Cancelamentos', r.cancelados.length]);
@@ -4800,12 +4838,11 @@ const admin = {
         doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
 
         const cartoes = [
-            {valor: String(r.clientesNovos), label: 'CLIENTES NOVOS'},
             {valor: String(r.clientesRecorrentes), label: 'CLIENTES RECORRENTES'},
             {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
             {valor: String(r.cancelados.length), label: 'CANCELAMENTOS'}
         ];
-        const gap = 4, largCartao = (pageW - margem*2 - gap*3)/4, altCartao = 23;
+        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
             doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
@@ -4875,7 +4912,16 @@ const admin = {
             rodape(p);
         }
 
-        doc.save(`relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.pdf`);
+        // não baixa mais automaticamente: gera o arquivo PDF real uma única vez e
+        // reaproveita esse MESMO arquivo tanto para a pré-visualização quanto para
+        // o download (botão "Baixar PDF"), registrando-o no Histórico de PDFs Gerados
+        const nomeArquivo = `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.pdf`;
+        this.finalizarGeracaoPDF(doc, {
+            nomeArquivo,
+            titulo: r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho',
+            tipo: 'relatorios',
+            periodoLabel: r.periodoLabel
+        });
     },
 
     /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
@@ -5199,12 +5245,265 @@ const admin = {
             rodape(p);
         }
 
-        doc.save(`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`);
+        const nomeArquivo = `relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
+        this.finalizarGeracaoPDF(doc, {
+            nomeArquivo,
+            titulo: `Relatório do Barbeiro — ${this.barbeiroGestao.nome}`,
+            tipo: 'gestao-barbeiro',
+            periodoLabel: r.periodoLabel
+        });
     },
 
     formatarDataHoraBR(iso){
         const d = new Date(iso);
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    },
+
+    /* ============ HISTÓRICO DE PDFs GERADOS ============
+       Substitui o download automático de "Emitir PDF" por um fluxo de
+       pré-visualização real (Emitir → Gerar → Registrar no Histórico → Abrir
+       Pré-visualização → o usuário decide "Baixar PDF" ou "Voltar"). O mesmo
+       arquivo PDF gerado (mesmo blob) é usado tanto na pré-visualização quanto
+       no download — nunca é gerado um segundo arquivo diferente.
+
+       Depende de dois recursos no Supabase (documentados junto ao código-fonte
+       entregue, precisam ser criados uma única vez no projeto):
+       - bucket de Storage "relatorios-pdfs" (ver BUCKET_RELATORIOS_PDF)
+       - tabela "relatorios_gerados" (colunas: id, barbeiro_id, barbeiro_nome,
+         tipo, titulo, periodo_label, arquivo_path, nome_arquivo, created_at)
+
+       Cada registro do histórico é salvo com o barbeiro_id de quem estava
+       logado no momento em que o PDF foi emitido — tanto o relatório emitido
+       pelo próprio barbeiro em "Relatórios" quanto o relatório emitido pelo
+       dono/administrador em "Gestão do Barbeiro" (tela que já é restrita ao
+       administrador). Isso mantém, sem criar nenhuma permissão nova, a mesma
+       separação de acesso que o sistema já tinha: cada barbeiro só enxerga em
+       seu próprio Histórico os PDFs que ele mesmo emitiu. */
+    pdfPreview: null,
+
+    /* chamado ao final de exportarPDF() / exportarGestaoPDF() no lugar de doc.save():
+       transforma o documento jsPDF já pronto em um arquivo (blob) real uma única
+       vez, abre a pré-visualização imediatamente com esse arquivo e, em paralelo,
+       tenta registrá-lo no histórico (sem travar a pré-visualização caso a rede
+       esteja lenta ou indisponível). */
+    finalizarGeracaoPDF(doc, meta){
+        let blob;
+        try{
+            blob = doc.output('blob');
+        }catch(e){
+            alert('Não foi possível gerar o arquivo do relatório em PDF. Tente novamente.');
+            return;
+        }
+        this.abrirPreviewPDF({ blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
+        this.registrarPdfNoHistorico({ ...meta, blob });
+    },
+
+    /* pré-visualização do PDF real (não é imagem nem HTML fingindo ser PDF):
+       aceita OU um "blob" recém-gerado (Emitir PDF) OU as URLs já salvas de um
+       item do Histórico (Visualizar). Em ambos os casos, o link usado para
+       "Baixar PDF" aponta exatamente para o mesmo arquivo mostrado no iframe. */
+    abrirPreviewPDF({ blob, visualizarUrl, baixarUrl, nomeArquivo, titulo }){
+        this.fecharObjectUrlPreviewAnterior();
+        let urlVisualizar = visualizarUrl, urlBaixar = baixarUrl, isBlob = false;
+        if(blob){
+            urlVisualizar = URL.createObjectURL(blob);
+            urlBaixar = urlVisualizar; // mesmíssimo arquivo para visualizar e baixar
+            isBlob = true;
+        }
+        this.pdfPreview = { visualizarUrl: urlVisualizar, baixarUrl: urlBaixar, nomeArquivo: nomeArquivo || 'relatorio.pdf', isBlob };
+
+        const tituloEl = document.getElementById('admin-page-title');
+        if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="admin-search-bar">
+                <button class="ag-btn" onclick="admin.fecharPreviewPDF()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                <button class="admin-btn-primario" onclick="admin.baixarPdfPreview()"><i class="fa-solid fa-file-arrow-down"></i> Baixar PDF</button>
+            </div>
+            <div class="dash-panel pdf-preview-panel">
+                <h4><i class="fa-solid fa-file-pdf"></i> Pré-visualização do Relatório${titulo ? ' — '+titulo : ''}</h4>
+                <div class="pdf-preview-frame-wrap">
+                    <iframe src="${urlVisualizar}" class="pdf-preview-frame" title="Pré-visualização do relatório em PDF"></iframe>
+                </div>
+            </div>
+        `;
+        fecharMenuAdminMobile();
+    },
+
+    /* fecha a pré-visualização e volta para a página de onde ela foi aberta
+       (Relatórios, Gestão do Barbeiro ou o próprio Histórico de PDFs) */
+    fecharPreviewPDF(){
+        this.fecharObjectUrlPreviewAnterior();
+        this.pdfPreview = null;
+        this.irPara(this.paginaAtual);
+    },
+
+    fecharObjectUrlPreviewAnterior(){
+        if(this.pdfPreview && this.pdfPreview.isBlob && this.pdfPreview.visualizarUrl){
+            try{ URL.revokeObjectURL(this.pdfPreview.visualizarUrl); }catch(e){}
+        }
+    },
+
+    baixarPdfPreview(){
+        if(!this.pdfPreview) return;
+        const a = document.createElement('a');
+        a.href = this.pdfPreview.baixarUrl;
+        a.download = this.pdfPreview.nomeArquivo;
+        a.target = '_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    },
+
+    /* envia o PDF já gerado (mesmo blob mostrado na pré-visualização) para o
+       Storage do Supabase e registra a linha correspondente no histórico.
+       Só entra aqui quando o PDF foi realmente gerado com sucesso — se o
+       upload ou o registro falharem, o relatório NÃO aparece no histórico
+       (não fica um registro "quebrado" apontando para um arquivo inexistente),
+       mas a pré-visualização já aberta continua funcionando normalmente. */
+    async registrarPdfNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo }){
+        if(!this.barbeiro || !blob) return;
+        try{
+            const caminho = `${this.barbeiro.id}/${Date.now()}-${nomeArquivo}`;
+            const { error: erroUpload } = await sb.storage.from(BUCKET_RELATORIOS_PDF)
+                .upload(caminho, blob, { contentType: 'application/pdf', upsert: false });
+            if(erroUpload){
+                console.warn('Não foi possível salvar o PDF no Histórico de PDFs Gerados:', erroUpload.message);
+                return;
+            }
+            const { error: erroInsert } = await sb.from('relatorios_gerados').insert({
+                barbeiro_id: this.barbeiro.id,
+                barbeiro_nome: this.barbeiro.nome,
+                tipo, titulo, periodo_label: periodoLabel,
+                arquivo_path: caminho, nome_arquivo: nomeArquivo
+            });
+            if(erroInsert){
+                console.warn('Não foi possível registrar o PDF no Histórico de PDFs Gerados:', erroInsert.message);
+                return;
+            }
+            // se a tela de histórico já estiver aberta (em outra aba/momento), atualiza a lista
+            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview) this.renderHistoricoPdfs();
+        }catch(e){
+            console.warn('Falha inesperada ao registrar o PDF no Histórico de PDFs Gerados:', e);
+        }
+    },
+
+    /* lista, para o barbeiro logado, somente os PDFs que ele mesmo emitiu —
+       nunca mistura com o histórico de outro barbeiro */
+    async renderHistoricoPdfs(){
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando histórico de PDFs...</div>';
+        if(!this.barbeiro) return;
+        const { data, error } = await sb.from('relatorios_gerados')
+            .select('*')
+            .eq('barbeiro_id', this.barbeiro.id)
+            .order('created_at', { ascending: false });
+
+        if(error){
+            document.getElementById('admin-content').innerHTML =
+                `<div class="admin-empty">Não foi possível carregar o histórico de PDFs.<br>${error.message||''}</div>`;
+            return;
+        }
+
+        this._historicoPdfsCache = data || [];
+        if(!this._historicoPdfsCache.length){
+            document.getElementById('admin-content').innerHTML =
+                '<div class="admin-empty">Nenhum PDF gerado ainda.<br>Os relatórios emitidos em PDF (em "Relatórios"'+(this.ehAdmin()?' ou "Gestão do Barbeiro"':'')+') aparecerão aqui automaticamente.</div>';
+            return;
+        }
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="dash-panel">
+                <div class="admin-search-bar" style="justify-content:space-between;">
+                    <h4 style="margin:0;"><i class="fa-solid fa-file-pdf"></i> Histórico de Relatórios</h4>
+                    <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoPdfs()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
+                </div>
+                <div class="mini-list">
+                    ${this._historicoPdfsCache.map(item => `
+                        <div class="mini-list-item pdf-historico-item">
+                            <span class="n">
+                                ${item.titulo || 'Relatório'}
+                                <br><small class="pdf-historico-meta">
+                                    ${item.periodo_label ? 'Período: '+item.periodo_label+' • ' : ''}Gerado em ${this.formatarDataHoraBR(item.created_at)} por ${item.barbeiro_nome || '—'}
+                                </small>
+                            </span>
+                            <span class="m pdf-historico-acoes">
+                                <button class="ag-btn" onclick="admin.visualizarPdfHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                                <button class="ag-btn" onclick="admin.baixarPdfHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
+                                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarPdfDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    /* reabre a pré-visualização de um PDF já existente — reaproveita o arquivo
+       já salvo no Storage, nunca gera um novo PDF nem duplica o registro */
+    visualizarPdfHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item) return;
+        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+    },
+
+    baixarPdfHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item) return;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        const a = document.createElement('a');
+        a.href = baixarUrl; a.download = item.nome_arquivo; a.target = '_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    },
+
+    /* apaga somente UM PDF do histórico: remove o arquivo do Storage e, em seguida,
+       o registro correspondente. Nunca mexe em agendamentos, clientes, barbeiros,
+       configurações, serviços ou no histórico de outro barbeiro — o próprio filtro
+       por barbeiro_id (aqui e na policy do banco) garante isso. */
+    async apagarPdfDoHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item || !this.barbeiro) return;
+        if(!confirm('Deseja apagar este relatório do histórico?')) return;
+
+        if(item.arquivo_path){
+            const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove([item.arquivo_path]);
+            if(erroStorage){
+                alert('Não foi possível apagar o arquivo do PDF: ' + erroStorage.message);
+                return;
+            }
+        }
+        // "barbeiro_id" no filtro é uma segunda trava (além da policy do banco): mesmo que
+        // alguém altere o id na URL/console, só o próprio histórico do barbeiro pode ser apagado
+        const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
+            .eq('id', item.id).eq('barbeiro_id', this.barbeiro.id);
+        if(erroDelete){
+            alert('Não foi possível apagar o registro do histórico: ' + erroDelete.message);
+            return;
+        }
+        this.renderHistoricoPdfs();
+    },
+
+    /* apaga TODOS os PDFs do histórico do barbeiro logado — nunca de outro barbeiro */
+    async apagarTodoHistoricoPdfs(){
+        if(!this.barbeiro) return;
+        const itens = this._historicoPdfsCache || [];
+        if(!itens.length) return;
+        if(!confirm('Tem certeza que deseja apagar todo o histórico de PDFs? Essa ação não poderá ser desfeita.')) return;
+
+        const caminhos = itens.map(i => i.arquivo_path).filter(Boolean);
+        if(caminhos.length){
+            const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove(caminhos);
+            if(erroStorage){
+                alert('Não foi possível apagar os arquivos dos PDFs: ' + erroStorage.message);
+                return;
+            }
+        }
+        const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
+            .eq('barbeiro_id', this.barbeiro.id);
+        if(erroDelete){
+            alert('Não foi possível apagar o histórico: ' + erroDelete.message);
+            return;
+        }
+        this.renderHistoricoPdfs();
     },
 
     /* ============ 10. CONFIGURAÇÕES ============ */

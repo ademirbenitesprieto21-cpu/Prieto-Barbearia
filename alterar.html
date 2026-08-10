@@ -131,6 +131,7 @@
     letter-spacing:.3px;
   }
   .hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .hero-actions .btn{width:280px;max-width:100%;justify-content:center;text-align:center;}
   .btn{
     font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
     padding:14px 26px;border-radius:8px;cursor:pointer;border:none;
@@ -143,6 +144,49 @@
   .btn-light:hover{background:#e9e6de;}
   .btn-gold{background:var(--accent);color:#1a1305;}
   .btn-gold:hover{background:#d9b578;}
+
+  /* Botão "Agendamento Online" do hero: mesma função e texto de sempre.
+     Fundo branco, texto escuro com bom contraste, acabamento elegante e
+     coerente com o restante do site — hover suave, sem exageros. */
+  .btn-agendamento-online{
+    background:#ffffff;
+    color:#141416;
+    font-weight:800;
+    letter-spacing:.4px;
+    padding:15px 30px;
+    border:1px solid rgba(255,255,255,0.35);
+    box-shadow:0 12px 28px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  .btn-agendamento-online .icon{transition:transform .25s ease;}
+  .btn-agendamento-online:hover{
+    background:#efece4;
+    box-shadow:0 16px 34px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.7);
+    transform:translateY(-2px);
+    animation:none; /* o hover sempre tem prioridade sobre a animação de pulso */
+  }
+  .btn-agendamento-online:hover .icon{transform:scale(1.08);}
+  .btn-agendamento-online:active{transform:translateY(0);box-shadow:0 8px 18px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.5);}
+
+  /* Botão "Agendamento WhatsApp" do hero: mesma função e texto de sempre.
+     Tom cinza escuro/preto (não 100% preto, para o texto claro manter bom
+     contraste), criando contraste visual claro com o botão branco acima. */
+  .btn-agendamento-whatsapp{
+    background:#232324;
+    color:var(--text);
+    font-weight:700;
+    letter-spacing:.2px;
+    border:1px solid rgba(255,255,255,0.14);
+    box-shadow:0 12px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  .btn-agendamento-whatsapp:hover{
+    background:#2d2d2f;
+    box-shadow:0 16px 34px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08);
+    transform:translateY(-2px);
+    animation:none; /* o hover sempre tem prioridade sobre a animação de pulso */
+  }
+  .btn-agendamento-whatsapp:active{transform:translateY(0);box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05);}
 
   /* SECTION HEADINGS */
   .section{padding:100px 0;}
@@ -194,6 +238,10 @@
     max-width:720px;margin:0 auto 30px;color:var(--text-muted);
     font-size:16px;line-height:1.7;
   }
+  /* quando o parágrafo é o último elemento do card (seção "Quem Somos" sem
+     as tags de benefícios), remove a margem inferior extra para manter o
+     espaçamento simétrico com o padding do card */
+  .about-card p:last-child{margin-bottom:0;}
   .tags{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
   .tag{
     border:1px solid rgba(255,255,255,0.18);
@@ -407,6 +455,23 @@
   #booking-view .barber span{color:#a8a8a8;font-size:14px;}
   #booking-view .barber i:last-child{margin-left:auto;color:#8f8f8f;font-size:18px;transition:.3s;}
   #booking-view .barber:hover i:last-child{transform:translateX(5px);color:white;}
+
+  /* barbeiro com perfil desativado no agendamento online: fica visível na lista,
+     porém com risco sobre o nome/foto e sem poder ser selecionado pelo cliente */
+  #booking-view .barber.indisponivel{cursor:not-allowed;opacity:.55;}
+  #booking-view .barber.indisponivel:hover{transform:none;border-color:transparent;background:#202020;box-shadow:none;}
+  #booking-view .barber.indisponivel img{filter:grayscale(1);position:relative;}
+  #booking-view .barber.indisponivel h3{position:relative;display:inline-block;}
+  #booking-view .barber.indisponivel h3::after{
+      content:'';position:absolute;left:0;right:0;top:50%;
+      border-top:2px solid #e05a5a;transform:translateY(-50%);
+  }
+  #booking-view .barber.indisponivel .barber-badge-indisponivel{
+      display:inline-flex;align-items:center;gap:6px;margin-top:4px;
+      font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+      color:#e05a5a;
+  }
+  #booking-view .barber.indisponivel i:last-child{display:none;}
 
   /* ================= SCREEN 2 : PERFIL / AGENDA ================= */
   #booking-view .profile-header{
@@ -856,6 +921,25 @@
       transform:scale(1.08);
   }
 
+  /* mesmo estado visual do agendamento online: barbeiro indisponível continua
+     no modal do WhatsApp, porém riscado, sem destaque de hover e sem poder
+     ser selecionado (ver renderWhatsappModalCards / selectBarberForWhatsapp) */
+  .barber-modal-card.indisponivel{cursor:not-allowed;opacity:.55;}
+  .barber-modal-card.indisponivel:hover{transform:none;border-color:rgba(255,255,255,.08);background:#1f1f21;box-shadow:none;}
+  .barber-modal-card.indisponivel .barber-modal-photo{filter:grayscale(1);}
+  .barber-modal-card.indisponivel:hover .barber-modal-photo{transform:none;border-color:rgba(255,255,255,.7);}
+  .barber-modal-card.indisponivel .barber-modal-info h3{position:relative;display:inline-block;}
+  .barber-modal-card.indisponivel .barber-modal-info h3::after{
+      content:'';position:absolute;left:0;right:0;top:50%;
+      border-top:2px solid #e05a5a;transform:translateY(-50%);
+  }
+  .barber-modal-card.indisponivel .barber-modal-whats{
+      background:rgba(224,90,90,.12);border-color:rgba(224,90,90,.35);color:#e05a5a;
+  }
+  .barber-modal-card.indisponivel:hover .barber-modal-whats{
+      background:rgba(224,90,90,.12);color:#e05a5a;transform:none;
+  }
+
   @media(max-width:600px){
       .barber-modal{padding:32px 22px 24px;border-radius:20px;}
       .barber-modal h2{font-size:27px;}
@@ -1112,6 +1196,22 @@
   .mini-list-item{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 12px;background:var(--input-bg);border-radius:10px;}
   .mini-list-item .n{font-weight:600;}
   .mini-list-item .m{color:var(--text-muted);font-size:12px;}
+  /* Pré-visualização de PDF (Emitir PDF / Histórico de PDFs Gerados): segue o
+     mesmo cartão escuro usado em .dash-panel, só acrescenta a área do iframe. */
+  .pdf-preview-panel h4{display:flex;align-items:center;gap:8px;}
+  .pdf-preview-frame-wrap{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:75vh;min-height:420px;}
+  .pdf-preview-frame{width:100%;height:100%;border:0;display:block;}
+  @media(max-width:600px){ .pdf-preview-frame-wrap{height:65vh;min-height:360px;} }
+  /* Histórico de PDFs Gerados: reaproveita o .mini-list-item, só ajusta os botões */
+  .pdf-historico-item{align-items:center;gap:12px;}
+  .pdf-historico-item .n{line-height:1.5;}
+  .pdf-historico-meta{color:var(--text-muted);font-weight:400;}
+  .pdf-historico-acoes{display:flex;gap:8px;flex-shrink:0;}
+  @media(max-width:600px){
+    .pdf-historico-item{flex-direction:column;align-items:flex-start;}
+    .pdf-historico-acoes{width:100%;}
+    .pdf-historico-acoes .ag-btn{flex:1;justify-content:center;}
+  }
   .bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;}
   .bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;}
   .bar-chart .bar{width:100%;background:var(--accent);border-radius:5px 5px 0 0;min-height:3px;transition:height .3s;}
@@ -1121,6 +1221,25 @@
   .mini-cal .dcell.tem{color:var(--text);}
   .mini-cal .dcell.tem::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px;}
   .mini-cal .dcell.hoje{border:1px solid var(--accent);}
+
+  /* ---------- AGENDA DE HOJE (grade de horários disponíveis/ocupados) ---------- */
+  .slot-grid{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;}
+  .slot-item{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;
+    background:var(--input-bg);border-radius:10px;border:1px solid transparent;
+  }
+  .slot-item.ocupado{border-color:rgba(220,80,80,.25);}
+  .slot-item.disponivel{border-color:rgba(94,200,120,.2);}
+  .slot-item.passou{opacity:.5;}
+  .slot-item .slot-hora{font-weight:700;font-size:13.5px;min-width:48px;}
+  .slot-item .slot-cliente{flex:1;color:var(--text-muted);font-size:12.5px;}
+  .slot-badge{
+    font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:4px 10px;border-radius:20px;white-space:nowrap;
+  }
+  .slot-badge.disponivel{background:rgba(94,200,120,.15);color:#7ee6a0;}
+  .slot-badge.ocupado{background:rgba(220,80,80,.15);color:#e6a3a3;}
+  .slot-badge.passou{background:rgba(150,150,150,.15);color:var(--text-muted);}
 
   /* ---------- CARDS GENÉRICOS (Clientes, Serviços, Horários...) ---------- */
   .admin-btn-primario{
@@ -1711,6 +1830,50 @@
   @media(prefers-reduced-motion:reduce){
     .reveal{opacity:1;translate:0 0;transition:none;}
   }
+
+  /* ---- Animação de entrada dos botões "Agendamento Online" e
+     "Agendamento WhatsApp" do hero ----
+     Diferente do .reveal acima (que fica desativado no celular), esta
+     animação funciona igual no computador e no celular: fade-in discreto
+     com um pequeno deslocamento vertical, disparado uma única vez quando
+     o botão entra na tela. Só respeita prefers-reduced-motion. */
+  .cta-reveal{
+    opacity:0;
+    translate:0 14px;
+    transition:opacity .5s ease, translate .5s ease;
+    will-change:opacity, translate;
+  }
+  .cta-reveal.in-view{
+    opacity:1;
+    translate:0 0;
+  }
+  .hero-actions .cta-reveal:nth-child(2){transition-delay:.08s;}
+  @media(prefers-reduced-motion:reduce){
+    .cta-reveal{opacity:1;translate:0 0;transition:none;}
+  }
+
+  /* ---- Animação de "batida"/pulso dos botões do hero ----
+     100% automática: dispara sozinha via JS enquanto o botão está visível
+     na tela (ver script no fim da página), sem depender de clique, toque
+     ou :hover — o cliente não precisa fazer nada. Usa a propriedade
+     "transform" (scale), que não conflita com a propriedade "translate"
+     usada acima no fade-in nem com o "transform: translateY" do :hover —
+     o próprio :hover só cancela a animação (animation:none) caso o mouse
+     esteja em cima durante uma batida, pra nunca disputar visualmente com
+     o pulso; ele nunca é o gatilho da animação. */
+  .cta-pulse{
+    animation:ctaPulse 1.1s ease;
+  }
+  @keyframes ctaPulse{
+    0%{transform:scale(1);}
+    28%{transform:scale(1.05);}
+    48%{transform:scale(1);}
+    66%{transform:scale(1.03);}
+    100%{transform:scale(1);}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .cta-pulse{animation:none;}
+  }
 </style>
 </head>
 <body>
@@ -1732,7 +1895,7 @@
       <nav class="links">
         <a href="#home">Home</a>
         <a href="#servicos">Serviços</a>
-        <a href="#sobre">Sobre</a>
+        <a href="#sobre">Quem Somos</a>
         <a href="#ambiente">Ambiente</a>
         <a href="#contato">Contato</a>
         <a href="#" onclick="showAdmin(); return false;">Área Restrita</a>
@@ -1754,7 +1917,7 @@
     <nav class="mobile-links" id="mobile-menu">
       <a href="#home" onclick="closeMobileMenu()">Home</a>
       <a href="#servicos" onclick="closeMobileMenu()">Serviços</a>
-      <a href="#sobre" onclick="closeMobileMenu()">Sobre</a>
+      <a href="#sobre" onclick="closeMobileMenu()">Quem Somos</a>
       <a href="#ambiente" onclick="closeMobileMenu()">Ambiente</a>
       <a href="#contato" onclick="closeMobileMenu()">Contato</a>
       <a href="#" class="mobile-link-restrita" onclick="closeMobileMenu(); showAdmin(); return false;"><i class="fa-solid fa-lock"></i> Área Restrita</a>
@@ -1765,13 +1928,12 @@
   <section class="hero" id="home">
     <div class="hero-inner container">
       <img class="hero-logo" src="logo.png" alt="Barbearia Prieto">
-      <p class="hero-sub">Cortes modernos em Sanga Puitã</p>
+      <p class="hero-sub">Cuidado e estilo em Sanga Puitã</p>
       <div class="hero-actions">
-        <a class="btn btn-dark" href="#" onclick="showBooking(); return false;">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+        <a class="btn btn-agendamento-online cta-reveal" href="#" onclick="showBooking(); return false;">
           Agendamento Online
         </a>
-        <a class="btn btn-light" href="#" onclick="openWhatsappModal(); return false;">Agendamento WhatsApp</a>
+        <a class="btn btn-agendamento-whatsapp cta-reveal" href="#" onclick="openWhatsappModal(); return false;">Agendamento WhatsApp</a>
       </div>
     </div>
   </section>
@@ -1785,42 +1947,37 @@
           <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
           <div class="service-overlay">
             <h3>CORTE MASCULINO</h3>
-            <p>Cortes modernos e estilosos para todos os estilos</p>
+            <p>Seu estilo, do seu jeito.</p>
           </div>
         </div>
         <div class="service-card reveal">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
           <div class="service-overlay">
             <h3>CORTE INFANTIL</h3>
-            <p>Cortes divertidos e profissionais para crianças</p>
+            <p>Estilo para os pequenos.</p>
           </div>
         </div>
         <div class="service-card reveal">
           <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
           <div class="service-overlay">
             <h3>BARBA</h3>
-            <p>Barba alinhada com navalha e acabamento perfeito</p>
+            <p>Cuidado e estilo em cada detalhe.</p>
           </div>
         </div>
         <div class="service-card reveal">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
           <div class="service-overlay">
             <h3>SOBRANCELHA</h3>
-            <p>Design de sobrancelha masculina com precisão</p>
+            <p>Mais definição para o seu visual.</p>
           </div>
         </div>
       </div>
 
-      <!-- SOBRE -->
+      <!-- SOBRE / QUEM SOMOS -->
       <div class="about-card reveal" id="sobre">
-        <h2>SOBRE</h2>
+        <h2>QUEM SOMOS</h2>
         <div class="divider"></div>
-        <p>A Barbearia Prieto foi criada para trazer cortes modernos e atendimento de qualidade para a região de Sanga Puitã em Ponta Porã. Nosso objetivo é oferecer estilo, confiança e um atendimento profissional para cada cliente.</p>
-        <div class="tags">
-          <span class="tag">Técnica moderna</span>
-          <span class="tag">Ambiente premium</span>
-          <span class="tag">Atendimento profissional</span>
-        </div>
+        <p>Mais do que um lugar para mudar o visual, somos um espaço para quem gosta de se cuidar, valoriza seu estilo e acredita que os detalhes fazem diferença. Na Prieto Barbearia, queremos que cada atendimento seja um momento para você, com atenção, tranquilidade e aquele resultado que faz você se olhar no espelho e gostar do que vê.</p>
       </div>
     </div>
   </section>
@@ -1920,13 +2077,13 @@
      AGENDAMENTO ONLINE — interface integrada (oculta por padrão)
      ========================================================= -->
 <div id="booking-view">
-  <button class="voltar-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
 
   <div class="app">
 
       <!-- ============= SCREEN 1: LISTA DE BARBEIROS ============= -->
       <div class="screen active" id="screen-list">
           <header>
+              <button class="voltar-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
               <div class="logo"><img src="logo.png" alt="Barbearia Prieto"></div>
               <p>Rua Sindoca Varques • Sanga Puitã<br>Ponta Porã • MS</p>
           </header>
@@ -2116,7 +2273,7 @@
         <li><button data-page="notificacoes" onclick="admin.irPara('notificacoes')"><i class="fa-solid fa-bell"></i>Notificações</button></li>
         <li><button data-page="financeiro" onclick="admin.irPara('financeiro')"><i class="fa-solid fa-sack-dollar"></i>Financeiro</button></li>
         <li><button data-page="relatorios" onclick="admin.irPara('relatorios')"><i class="fa-solid fa-chart-line"></i>Relatórios</button></li>
-        <li><button data-page="perfil" onclick="admin.irPara('perfil')"><i class="fa-solid fa-id-badge"></i>Perfil</button></li>
+        <li><button data-page="historico-pdfs" onclick="admin.irPara('historico-pdfs')"><i class="fa-solid fa-file-pdf"></i>Histórico de Relatórios</button></li>
         <li><button data-page="configuracoes" onclick="admin.irPara('configuracoes')"><i class="fa-solid fa-gear"></i>Configurações</button></li>
         <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
@@ -2214,21 +2371,33 @@ function closeWhatsappModal(){
 
 function renderWhatsappModalCards(){
     const wrap = document.getElementById('whatsapp-modal-cards');
-    wrap.innerHTML = barbers.map(b => `
-        <div class="barber-modal-card" onclick="selectBarberForWhatsapp(${b.id})">
+    // mesma fonte de disponibilidade usada no Agendamento Online ("barbers"),
+    // então os dois fluxos nunca ficam dessincronizados — um único status por
+    // barbeiro, vindo da coluna "recebe_agendamento_online" na tabela "barbeiros".
+    // A ordenação também é a mesma (ver ordenarBarbeirosPorDisponibilidade):
+    // disponíveis em cima, indisponíveis embaixo, sem esconder ninguém.
+    wrap.innerHTML = ordenarBarbeirosPorDisponibilidade(barbers).map(b => {
+        const indisponivel = b.disponivel === false;
+        return `
+        <div class="barber-modal-card${indisponivel ? ' indisponivel' : ''}" ${indisponivel ? '' : `onclick="selectBarberForWhatsapp(${b.id})"`}>
             <div class="barber-modal-photo"><img src="${b.avatar}" alt="${b.name}"></div>
             <div class="barber-modal-info">
                 <h3>${b.name}</h3>
-                <span>${b.specialty}</span>
+                <span>${indisponivel ? 'Indisponível no momento' : b.specialty}</span>
             </div>
-            <div class="barber-modal-whats"><i class="fa-brands fa-whatsapp"></i></div>
+            <div class="barber-modal-whats">${indisponivel ? '<i class="fa-solid fa-ban"></i>' : '<i class="fa-brands fa-whatsapp"></i>'}</div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function selectBarberForWhatsapp(barberId){
     const barber = barbers.find(b => b.id === barberId);
     if(!barber) return;
+    if(barber.disponivel === false){
+        alert('Este barbeiro está temporariamente indisponível. Por favor, escolha outro barbeiro.');
+        return;
+    }
 
     closeWhatsappModal();
 
@@ -2244,7 +2413,8 @@ function selectBarberForWhatsapp(barberId){
 const WHATSAPP_BOOKING_MESSAGE =
 `Olá! 👋🏻
 
-Queria agendar um horário na 💈Prieto Barbearia💈.
+Queria agendar um horário na
+💈*Barbearia Prieto*💈
 
 Aguardo a confirmação do meu agendamento.`;
 
@@ -2269,14 +2439,18 @@ let barbers = [
         name: "Barbeiro Tradicional",
         specialty: "Especialista em cortes clássicos",
         avatar: "barbeiro-tradicional.jpg",
-        phone: "+5567998036695"
+        phone: "+5567998036695",
+        disponivel: true,
+        ordemOriginal: 0
     },
     {
         id: 2,
         name: "Barbeiro Experiente",
         specialty: "Especialista em cortes modernos",
         avatar: "barbeiro-experiente.jpg",
-        phone: "+595983907072"
+        phone: "+595983907072",
+        disponivel: true,
+        ordemOriginal: 1
     }
 ];
 
@@ -2292,28 +2466,35 @@ async function carregarBarbeirosPublicos(){
             .from('barbeiros')
             .select('id, nome, especialidade, foto_url, whatsapp, telefone, ativo, recebe_agendamento_online, nivel_acesso')
             .eq('ativo', true)
-            .order('nome');
+            .order('id');
 
         if(error || !data || !data.length) return; // mantém o fallback acima se algo falhar
 
-        // "recebe_agendamento_online" pode não existir ainda no banco (é uma coluna nova
-        // e opcional); nesse caso, tratamos como visível por padrão (!== false cobre
-        // tanto true quanto undefined).
         // "funcionario" (cargo que NÃO atende clientes) nunca aparece na seleção pública,
         // mesmo que esteja ativo — só "barbeiro" (e cadastros antigos sem nivel_acesso
         // definido, tratados como barbeiro por compatibilidade) devem aparecer.
-        const ativosNoAgendamento = data.filter(b =>
-            b.recebe_agendamento_online !== false && b.nivel_acesso !== 'funcionario'
-        );
-        if(!ativosNoAgendamento.length) return;
+        const visiveisNoAgendamento = data.filter(b => b.nivel_acesso !== 'funcionario');
+        if(!visiveisNoAgendamento.length) return;
 
-        barbers = ativosNoAgendamento.map((b, i) => ({
+        // "recebe_agendamento_online" pode não existir ainda no banco (é uma coluna nova
+        // e opcional); nesse caso, tratamos como disponível por padrão (!== false cobre
+        // tanto true quanto undefined). Quando o barbeiro desativa o próprio perfil (ou é
+        // desativado pela Gestão de Barbeiros), ele continua aparecendo na lista pública,
+        // porém marcado como indisponível — sem poder ser selecionado (ver renderBarberList).
+        barbers = visiveisNoAgendamento.map((b, i) => ({
             id: i + 1,
             dbId: b.id,
             name: b.nome,
             specialty: b.especialidade || 'Barbeiro da Prieto Barbearia',
-            avatar: b.foto_url || (i % 2 === 0 ? 'barbeiro-tradicional.jpg' : 'barbeiro-experiente.jpg'),
-            phone: (b.whatsapp || b.telefone || '').replace(/[^\d+]/g,'')
+            // a foto cadastrada no banco (foto_url) sempre tem prioridade; o fallback
+            // por nome garante que o Tradicional sempre recebe "barbeiro-tradicional.jpg"
+            // e o Experiente "barbeiro-experiente.jpg", independente da ordem da consulta
+            // (antes isso era feito por posição no array, o que trocava as fotos quando
+            // a ordenação mudava — ver correção deste bug).
+            avatar: b.foto_url || ((b.nome || '').toLowerCase().includes('experiente') ? 'barbeiro-experiente.jpg' : 'barbeiro-tradicional.jpg'),
+            phone: (b.whatsapp || b.telefone || '').replace(/[^\d+]/g,''),
+            disponivel: b.recebe_agendamento_online !== false,
+            ordemOriginal: i // posição de origem, usada para reordenar disponíveis/indisponíveis sem embaralhar o restante
         }));
 
         renderBarberList();
@@ -2330,6 +2511,7 @@ let currentBarber = null;
 let viewYear, viewMonth; // mês exibido no calendário
 let selectedDate = null; // "YYYY-MM-DD"
 let selectedTime = null;
+let hojeIndisponivel = false; // true quando não sobra nenhum horário livre hoje pra esse barbeiro (bloqueia o dia no calendário)
 
 /* horários de funcionamento e bloqueios do barbeiro selecionado,
    carregados do Supabase (mesma fonte que a Área Restrita usa) */
@@ -2406,6 +2588,32 @@ function getAgoraBrasil(){
     };
 }
 
+/* calcula os horários de HOJE ainda disponíveis (abertura/fechamento, intervalo
+   de almoço, horários já ocupados e horários que já passaram no fuso de
+   Brasília). Usada pela Área Restrita (Dashboard e Gestão do Barbeiro) para o
+   número de "horários disponíveis hoje" bater exatamente com o que aparece
+   pro cliente no Agendamento Online (gerarSlotsDoDia usa a mesma regra). */
+function calcularSlotsHojeDisponiveis(h, horariosOcupadosSet){
+    if(!h || h.ativo === false || !h.hora_abertura || !h.hora_fechamento) return [];
+
+    const paraMin = hhmm => { const [hh,mm] = hhmm.slice(0,5).split(':').map(Number); return hh*60+mm; };
+    const abertura = paraMin(h.hora_abertura);
+    const fechamento = paraMin(h.hora_fechamento);
+    const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
+    const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
+    const agora = getAgoraBrasil();
+
+    let slots = [];
+    for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
+        if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
+        if(t <= agora.minutos) continue; // já passou
+        const hhmm = `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+        if(horariosOcupadosSet && horariosOcupadosSet.has(hhmm)) continue;
+        slots.push(hhmm);
+    }
+    return slots;
+}
+
 /* gera os horários (slots) de um dia a partir da configuração salva na Área Restrita,
    descontando o intervalo de almoço e os horários já agendados por outros clientes */
 async function gerarSlotsDoDia(dateKey){
@@ -2456,25 +2664,55 @@ async function gerarSlotsDoDia(dateKey){
     return slots;
 }
 
+/* ordena a lista de barbeiros para exibição: disponíveis primeiro,
+   indisponíveis por último, mantendo entre si a ordem original
+   (ordemOriginal) de cada grupo. Não altera o array recebido nem
+   remove ninguém — só devolve uma cópia reordenada. Usada tanto pelo
+   Agendamento Online (renderBarberList) quanto pelo Agendamento
+   WhatsApp (renderWhatsappModalCards), para que os dois fluxos usem
+   exatamente a mesma regra e nunca fiquem dessincronizados: sempre que
+   o status de um barbeiro muda (recebe_agendamento_online), a próxima
+   renderização em qualquer um dos dois já reflete a nova ordem. */
+function ordenarBarbeirosPorDisponibilidade(lista){
+    return [...lista].sort((a, b) => {
+        const aIndisp = a.disponivel === false;
+        const bIndisp = b.disponivel === false;
+        if(aIndisp !== bIndisp) return aIndisp ? 1 : -1;
+        return (a.ordemOriginal ?? 0) - (b.ordemOriginal ?? 0);
+    });
+}
+
 /* ---------------- RENDER LISTA ---------------- */
 function renderBarberList(){
     const list = document.getElementById('barber-list');
-    list.innerHTML = barbers.map(b => `
-        <div class="barber" onclick="openBooking(${b.id})">
+    // o array "barbers" em si não é alterado, então isso nunca vira uma
+    // reordenação permanente — assim que o barbeiro reativa o perfil, ele
+    // volta sozinho para a posição de origem.
+    const ordenados = ordenarBarbeirosPorDisponibilidade(barbers);
+    list.innerHTML = ordenados.map(b => {
+        const indisponivel = b.disponivel === false;
+        return `
+        <div class="barber${indisponivel ? ' indisponivel' : ''}" ${indisponivel ? '' : `onclick="openBooking(${b.id})"`}>
             <img src="${b.avatar}" alt="${b.name}">
             <div>
                 <h3>${b.name}</h3>
                 <span>${b.specialty}</span>
+                ${indisponivel ? '<div class="barber-badge-indisponivel"><i class="fa-solid fa-ban"></i> Indisponível no momento</div>' : ''}
             </div>
             <i class="fa-solid fa-chevron-right"></i>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 /* ---------------- NAVEGAÇÃO ENTRE TELAS DO AGENDAMENTO ---------------- */
 async function openBooking(barberId){
     currentBarber = barbers.find(b => b.id === barberId);
     if(!currentBarber) return;
+    if(currentBarber.disponivel === false){
+        alert('Este barbeiro está temporariamente indisponível para novos agendamentos. Por favor, escolha outro barbeiro.');
+        return;
+    }
 
     document.getElementById('bk-avatar').src = currentBarber.avatar;
     document.getElementById('bk-avatar').alt = currentBarber.name;
@@ -2482,9 +2720,13 @@ async function openBooking(barberId){
     document.getElementById('bk-address').textContent = shopAddress;
     document.getElementById('bk-whatsapp').href = buildWhatsappUrl(currentBarber.phone);
 
-    const today = new Date();
-    viewYear = today.getFullYear();
-    viewMonth = today.getMonth();
+    // mês inicial do calendário sempre baseado no dia de HOJE no fuso de
+    // Brasília (nunca no fuso local do aparelho do cliente) — ver correção
+    // do bug de "dia vermelho sem ter sido bloqueado" em renderCalendar().
+    const hojeBrasil = getAgoraBrasil();
+    const [anoHoje, mesHoje] = hojeBrasil.dateKey.split('-').map(Number);
+    viewYear = anoHoje;
+    viewMonth = mesHoje - 1;
     selectedDate = null;
     selectedTime = null;
 
@@ -2498,6 +2740,13 @@ async function openBooking(barberId){
     renderSlots();
     updateContinueButton();
     await carregarDisponibilidadeBarbeiro();
+
+    // verifica se hoje ainda tem algum horário livre pra esse barbeiro; se não
+    // tiver (expediente encerrado, dia todo ocupado, etc.), o dia de hoje fica
+    // bloqueado no calendário, igual a um dia fechado
+    const agoraAbertura = getAgoraBrasil();
+    hojeIndisponivel = (await gerarSlotsDoDia(agoraAbertura.dateKey)).length === 0;
+
     renderCalendar();
     renderSlots();
 }
@@ -2610,9 +2859,21 @@ async function finalizarAgendamento(){
     try{
         const { data: barbeiroRow } = await sb
             .from('barbeiros')
-            .select('id')
+            .select('id, recebe_agendamento_online')
             .eq('nome', currentBarber.name)
             .single();
+
+        // reconfirma a disponibilidade direto no banco, mesmo que a tela já tenha
+        // sido carregada há um tempo — impede o agendamento se o barbeiro tiver
+        // sido desativado nesse meio tempo (proteção além da checagem visual).
+        if(barbeiroRow && barbeiroRow.recebe_agendamento_online === false){
+            alert('Este barbeiro está temporariamente indisponível para novos agendamentos. Por favor, escolha outro barbeiro.');
+            btn.disabled = false;
+            btn.textContent = textoOriginal;
+            goToList();
+            await carregarBarbeirosPublicos();
+            return;
+        }
 
         if(barbeiroRow){
             let clienteId = null;
@@ -2717,8 +2978,15 @@ function renderCalendar(){
     const firstDay = new Date(viewYear, viewMonth, 1).getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    // "hoje" é sempre o dia no fuso de Brasília — usado tanto para saber quais
+    // dias já passaram (isPast) quanto para o dia sem vagas (diaSemVagasHoje).
+    // Antes, "isPast" usava o relógio/fuso local do aparelho do cliente
+    // enquanto "diaSemVagasHoje" usava o fuso de Brasília; quando os dois
+    // fusos não coincidiam (aparelho configurado em outro fuso horário), um
+    // dia podia aparecer bloqueado/vermelho no calendário sem que nenhum
+    // bloqueio tivesse sido cadastrado. Comparando sempre por texto
+    // (dateKey, "YYYY-MM-DD") no mesmo fuso, os dois ficam sempre coerentes.
+    const agoraHoje = getAgoraBrasil(); // dateKey de hoje no fuso de Brasília
 
     for(let i=0;i<firstDay;i++){
         grid.appendChild(document.createElement('div'));
@@ -2726,23 +2994,25 @@ function renderCalendar(){
 
     for(let d=1; d<=daysInMonth; d++){
         const cellDate = new Date(viewYear, viewMonth, d);
-        const isPast = cellDate < today;
         const dateKey = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isPast = dateKey < agoraHoje.dateKey;
         const diaSemana = cellDate.getDay();
 
         // dia fechado: sem configuração de horário para esse dia da semana, ou marcado como inativo
         const h = horariosPorDia[diaSemana];
         const diaFechado = !h || h.ativo === false;
         const diaBloqueado = dataBloqueada(dateKey);
+        // hoje sem nenhum horário livre (expediente encerrado ou dia lotado): trata como bloqueado
+        const diaSemVagasHoje = hojeIndisponivel && dateKey === agoraHoje.dateKey;
 
         const btn = document.createElement('button');
         btn.className = 'day-cell';
         btn.textContent = d;
 
-        const disabled = isPast || diaFechado || diaBloqueado;
+        const disabled = isPast || diaFechado || diaBloqueado || diaSemVagasHoje;
         if(disabled){
             btn.disabled = true;
-            if(diaBloqueado) btn.classList.add('bloqueado');
+            if(diaBloqueado || diaSemVagasHoje) btn.classList.add('bloqueado');
         } else {
             btn.innerHTML = `${d}<span class="dot"></span>`;
             btn.onclick = () => selectDate(dateKey, btn);
@@ -2832,6 +3102,13 @@ const SUPABASE_URL = 'https://suxzplbcesapowoppwhf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1eHpwbGJjZXNhcG93b3Bwd2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTk2NzEsImV4cCI6MjEwMTE3NTY3MX0.61503msT-pGNLnbJCNbzTJ2vyN2Y20U8ZYWBBFD3jE0';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* Nome do bucket do Supabase Storage usado para guardar os arquivos PDF reais
+   dos relatórios emitidos (ver PARTE "HISTÓRICO DE PDFs GERADOS" mais abaixo).
+   Esse bucket + a tabela "relatorios_gerados" precisam existir no projeto do
+   Supabase — o SQL de criação de ambos está documentado junto com o código
+   dessa funcionalidade. */
+const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
+
 function showAdmin(){
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('booking-view').classList.remove('active');
@@ -2871,6 +3148,7 @@ const TITULOS_PAGINA = {
     notificacoes: 'Notificações',
     financeiro: 'Financeiro',
     relatorios: 'Relatórios',
+    'historico-pdfs': 'Histórico de Relatórios',
     perfil: 'Perfil',
     configuracoes: 'Configurações',
     'gestao-barbeiro': 'Gestão do Barbeiro'
@@ -2985,7 +3263,7 @@ const admin = {
     paginasPermitidas(){
         const nivel = this.barbeiro ? this.barbeiro.nivel_acesso : 'barbeiro';
         if(nivel === 'administrador') return null; // null = todas as páginas
-        if(nivel === 'funcionario') return ['dashboard','agendamentos','agenda','clientes','perfil','configuracoes'];
+        if(nivel === 'funcionario') return ['dashboard','agendamentos','agenda','clientes','configuracoes'];
         return null; // barbeiro: todas as páginas normais
     },
 
@@ -2998,6 +3276,20 @@ const admin = {
         });
         const itemGestao = document.getElementById('menu-item-gestao-barbeiro');
         if(itemGestao) itemGestao.style.display = this.ehAdmin() ? '' : 'none';
+
+        // Reordena o menu SOMENTE para o Barbeiro Tradicional (admin/dono): "Configurações"
+        // passa a ficar imediatamente abaixo de "Gestão de Barbeiros" (menu-item-gestao-barbeiro).
+        // O Barbeiro Experiente nunca é admin, então esse bloco não altera a ordem dele —
+        // sua navegação permanece exatamente como já está hoje.
+        if(this.ehAdmin() && itemGestao){
+            const btnConfig = document.querySelector('#admin-menu button[data-page="configuracoes"]');
+            const itemConfig = btnConfig ? btnConfig.closest('li') : null;
+            // só move se ainda não estiver na posição correta (evita mexer no DOM à toa
+            // se aplicarPermissoes() for chamada mais de uma vez na mesma sessão)
+            if(itemConfig && itemGestao.nextElementSibling !== itemConfig){
+                itemGestao.insertAdjacentElement('afterend', itemConfig);
+            }
+        }
     },
 
     /* ============ STATUS ONLINE ============ */
@@ -3097,7 +3389,7 @@ const admin = {
             notificacoes: () => this.renderNotificacoes(),
             financeiro: () => this.renderFinanceiro(),
             relatorios: () => this.renderRelatorios(),
-            perfil: () => this.renderPerfil(),
+            'historico-pdfs': () => this.renderHistoricoPdfs(),
             configuracoes: () => this.renderConfiguracoes(),
             'gestao-barbeiro': () => this.renderGestaoBarbeiro()
         };
@@ -3109,7 +3401,7 @@ const admin = {
             <div class="admin-search-bar">
                 <input type="text" id="admin-busca-texto" placeholder="Buscar por nome, telefone ou serviço..." oninput="admin.aplicarFiltro()">
                 <input type="date" id="admin-busca-data" oninput="admin.aplicarFiltro()">
-                ${this.ehAdmin() ? `<button class="admin-btn-primario" onclick="admin.formAdicionarCliente()"><i class="fa-solid fa-plus"></i> Adicionar Cliente</button>` : ''}
+                <button class="admin-btn-primario" onclick="admin.formAdicionarCliente()"><i class="fa-solid fa-plus"></i> Adicionar Cliente</button>
             </div>
             <div class="admin-search-bar" id="admin-filtros-rapidos">
                 ${['todos','hoje','amanha','semana','mes','confirmado','pendente','cancelado'].map(f => `
@@ -3322,7 +3614,7 @@ const admin = {
             // busca TODOS os barbeiros ativos cadastrados no sistema (mesma fonte
             // de dados usada na Gestão de Barbeiro), sem excluir nenhum cargo —
             // qualquer um dos barbeiros cadastrados pode ter realizado o atendimento
-            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo').eq('ativo', true).order('nome');
+            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo,nivel_acesso').eq('ativo', true).order('nome');
             if(erroEquipe){
                 // não engole o erro: se a política de acesso (RLS) da tabela "barbeiros"
                 // estiver bloqueando essa leitura, ou a tabela estiver vazia, mostra
@@ -3386,7 +3678,7 @@ const admin = {
         const servicoId = servicoSelect.value || null;
         const opcaoSelecionada = servicoSelect.options[servicoSelect.selectedIndex];
 
-        const payload = { data, horario, status, servico_id: servicoId };
+        const payload = { data, horario: horario || null, status, servico_id: servicoId };
         if(servicoId){
             payload.servico_valor = Number(opcaoSelecionada.dataset.valor);
             payload.servico_duracao_minutos = Number(opcaoSelecionada.dataset.duracao);
@@ -3403,25 +3695,32 @@ const admin = {
         }
 
         const { error } = await sb.from('agendamentos').update(payload).eq('id', id);
-        if(error){ alert('Não foi possível salvar as alterações.'); return; }
+        if(error){
+            console.error('Erro ao salvar edição do agendamento:', error);
+            alert('Não foi possível salvar as alterações.' + (error.message ? '\n\nMotivo: ' + error.message : ''));
+            return;
+        }
         this.fecharModal();
         await this.carregarAgendamentos();
     },
 
-    /* ============ ADICIONAR CLIENTE PRESENCIAL (somente administradores) ============
+    /* ============ ADICIONAR CLIENTE PRESENCIAL ============
        Registra manualmente um atendimento que aconteceu na barbearia mas
        não passou pelo Agendamento Online (sem e-mail, sem WhatsApp e sem
        horário — só data, nome opcional, serviço e valor). Usa a mesma
        tabela "agendamentos", marcando origem:'presencial' e status já
        como 'finalizado' (o atendimento já ocorreu), para entrar
-       corretamente no faturamento e nos relatórios. */
+       corretamente no faturamento e nos relatórios. Disponível para
+       qualquer barbeiro logado; só o administrador/dono vê o campo extra
+       "Barbeiro que realizou o atendimento" (pode registrar em nome de
+       qualquer um da equipe). */
     async formAdicionarCliente(){
-        if(!this.ehAdmin()){ alert('Você não tem permissão para registrar atendimentos presenciais.'); return; }
+        if(!this.barbeiro){ alert('Não foi possível identificar o barbeiro logado.'); return; }
 
-        const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).order('nome');
-        const opcoesServico = (servicos || []).map(s =>
-            `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
-        ).join('');
+        // por padrão, mostra só os serviços do próprio barbeiro logado —
+        // se for admin e trocar quem atendeu, a lista se atualiza sozinha
+        // (ver atualizarServicosPresencial)
+        const opcoesServico = await this.opcoesServicoDoBarbeiro(this.barbeiro.id);
 
         // o dono pode registrar o atendimento em nome de qualquer barbeiro;
         // os demais usuários só registram para si mesmos (comportamento original)
@@ -3429,7 +3728,7 @@ const admin = {
         if(this.ehAdmin()){
             // mesma fonte de dados usada nos outros seletores de barbeiro —
             // todos os barbeiros ativos cadastrados, sem excluir nenhum cargo
-            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo').eq('ativo', true).order('nome');
+            const { data: equipe, error: erroEquipe } = await sb.from('barbeiros').select('id,nome,ativo,nivel_acesso').eq('ativo', true).order('nome');
             if(erroEquipe){
                 campoBarbeiro = `
                     <div class="campo">
@@ -3446,7 +3745,7 @@ const admin = {
                 campoBarbeiro = `
                     <div class="campo">
                         <label>Barbeiro que realizou o atendimento</label>
-                        <select id="pres-barbeiro">
+                        <select id="pres-barbeiro" onchange="admin.atualizarServicosPresencial(this.value)">
                             ${equipe.map(b => `<option value="${b.id}" ${b.id===this.barbeiro.id?'selected':''}>${b.nome}</option>`).join('')}
                         </select>
                     </div>`;
@@ -3473,8 +3772,29 @@ const admin = {
         document.getElementById('admin-modal-overlay').classList.add('active');
     },
 
+    /* busca só os serviços ATIVOS de um barbeiro específico, já formatados
+       como <option> — usado no formulário de Adicionar Cliente pra manter
+       a lista de serviços sempre de acordo com o barbeiro selecionado */
+    async opcoesServicoDoBarbeiro(barbeiroId){
+        const { data: servicos } = await sb.from('servicos').select('*').eq('ativo', true).eq('barbeiro_id', barbeiroId).order('nome');
+        return (servicos || []).map(s =>
+            `<option value="${s.id}" data-valor="${s.valor}" data-duracao="${s.tempo_estimado_minutos}">${s.nome} — R$ ${Number(s.valor).toFixed(2).replace('.',',')}</option>`
+        ).join('');
+    },
+
+    /* chamado quando o admin troca o "Barbeiro que realizou o atendimento"
+       no formulário de Adicionar Cliente: recarrega o select de Serviço
+       pra mostrar só os serviços do barbeiro escolhido */
+    async atualizarServicosPresencial(barbeiroId){
+        const select = document.getElementById('pres-servico');
+        if(!select) return;
+        select.innerHTML = '<option value="">Carregando...</option>';
+        const opcoesServico = await this.opcoesServicoDoBarbeiro(barbeiroId);
+        select.innerHTML = `<option value="">Selecionar</option>${opcoesServico}`;
+    },
+
     async salvarClientePresencial(){
-        if(!this.ehAdmin()){ alert('Você não tem permissão para registrar atendimentos presenciais.'); return; }
+        if(!this.barbeiro){ alert('Não foi possível identificar o barbeiro logado.'); return; }
 
         const nome = document.getElementById('pres-nome').value.trim();
         const data = document.getElementById('pres-data').value;
@@ -3539,14 +3859,70 @@ const admin = {
     },
 
     /* ============ HELPERS COMPARTILHADOS ============ */
+    /* sempre no fuso de Brasília (America/Sao_Paulo), igual ao resto do
+       sistema — evita que "hoje" fique deslocado se o navegador/servidor
+       estiver rodando em outro fuso horário */
     hojeISO(){
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return getAgoraBrasil().dateKey;
     },
     paraData(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); },
     formatarMoeda(v){ return 'R$ ' + Number(v||0).toFixed(2).replace('.', ','); },
 
     /* ============ 1. DASHBOARD ============ */
+    /* Monta a grade de horários de HOJE para o barbeiro logado, usando a
+       MESMA lógica de geração de slots do Agendamento Online (ver
+       gerarSlotsDoDia, mais acima no arquivo): horário de abertura/fechamento
+       e intervalo de almoço vêm de "horarios_funcionamento" (linha do dia da
+       semana atual), o passo de cada horário é DURACAO_PADRAO_MIN, e um
+       horário só aparece como OCUPADO se já existir, para ESTE barbeiro
+       (this.barbeiro.id), um agendamento real (não cancelado) naquele
+       horário exato hoje. Não inventa horários nem mistura barbeiros. */
+    montarAgendaHojeHtml(h, agendamentosHoje, bloqueioHoje){
+        if(bloqueioHoje){
+            return `<div class="admin-empty">Hoje está bloqueado para agendamentos${bloqueioHoje.tipo ? ' ('+bloqueioHoje.tipo+')' : ''}.</div>`;
+        }
+        if(!h || h.ativo === false || !h.hora_abertura || !h.hora_fechamento){
+            return `<div class="admin-empty">Nenhum horário de funcionamento configurado para hoje.</div>`;
+        }
+
+        const paraMin = hhmm => { const [hh,mm] = hhmm.slice(0,5).split(':').map(Number); return hh*60+mm; };
+        const paraHHMM = min => `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+        const abertura = paraMin(h.hora_abertura);
+        const fechamento = paraMin(h.hora_fechamento);
+        const intervaloIni = h.intervalo_inicio ? paraMin(h.intervalo_inicio) : null;
+        const intervaloFim = h.intervalo_fim ? paraMin(h.intervalo_fim) : null;
+
+        // mapa horário -> nome do cliente, só com os agendamentos de HOJE
+        // deste barbeiro (agendamentosHoje já vem filtrado por barbeiro_id
+        // e por status != 'cancelado' lá no renderDashboard)
+        const ocupados = new Map();
+        agendamentosHoje.forEach(a => { if(a.horario) ocupados.set(a.horario.slice(0,5), a.cliente_nome || 'Cliente presencial'); });
+
+        // mesmo corte de horário do Agendamento Online: um horário que já passou
+        // não pode aparecer como "Disponível" aqui
+        const agora = getAgoraBrasil();
+
+        let linhas = '';
+        for(let t = abertura; t + DURACAO_PADRAO_MIN <= fechamento; t += DURACAO_PADRAO_MIN){
+            if(intervaloIni !== null && intervaloFim !== null && t >= intervaloIni && t < intervaloFim) continue;
+            const hhmm = paraHHMM(t);
+            const cliente = ocupados.get(hhmm);
+            const ocupado = !!cliente;
+            const jaPassou = !ocupado && t <= agora.minutos;
+            const estado = ocupado ? 'ocupado' : (jaPassou ? 'passou' : 'disponivel');
+            const rotulo = ocupado ? 'Ocupado' : (jaPassou ? 'Passou' : 'Disponível');
+            linhas += `
+                <div class="slot-item ${estado}">
+                    <span class="slot-hora">${hhmm}</span>
+                    <span class="slot-badge ${estado}">${rotulo}</span>
+                    <span class="slot-cliente">${ocupado ? cliente : '—'}</span>
+                </div>`;
+        }
+
+        if(!linhas) return `<div class="admin-empty">Nenhum horário dentro do expediente de hoje.</div>`;
+        return `<div class="slot-grid">${linhas}</div>`;
+    },
+
     async renderDashboard(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando dashboard...</div>';
 
@@ -3554,12 +3930,13 @@ const admin = {
         const hojeDate = this.paraData(hoje);
         const semanaFim = new Date(hojeDate); semanaFim.setDate(semanaFim.getDate()+6);
         const mesAtual = hojeDate.getMonth(), anoAtual = hojeDate.getFullYear();
-        const diaSemanaHoje = new Date().getDay();
+        const diaSemanaHoje = hojeDate.getDay();
 
-        const [{data: ags}, {count: naoLidas}, {data: horariosHoje}] = await Promise.all([
+        const [{data: ags}, {count: naoLidas}, {data: horariosHoje}, {data: bloqueiosHoje}] = await Promise.all([
             sb.from('agendamentos').select('*, servicos(nome)').eq('barbeiro_id', this.barbeiro.id).order('data',{ascending:true}).order('horario',{ascending:true}),
             sb.from('notificacoes').select('id', {count:'exact', head:true}).eq('barbeiro_id', this.barbeiro.id).eq('lida', false),
-            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', this.barbeiro.id).eq('dia_semana', diaSemanaHoje).eq('ativo', true)
+            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', this.barbeiro.id).eq('dia_semana', diaSemanaHoje).eq('ativo', true),
+            sb.from('bloqueios_data').select('data_inicio, data_fim, tipo').eq('barbeiro_id', this.barbeiro.id)
         ]);
 
         const lista = ags || [];
@@ -3576,14 +3953,18 @@ const admin = {
         const receitaMensal = lista.filter(a => { const d=this.paraData(a.data); return d.getMonth()===mesAtual && d.getFullYear()===anoAtual && a.status==='finalizado'; }).reduce((s,a) => s+Number(a.servico_valor||0), 0);
         const servicosRealizados = lista.filter(a => a.status==='finalizado').length;
 
-        let totalSlotsHoje = 0;
-        if(horariosHoje && horariosHoje[0] && horariosHoje[0].hora_abertura && horariosHoje[0].hora_fechamento){
-            const [ha,ma] = horariosHoje[0].hora_abertura.split(':').map(Number);
-            const [hf,mf] = horariosHoje[0].hora_fechamento.split(':').map(Number);
-            totalSlotsHoje = Math.max(Math.floor(((hf*60+mf)-(ha*60+ma))/30), 0);
-        }
         const ocupadosHoje = agendamentosHoje.length;
-        const disponiveisHoje = Math.max(totalSlotsHoje - ocupadosHoje, 0);
+        // mesmo cálculo usado no Agendamento Online: desconta intervalo de almoço,
+        // horários já ocupados e horários que já passaram no fuso de Brasília
+        const ocupadosSetHoje = new Set(agendamentosHoje.filter(a => a.horario).map(a => a.horario.slice(0,5)));
+        const disponiveisHoje = calcularSlotsHojeDisponiveis(horariosHoje && horariosHoje[0], ocupadosSetHoje).length;
+
+        // ---- Agenda de hoje, horário a horário (mesma lógica de geração de
+        // slots do Agendamento Online: abertura/fechamento + intervalo de
+        // almoço da tabela "horarios_funcionamento", descontando os horários
+        // já ocupados por agendamentos reais deste barbeiro em "agendamentos") ----
+        const bloqueioHoje = (bloqueiosHoje||[]).find(b => hoje >= b.data_inicio && hoje <= b.data_fim);
+        const agendaHojeHtml = this.montarAgendaHojeHtml(horariosHoje && horariosHoje[0], agendamentosHoje, bloqueioHoje);
 
         // últimos 7 dias para os gráficos
         const dias7 = [];
@@ -3627,6 +4008,11 @@ const admin = {
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-coins"></i>Receita mensal</div><div class="value">${this.formatarMoeda(receitaMensal)}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Serviços realizados</div><div class="value">${servicosRealizados}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-bell"></i>Notificações não lidas</div><div class="value">${naoLidas || 0}</div></div>
+            </div>
+
+            <div class="dash-panel">
+                <h4><i class="fa-solid fa-calendar-day"></i> Agenda de hoje — ${this.formatarDataBR(hoje)}</h4>
+                ${agendaHojeHtml}
             </div>
 
             <div class="dash-columns">
@@ -3899,7 +4285,8 @@ const admin = {
     servicosCache: [],
     async renderServicos(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando serviços...</div>';
-        const { data } = await sb.from('servicos').select('*').order('nome');
+        // cada barbeiro só vê e gerencia os próprios serviços
+        const { data } = await sb.from('servicos').select('*').eq('barbeiro_id', this.barbeiro.id).order('nome');
         this.servicosCache = data || [];
         this.desenharServicos();
     },
@@ -3951,21 +4338,21 @@ const admin = {
         if(!payload.nome || !payload.valor){ alert('Preencha nome e valor.'); return; }
 
         const { error } = id
-            ? await sb.from('servicos').update(payload).eq('id', id)
-            : await sb.from('servicos').insert({...payload, ativo:true});
+            ? await sb.from('servicos').update(payload).eq('id', id).eq('barbeiro_id', this.barbeiro.id)
+            : await sb.from('servicos').insert({...payload, ativo:true, barbeiro_id: this.barbeiro.id});
         if(error){ alert('Não foi possível salvar o serviço.'); return; }
         this.fecharModal();
         await this.renderServicos();
     },
 
     async alternarServico(id, novoStatus){
-        await sb.from('servicos').update({ativo: novoStatus}).eq('id', id);
+        await sb.from('servicos').update({ativo: novoStatus}).eq('id', id).eq('barbeiro_id', this.barbeiro.id);
         await this.renderServicos();
     },
 
     async excluirServico(id){
         if(!confirm('Excluir este serviço? Agendamentos antigos mantêm o valor já registrado.')) return;
-        await sb.from('servicos').delete().eq('id', id);
+        await sb.from('servicos').delete().eq('id', id).eq('barbeiro_id', this.barbeiro.id);
         await this.renderServicos();
     },
 
@@ -4173,10 +4560,29 @@ const admin = {
 
     /* ============ 9. RELATÓRIOS ============ */
     relatorioFiltro: 'mes',
+    // false = relatório do próprio barbeiro logado; true = relatório consolidado
+    // da barbearia inteira (todos os barbeiros juntos) — disponível para qualquer
+    // barbeiro logado (Tradicional e Experiente), não só o dono/admin
+    relatorioModoBarbearia: false,
     async renderRelatorios(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando relatórios...</div>';
-        const { data: ags } = await sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at)').eq('barbeiro_id', this.barbeiro.id);
+        const [{data: ags}, {data: agsGeral}] = await Promise.all([
+            sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at)').eq('barbeiro_id', this.barbeiro.id),
+            sb.from('agendamentos').select('*, servicos(nome), clientes(nome, created_at), barbeiros(nome)')
+        ]);
         this.relatorioCache = ags || [];
+        this.relatorioCacheBarbearia = agsGeral || [];
+        this.desenharRelatorios();
+    },
+
+    /* lista de agendamentos usada pelo relatório em tela, no CSV e no PDF —
+       alterna entre "meus agendamentos" e "todos os barbeiros" conforme o modo */
+    dadosRelatorioAtivos(){
+        return (this.relatorioModoBarbearia && this.relatorioCacheBarbearia) ? this.relatorioCacheBarbearia : this.relatorioCache;
+    },
+
+    alternarModoRelatorio(){
+        this.relatorioModoBarbearia = !this.relatorioModoBarbearia;
         this.desenharRelatorios();
     },
 
@@ -4197,7 +4603,8 @@ const admin = {
        exatamente os mesmos números. Nada aqui é recalculado de forma diferente
        na hora de exportar. */
     calcularRelatorio(){
-        const lista = this.filtrarPorPeriodo(this.relatorioCache);
+        const modoBarbearia = this.relatorioModoBarbearia && this.relatorioCacheBarbearia;
+        const lista = this.filtrarPorPeriodo(this.dadosRelatorioAtivos());
         const finalizados = lista.filter(a => a.status === 'finalizado');
         const cancelados = lista.filter(a => a.status === 'cancelado');
 
@@ -4223,10 +4630,27 @@ const admin = {
 
         const periodoLabels = {dia:'Hoje', semana:'Últimos 7 dias', mes:'Este mês', ano:'Este ano'};
 
+        // no modo consolidado, também soma faturamento/atendimentos/clientes por
+        // barbeiro individualmente — é o que diferencia o "relatório da barbearia"
+        // de simplesmente juntar os números de todo mundo numa pilha só
+        let porBarbeiro = [];
+        if(modoBarbearia){
+            const grupos = {};
+            lista.forEach(a => {
+                const nome = a.barbeiros ? a.barbeiros.nome : 'Sem barbeiro';
+                if(!grupos[nome]) grupos[nome] = { nome, finalizados:0, faturamento:0, clientes:new Set() };
+                if(a.status === 'finalizado'){ grupos[nome].finalizados++; grupos[nome].faturamento += Number(a.servico_valor||0); }
+                if(a.cliente_id) grupos[nome].clientes.add(a.cliente_id);
+            });
+            porBarbeiro = Object.values(grupos)
+                .map(g => ({ nome:g.nome, finalizados:g.finalizados, faturamento:g.faturamento, clientes:g.clientes.size }))
+                .sort((a,b) => b.faturamento - a.faturamento);
+        }
+
         return {
-            lista, finalizados, cancelados,
+            lista, finalizados, cancelados, modoBarbearia,
             periodoLabel: periodoLabels[this.relatorioFiltro] || this.relatorioFiltro,
-            clientesNovos, clientesRecorrentes, faturamento,
+            clientesNovos, clientesRecorrentes, faturamento, porBarbeiro,
             horariosOrdenados: ordenado(contagemHorario),
             diasOrdenados: ordenado(contagemDia),
             servicosOrdenados: ordenado(contagemServico)
@@ -4240,15 +4664,17 @@ const admin = {
         document.getElementById('admin-content').innerHTML = `
             <div class="admin-search-bar" id="admin-filtros-rapidos">
                 ${['dia','semana','mes','ano'].map(f => `<button class="ag-btn filtro-rapido${this.relatorioFiltro===f?' active':''}" onclick="admin.setFiltroRelatorio('${f}')">${{dia:'Hoje',semana:'Semana',mes:'Mês',ano:'Ano'}[f]}</button>`).join('')}
+                <button class="ag-btn filtro-rapido${this.relatorioModoBarbearia?' active':''}" onclick="admin.alternarModoRelatorio()"><i class="fa-solid fa-store"></i> ${this.relatorioModoBarbearia?'Ver meu relatório':'Relatório da barbearia'}</button>
                 <button class="admin-btn-primario" onclick="admin.exportarCSV()"><i class="fa-solid fa-file-csv"></i> Exportar Excel (CSV)</button>
                 <button class="admin-btn-primario" onclick="admin.exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
             </div>
+            ${r.modoBarbearia ? `<div class="dash-panel" style="border-color:var(--accent);margin-bottom:16px;"><h4><i class="fa-solid fa-store"></i> Visão consolidada — todos os barbeiros (${r.periodoLabel})</h4><div style="color:var(--text-muted);font-size:12.5px;margin-top:-6px;margin-bottom:4px;">Os números abaixo somam os atendimentos de todos os profissionais da Prieto Barbearia neste período.</div></div>` : ''}
             <div class="stat-grid">
-                <div class="stat-card"><div class="label">Clientes novos</div><div class="value">${r.clientesNovos}</div></div>
                 <div class="stat-card"><div class="label">Clientes recorrentes</div><div class="value">${r.clientesRecorrentes}</div></div>
                 <div class="stat-card"><div class="label">Faturamento no período</div><div class="value">${this.formatarMoeda(r.faturamento)}</div></div>
                 <div class="stat-card"><div class="label">Cancelamentos</div><div class="value">${r.cancelados.length}</div></div>
             </div>
+            ${r.modoBarbearia ? `<div class="dash-panel"><h4>Faturamento por barbeiro</h4><div class="mini-list">${r.porBarbeiro.length ? r.porBarbeiro.map(b=>`<div class="mini-list-item"><span class="n">${b.nome}</span><span class="m">${this.formatarMoeda(b.faturamento)} • ${b.finalizados} atendimento(s) • ${b.clientes} cliente(s)</span></div>`).join('') : '<div class="mini-list-item">Sem dados.</div>'}</div></div>` : ''}
             <div class="dash-columns">
                 <div class="dash-panel"><h4>Horários mais movimentados</h4><div class="mini-list">${top5(r.horariosOrdenados).map(([k,v])=>`<div class="mini-list-item"><span class="n">${this.formatarHora(k)}</span><span class="m">${v} atendimento(s)</span></div>`).join('') || '<div class="mini-list-item">Sem dados.</div>'}</div></div>
                 <div class="dash-panel"><h4>Dias mais movimentados</h4><div class="mini-list">${top5(r.diasOrdenados).map(([k,v])=>`<div class="mini-list-item"><span class="n">${k}</span><span class="m">${v} atendimento(s)</span></div>`).join('') || '<div class="mini-list-item">Sem dados.</div>'}</div></div>
@@ -4265,16 +4691,21 @@ const admin = {
     exportarCSV(){
         const r = this.calcularRelatorio();
         const linhas = [];
-        linhas.push(['PRIETO BARBEARIA - RELATÓRIO']);
+        linhas.push([r.modoBarbearia ? 'PRIETO BARBEARIA - RELATÓRIO CONSOLIDADO (TODOS OS BARBEIROS)' : 'PRIETO BARBEARIA - RELATÓRIO']);
         linhas.push([`Período analisado: ${r.periodoLabel}`]);
         linhas.push([]);
         linhas.push(['RESUMO']);
         linhas.push(['Categoria','Valor']);
-        linhas.push(['Clientes novos', r.clientesNovos]);
         linhas.push(['Clientes recorrentes', r.clientesRecorrentes]);
         linhas.push(['Faturamento no período', this.formatarMoeda(r.faturamento)]);
         linhas.push(['Cancelamentos', r.cancelados.length]);
         linhas.push([]);
+        if(r.modoBarbearia){
+            linhas.push(['FATURAMENTO POR BARBEIRO']);
+            linhas.push(['Barbeiro','Atendimentos','Clientes','Faturamento']);
+            (r.porBarbeiro.length ? r.porBarbeiro : [['Sem dados','','','']]).forEach(b => linhas.push([b.nome, b.finalizados, b.clientes, this.formatarMoeda(b.faturamento)]));
+            linhas.push([]);
+        }
         linhas.push(['HORÁRIOS MAIS MOVIMENTADOS']);
         linhas.push(['Horário','Quantidade']);
         (r.horariosOrdenados.length ? r.horariosOrdenados : [['Sem dados','']]).forEach(([k,v]) => linhas.push([this.formatarHora(k), v]));
@@ -4288,9 +4719,13 @@ const admin = {
         (r.diasOrdenados.length ? r.diasOrdenados : [['Sem dados','']]).forEach(([k,v]) => linhas.push([k, v]));
         linhas.push([]);
         linhas.push(['DETALHAMENTO DOS AGENDAMENTOS DO PERÍODO']);
-        linhas.push(['Cliente','Telefone','Serviço','Valor','Data','Horário','Status','Origem']);
+        linhas.push([
+            'Cliente','Telefone', ...(r.modoBarbearia ? ['Barbeiro'] : []), 'Serviço','Valor','Data','Horário','Status','Origem'
+        ]);
         r.lista.forEach(a => linhas.push([
-            a.cliente_nome || 'Cliente presencial', a.cliente_telefone||'', a.servicos?a.servicos.nome:'',
+            a.cliente_nome || 'Cliente presencial', a.cliente_telefone||'',
+            ...(r.modoBarbearia ? [a.barbeiros ? a.barbeiros.nome : '—'] : []),
+            a.servicos?a.servicos.nome:'',
             this.formatarMoeda(a.servico_valor||0), this.formatarDataBR(a.data),
             this.formatarHora(a.horario), a.status, a.origem==='presencial' ? 'Presencial' : 'Online'
         ]));
@@ -4299,7 +4734,7 @@ const admin = {
         const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `relatorio-prieto-barbearia-${this.hojeISO()}.csv`;
+        a.href = url; a.download = `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     },
@@ -4378,7 +4813,7 @@ const admin = {
         }
 
         doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
-        doc.text('RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
+        doc.text(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
         doc.text('PRIETO BARBEARIA', pageW/2, y, {align:'center'}); y += 5;
         doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
@@ -4403,12 +4838,11 @@ const admin = {
         doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
 
         const cartoes = [
-            {valor: String(r.clientesNovos), label: 'CLIENTES NOVOS'},
             {valor: String(r.clientesRecorrentes), label: 'CLIENTES RECORRENTES'},
             {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
             {valor: String(r.cancelados.length), label: 'CANCELAMENTOS'}
         ];
-        const gap = 4, largCartao = (pageW - margem*2 - gap*3)/4, altCartao = 23;
+        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
             doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
@@ -4426,6 +4860,26 @@ const admin = {
                 doc.addPage(); fundo(); y = 20;
             }
         };
+
+        // no modo consolidado, tabela extra logo após os cartões de resumo mostrando
+        // o desempenho de cada barbeiro separadamente dentro do total da barbearia
+        if(r.modoBarbearia && r.porBarbeiro.length){
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text('FATURAMENTO POR BARBEIRO', margem, y); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: {left: margem, right: margem, bottom: 20},
+                head: [['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO']],
+                body: r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
+                theme: 'grid',
+                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        }
 
         const secao = (titulo, corpo, colunas) => {
             garantirEspaco(30);
@@ -4458,7 +4912,16 @@ const admin = {
             rodape(p);
         }
 
-        doc.save(`relatorio-prieto-barbearia-${this.hojeISO()}.pdf`);
+        // não baixa mais automaticamente: gera o arquivo PDF real uma única vez e
+        // reaproveita esse MESMO arquivo tanto para a pré-visualização quanto para
+        // o download (botão "Baixar PDF"), registrando-o no Histórico de PDFs Gerados
+        const nomeArquivo = `relatorio-prieto-barbearia${r.modoBarbearia?'-consolidado':''}-${this.hojeISO()}.pdf`;
+        this.finalizarGeracaoPDF(doc, {
+            nomeArquivo,
+            titulo: r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho',
+            tipo: 'relatorios',
+            periodoLabel: r.periodoLabel
+        });
     },
 
     /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
@@ -4470,16 +4933,45 @@ const admin = {
             document.getElementById('admin-content').innerHTML = `<div class="admin-empty">Não foi possível carregar os barbeiros.<br>${error.message||''}</div>`;
             return;
         }
-        // mostra todos os barbeiros ativos, sem excluir nenhum cargo — precisa
-        // bater com quem pode ser selecionado em "Barbeiro que realizou o
-        // atendimento", senão os dados desse barbeiro ficam inacessíveis aqui
-        const barbeiros = equipe||[];
+        // trava fixo: só o Barbeiro Experiente aparece nesse select, independente
+        // de quem estiver logado ou de quantos outros barbeiros existirem
+        const barbeiros = (equipe||[]).filter(b => b.nome === 'Barbeiro Experiente');
         if(!barbeiros.length){
             document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Nenhum barbeiro ativo encontrado.</div>';
             return;
         }
         if(!this.barbeiroGestao || !barbeiros.some(b => b.id === this.barbeiroGestao.id)) this.barbeiroGestao = barbeiros[0];
         await this.desenharGestaoBarbeiro(barbeiros);
+    },
+
+    /* usada pela seção "Gestão de Barbeiros": só quem é admin (dono / Barbeiro
+       Tradicional) acessa essa tela (ver renderGestaoBarbeiro), então essa função
+       nunca fica exposta para o Barbeiro Experiente alterar o próprio nível de
+       acesso do Tradicional — ela só altera o barbeiro que está sendo exibido
+       na Gestão (hoje, sempre o Experiente). Não exclui nada: apenas marca
+       "recebe_agendamento_online" na tabela "barbeiros". */
+    async alternarDisponibilidadeGestao(barbeiroId, disponivel){
+        if(!this.ehAdmin()) return;
+        // pede de volta a linha atualizada (.select()) para confirmar que a
+        // alteração realmente aconteceu no banco — sem isso, uma política de
+        // segurança (RLS) do Supabase pode bloquear silenciosamente o update em
+        // OUTRO barbeiro (sem gerar "error"), fazendo o botão parecer que
+        // funcionou mesmo sem salvar nada.
+        const { data, error } = await sb.from('barbeiros')
+            .update({ recebe_agendamento_online: disponivel })
+            .eq('id', barbeiroId)
+            .select('id, recebe_agendamento_online');
+
+        if(error){ alert('Não foi possível atualizar a disponibilidade: ' + error.message); await this.renderGestaoBarbeiro(); return; }
+
+        if(!data || !data.length){
+            alert('A alteração não foi salva. Isso costuma acontecer quando a política de segurança (RLS) da tabela "barbeiros" no Supabase só permite que cada barbeiro atualize o próprio cadastro. Peça para liberar, para administradores, a permissão de UPDATE sobre a coluna "recebe_agendamento_online" de outros barbeiros.');
+            await this.renderGestaoBarbeiro();
+            return;
+        }
+
+        if(this.barbeiroGestao && this.barbeiroGestao.id === barbeiroId) this.barbeiroGestao.recebe_agendamento_online = disponivel;
+        await this.renderGestaoBarbeiro();
     },
 
     async trocarBarbeiroGestao(id){
@@ -4518,23 +5010,16 @@ const admin = {
         const clientesCadastrados = new Set(lista.filter(a=>a.cliente_id).map(a=>a.cliente_id)).size;
         const proximo = lista.find(a => a.data>=hoje && ['pendente','confirmado'].includes(a.status));
         const ultimo = [...finalizados].sort((a,c) => (c.data+' '+(c.horario||'')).localeCompare(a.data+' '+(a.horario||'')))[0];
-        let totalSlotsHoje = 0;
-        if(horariosHoje && horariosHoje[0] && horariosHoje[0].hora_abertura && horariosHoje[0].hora_fechamento){
-            const [ha,ma]=horariosHoje[0].hora_abertura.split(':').map(Number);
-            const [hf,mf]=horariosHoje[0].hora_fechamento.split(':').map(Number);
-            const intervalo = Number(horariosHoje[0].intervalo_atendimentos_minutos || 30);
-            totalSlotsHoje = Math.max(Math.floor(((hf*60+mf)-(ha*60+ma))/Math.max(intervalo,1)),0);
-        } else totalSlotsHoje = 18;
         const ocupadosHoje = hojeAg.length;
-        const disponiveisHoje = Math.max(totalSlotsHoje-ocupadosHoje,0);
+        // mesmo cálculo usado no Agendamento Online e no Dashboard: desconta
+        // intervalo de almoço, horários ocupados e horários já passados
+        const ocupadosSetGestaoHoje = new Set(hojeAg.filter(a => a.horario).map(a => a.horario.slice(0,5)));
+        const disponiveisHoje = calcularSlotsHojeDisponiveis(horariosHoje && horariosHoje[0], ocupadosSetGestaoHoje).length;
         const proximos5 = lista.filter(a=>a.data>=hoje && ['pendente','confirmado'].includes(a.status)).slice(0,5);
         const ultimo5 = [...lista].sort((a,c)=>new Date(c.created_at||0)-new Date(a.created_at||0)).slice(0,5);
 
         document.getElementById('admin-content').innerHTML = `
             <div class="admin-search-bar">
-                <select id="gestao-barbeiro-select" onchange="admin.trocarBarbeiroGestao(this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:Inter,sans-serif;font-size:13.5px;flex:1;min-width:220px;">
-                    ${barbeiros.map(x=>`<option value="${x.id}" ${x.id===b.id?'selected':''}>${x.nome}</option>`).join('')}
-                </select>
                 <button class="ag-btn" onclick="admin.gestaoFiltro='dia';admin.renderGestaoBarbeiro()">Hoje</button>
                 <button class="ag-btn" onclick="admin.gestaoFiltro='semana';admin.renderGestaoBarbeiro()">Semana</button>
                 <button class="ag-btn" onclick="admin.gestaoFiltro='mes';admin.renderGestaoBarbeiro()">Mês</button>
@@ -4543,9 +5028,21 @@ const admin = {
                 <button class="admin-btn-primario" onclick="admin.exportarGestaoPDF()"><i class="fa-solid fa-file-pdf"></i> Relatório PDF</button>
             </div>
             <div class="dash-panel" style="margin-bottom:20px;">
-                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                    <div class="admin-avatar-chip" style="width:48px;height:48px;border-radius:14px;">${b.foto_url?`<img src="${b.foto_url}" alt="${b.nome}">`:'<i class="fa-solid fa-user"></i>'}</div>
-                    <div><h3 style="margin-bottom:2px;">${b.nome}</h3><div style="color:var(--text-muted);font-size:12.5px;">Visão administrativa completa do profissional</div></div>
+                <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div class="admin-avatar-chip" style="width:48px;height:48px;border-radius:14px;">${b.foto_url?`<img src="${b.foto_url}" alt="${b.nome}">`:'<i class="fa-solid fa-user"></i>'}</div>
+                        <div><h3 style="margin-bottom:2px;">${b.nome}</h3><div style="color:var(--text-muted);font-size:12.5px;">Visão administrativa completa do profissional</div></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="integ-status" style="gap:6px;">
+                            <span class="integ-dot" style="background:${b.recebe_agendamento_online===false?'#e05a5a':'#3fb96a'};"></span>
+                            ${b.recebe_agendamento_online===false ? 'Indisponível no agendamento online' : 'Disponível no agendamento online'}
+                        </div>
+                        <label class="switch" title="${b.recebe_agendamento_online===false ? 'Ativar' : 'Desativar'} no agendamento online">
+                            <input type="checkbox" ${b.recebe_agendamento_online===false ? '' : 'checked'} onchange="admin.alternarDisponibilidadeGestao('${b.id}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="stat-grid">
@@ -4748,62 +5245,13 @@ const admin = {
             rodape(p);
         }
 
-        doc.save(`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`);
-    },
-
-    /* ============ 10. PERFIL ============ */
-    renderPerfil(){
-        const b = this.barbeiro;
-        document.getElementById('admin-content').innerHTML = `
-            <div class="dash-panel" style="max-width:520px;">
-                <div class="campo" style="margin-bottom:16px;"><label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:7px;">URL da foto</label><input class="campo-bloco" id="pf-foto" value="${b.foto_url||''}" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);"></div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Nome</label><input id="pf-nome" value="${b.nome||''}"></div>
-                    <div class="campo-bloco"><label>Especialidade</label><input id="pf-especialidade" value="${b.especialidade||''}"></div>
-                </div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Telefone</label><input id="pf-telefone" value="${b.telefone||''}"></div>
-                    <div class="campo-bloco"><label>WhatsApp</label><input id="pf-whatsapp" value="${b.whatsapp||''}"></div>
-                </div>
-                <div class="campos-linha">
-                    <div class="campo-bloco"><label>Instagram</label><input id="pf-instagram" value="${b.instagram||''}"></div>
-                    <div class="campo-bloco"><label>Tempo de experiência</label><input id="pf-experiencia" value="${b.tempo_experiencia||''}" placeholder="ex: 8 anos"></div>
-                </div>
-                <div class="campo-bloco" style="margin-bottom:16px;"><label>Biografia</label><input id="pf-bio" value="${b.biografia||''}"></div>
-                <div class="campo-bloco" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-                    <label class="switch"><input type="checkbox" id="pf-recebe-agendamento" ${b.recebe_agendamento_online!==false?'checked':''}><span class="slider"></span></label>
-                    <span style="font-size:13.5px;">Aparecer como opção no Agendamento Online</span>
-                </div>
-                <button class="admin-btn-primario" onclick="admin.salvarPerfil()"><i class="fa-solid fa-floppy-disk"></i> Salvar perfil</button>
-            </div>
-        `;
-    },
-
-    async salvarPerfil(){
-        const recebeEl = document.getElementById('pf-recebe-agendamento');
-        const payload = {
-            foto_url: document.getElementById('pf-foto').value.trim(),
-            nome: document.getElementById('pf-nome').value.trim(),
-            especialidade: document.getElementById('pf-especialidade').value.trim(),
-            telefone: document.getElementById('pf-telefone').value.trim(),
-            whatsapp: document.getElementById('pf-whatsapp').value.trim(),
-            instagram: document.getElementById('pf-instagram').value.trim(),
-            tempo_experiencia: document.getElementById('pf-experiencia').value.trim(),
-            biografia: document.getElementById('pf-bio').value.trim(),
-            recebe_agendamento_online: recebeEl ? recebeEl.checked : true
-        };
-        let { error } = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
-        if(error){
-            // fallback se a coluna "recebe_agendamento_online" ainda não existir no banco
-            delete payload.recebe_agendamento_online;
-            const retry = await sb.from('barbeiros').update(payload).eq('id', this.barbeiro.id);
-            error = retry.error;
-        }
-        if(error){ alert('Não foi possível salvar o perfil.'); return; }
-        this.barbeiro = {...this.barbeiro, ...payload};
-        document.getElementById('admin-barbeiro-nome').textContent = this.barbeiro.nome;
-        atualizarAvatarChip(this.barbeiro);
-        alert('Perfil atualizado! Essas informações já aparecem no Agendamento Online.');
+        const nomeArquivo = `relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
+        this.finalizarGeracaoPDF(doc, {
+            nomeArquivo,
+            titulo: `Relatório do Barbeiro — ${this.barbeiroGestao.nome}`,
+            tipo: 'gestao-barbeiro',
+            periodoLabel: r.periodoLabel
+        });
     },
 
     formatarDataHoraBR(iso){
@@ -4811,7 +5259,254 @@ const admin = {
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
 
-    /* ============ 11. CONFIGURAÇÕES ============ */
+    /* ============ HISTÓRICO DE PDFs GERADOS ============
+       Substitui o download automático de "Emitir PDF" por um fluxo de
+       pré-visualização real (Emitir → Gerar → Registrar no Histórico → Abrir
+       Pré-visualização → o usuário decide "Baixar PDF" ou "Voltar"). O mesmo
+       arquivo PDF gerado (mesmo blob) é usado tanto na pré-visualização quanto
+       no download — nunca é gerado um segundo arquivo diferente.
+
+       Depende de dois recursos no Supabase (documentados junto ao código-fonte
+       entregue, precisam ser criados uma única vez no projeto):
+       - bucket de Storage "relatorios-pdfs" (ver BUCKET_RELATORIOS_PDF)
+       - tabela "relatorios_gerados" (colunas: id, barbeiro_id, barbeiro_nome,
+         tipo, titulo, periodo_label, arquivo_path, nome_arquivo, created_at)
+
+       Cada registro do histórico é salvo com o barbeiro_id de quem estava
+       logado no momento em que o PDF foi emitido — tanto o relatório emitido
+       pelo próprio barbeiro em "Relatórios" quanto o relatório emitido pelo
+       dono/administrador em "Gestão do Barbeiro" (tela que já é restrita ao
+       administrador). Isso mantém, sem criar nenhuma permissão nova, a mesma
+       separação de acesso que o sistema já tinha: cada barbeiro só enxerga em
+       seu próprio Histórico os PDFs que ele mesmo emitiu. */
+    pdfPreview: null,
+
+    /* chamado ao final de exportarPDF() / exportarGestaoPDF() no lugar de doc.save():
+       transforma o documento jsPDF já pronto em um arquivo (blob) real uma única
+       vez, abre a pré-visualização imediatamente com esse arquivo e, em paralelo,
+       tenta registrá-lo no histórico (sem travar a pré-visualização caso a rede
+       esteja lenta ou indisponível). */
+    finalizarGeracaoPDF(doc, meta){
+        let blob;
+        try{
+            blob = doc.output('blob');
+        }catch(e){
+            alert('Não foi possível gerar o arquivo do relatório em PDF. Tente novamente.');
+            return;
+        }
+        this.abrirPreviewPDF({ blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
+        this.registrarPdfNoHistorico({ ...meta, blob });
+    },
+
+    /* pré-visualização do PDF real (não é imagem nem HTML fingindo ser PDF):
+       aceita OU um "blob" recém-gerado (Emitir PDF) OU as URLs já salvas de um
+       item do Histórico (Visualizar). Em ambos os casos, o link usado para
+       "Baixar PDF" aponta exatamente para o mesmo arquivo mostrado no iframe. */
+    abrirPreviewPDF({ blob, visualizarUrl, baixarUrl, nomeArquivo, titulo }){
+        this.fecharObjectUrlPreviewAnterior();
+        let urlVisualizar = visualizarUrl, urlBaixar = baixarUrl, isBlob = false;
+        if(blob){
+            urlVisualizar = URL.createObjectURL(blob);
+            urlBaixar = urlVisualizar; // mesmíssimo arquivo para visualizar e baixar
+            isBlob = true;
+        }
+        this.pdfPreview = { visualizarUrl: urlVisualizar, baixarUrl: urlBaixar, nomeArquivo: nomeArquivo || 'relatorio.pdf', isBlob };
+
+        const tituloEl = document.getElementById('admin-page-title');
+        if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="admin-search-bar">
+                <button class="ag-btn" onclick="admin.fecharPreviewPDF()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                <button class="admin-btn-primario" onclick="admin.baixarPdfPreview()"><i class="fa-solid fa-file-arrow-down"></i> Baixar PDF</button>
+            </div>
+            <div class="dash-panel pdf-preview-panel">
+                <h4><i class="fa-solid fa-file-pdf"></i> Pré-visualização do Relatório${titulo ? ' — '+titulo : ''}</h4>
+                <div class="pdf-preview-frame-wrap">
+                    <iframe src="${urlVisualizar}" class="pdf-preview-frame" title="Pré-visualização do relatório em PDF"></iframe>
+                </div>
+            </div>
+        `;
+        fecharMenuAdminMobile();
+    },
+
+    /* fecha a pré-visualização e volta para a página de onde ela foi aberta
+       (Relatórios, Gestão do Barbeiro ou o próprio Histórico de PDFs) */
+    fecharPreviewPDF(){
+        this.fecharObjectUrlPreviewAnterior();
+        this.pdfPreview = null;
+        this.irPara(this.paginaAtual);
+    },
+
+    fecharObjectUrlPreviewAnterior(){
+        if(this.pdfPreview && this.pdfPreview.isBlob && this.pdfPreview.visualizarUrl){
+            try{ URL.revokeObjectURL(this.pdfPreview.visualizarUrl); }catch(e){}
+        }
+    },
+
+    baixarPdfPreview(){
+        if(!this.pdfPreview) return;
+        const a = document.createElement('a');
+        a.href = this.pdfPreview.baixarUrl;
+        a.download = this.pdfPreview.nomeArquivo;
+        a.target = '_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    },
+
+    /* envia o PDF já gerado (mesmo blob mostrado na pré-visualização) para o
+       Storage do Supabase e registra a linha correspondente no histórico.
+       Só entra aqui quando o PDF foi realmente gerado com sucesso — se o
+       upload ou o registro falharem, o relatório NÃO aparece no histórico
+       (não fica um registro "quebrado" apontando para um arquivo inexistente),
+       mas a pré-visualização já aberta continua funcionando normalmente. */
+    async registrarPdfNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo }){
+        if(!this.barbeiro || !blob) return;
+        try{
+            const caminho = `${this.barbeiro.id}/${Date.now()}-${nomeArquivo}`;
+            const { error: erroUpload } = await sb.storage.from(BUCKET_RELATORIOS_PDF)
+                .upload(caminho, blob, { contentType: 'application/pdf', upsert: false });
+            if(erroUpload){
+                console.warn('Não foi possível salvar o PDF no Histórico de PDFs Gerados:', erroUpload.message);
+                return;
+            }
+            const { error: erroInsert } = await sb.from('relatorios_gerados').insert({
+                barbeiro_id: this.barbeiro.id,
+                barbeiro_nome: this.barbeiro.nome,
+                tipo, titulo, periodo_label: periodoLabel,
+                arquivo_path: caminho, nome_arquivo: nomeArquivo
+            });
+            if(erroInsert){
+                console.warn('Não foi possível registrar o PDF no Histórico de PDFs Gerados:', erroInsert.message);
+                return;
+            }
+            // se a tela de histórico já estiver aberta (em outra aba/momento), atualiza a lista
+            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview) this.renderHistoricoPdfs();
+        }catch(e){
+            console.warn('Falha inesperada ao registrar o PDF no Histórico de PDFs Gerados:', e);
+        }
+    },
+
+    /* lista, para o barbeiro logado, somente os PDFs que ele mesmo emitiu —
+       nunca mistura com o histórico de outro barbeiro */
+    async renderHistoricoPdfs(){
+        document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando histórico de PDFs...</div>';
+        if(!this.barbeiro) return;
+        const { data, error } = await sb.from('relatorios_gerados')
+            .select('*')
+            .eq('barbeiro_id', this.barbeiro.id)
+            .order('created_at', { ascending: false });
+
+        if(error){
+            document.getElementById('admin-content').innerHTML =
+                `<div class="admin-empty">Não foi possível carregar o histórico de PDFs.<br>${error.message||''}</div>`;
+            return;
+        }
+
+        this._historicoPdfsCache = data || [];
+        if(!this._historicoPdfsCache.length){
+            document.getElementById('admin-content').innerHTML =
+                '<div class="admin-empty">Nenhum PDF gerado ainda.<br>Os relatórios emitidos em PDF (em "Relatórios"'+(this.ehAdmin()?' ou "Gestão do Barbeiro"':'')+') aparecerão aqui automaticamente.</div>';
+            return;
+        }
+
+        document.getElementById('admin-content').innerHTML = `
+            <div class="dash-panel">
+                <div class="admin-search-bar" style="justify-content:space-between;">
+                    <h4 style="margin:0;"><i class="fa-solid fa-file-pdf"></i> Histórico de Relatórios</h4>
+                    <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoPdfs()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
+                </div>
+                <div class="mini-list">
+                    ${this._historicoPdfsCache.map(item => `
+                        <div class="mini-list-item pdf-historico-item">
+                            <span class="n">
+                                ${item.titulo || 'Relatório'}
+                                <br><small class="pdf-historico-meta">
+                                    ${item.periodo_label ? 'Período: '+item.periodo_label+' • ' : ''}Gerado em ${this.formatarDataHoraBR(item.created_at)} por ${item.barbeiro_nome || '—'}
+                                </small>
+                            </span>
+                            <span class="m pdf-historico-acoes">
+                                <button class="ag-btn" onclick="admin.visualizarPdfHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                                <button class="ag-btn" onclick="admin.baixarPdfHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
+                                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarPdfDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    /* reabre a pré-visualização de um PDF já existente — reaproveita o arquivo
+       já salvo no Storage, nunca gera um novo PDF nem duplica o registro */
+    visualizarPdfHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item) return;
+        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+    },
+
+    baixarPdfHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item) return;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        const a = document.createElement('a');
+        a.href = baixarUrl; a.download = item.nome_arquivo; a.target = '_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    },
+
+    /* apaga somente UM PDF do histórico: remove o arquivo do Storage e, em seguida,
+       o registro correspondente. Nunca mexe em agendamentos, clientes, barbeiros,
+       configurações, serviços ou no histórico de outro barbeiro — o próprio filtro
+       por barbeiro_id (aqui e na policy do banco) garante isso. */
+    async apagarPdfDoHistorico(id){
+        const item = (this._historicoPdfsCache||[]).find(i => String(i.id) === String(id));
+        if(!item || !this.barbeiro) return;
+        if(!confirm('Deseja apagar este relatório do histórico?')) return;
+
+        if(item.arquivo_path){
+            const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove([item.arquivo_path]);
+            if(erroStorage){
+                alert('Não foi possível apagar o arquivo do PDF: ' + erroStorage.message);
+                return;
+            }
+        }
+        // "barbeiro_id" no filtro é uma segunda trava (além da policy do banco): mesmo que
+        // alguém altere o id na URL/console, só o próprio histórico do barbeiro pode ser apagado
+        const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
+            .eq('id', item.id).eq('barbeiro_id', this.barbeiro.id);
+        if(erroDelete){
+            alert('Não foi possível apagar o registro do histórico: ' + erroDelete.message);
+            return;
+        }
+        this.renderHistoricoPdfs();
+    },
+
+    /* apaga TODOS os PDFs do histórico do barbeiro logado — nunca de outro barbeiro */
+    async apagarTodoHistoricoPdfs(){
+        if(!this.barbeiro) return;
+        const itens = this._historicoPdfsCache || [];
+        if(!itens.length) return;
+        if(!confirm('Tem certeza que deseja apagar todo o histórico de PDFs? Essa ação não poderá ser desfeita.')) return;
+
+        const caminhos = itens.map(i => i.arquivo_path).filter(Boolean);
+        if(caminhos.length){
+            const { error: erroStorage } = await sb.storage.from(BUCKET_RELATORIOS_PDF).remove(caminhos);
+            if(erroStorage){
+                alert('Não foi possível apagar os arquivos dos PDFs: ' + erroStorage.message);
+                return;
+            }
+        }
+        const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
+            .eq('barbeiro_id', this.barbeiro.id);
+        if(erroDelete){
+            alert('Não foi possível apagar o histórico: ' + erroDelete.message);
+            return;
+        }
+        this.renderHistoricoPdfs();
+    },
+
+    /* ============ 10. CONFIGURAÇÕES ============ */
     async renderConfiguracoes(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando configurações...</div>';
         const { data: { user } } = await sb.auth.getUser();
@@ -4831,6 +5526,25 @@ const admin = {
                     <div class="campo-bloco"><label>Nova senha</label><input id="cfg-senha" type="password" placeholder="Deixe em branco para não alterar"></div>
                 </div>
                 <button class="ag-btn" onclick="admin.salvarConta()"><i class="fa-solid fa-key"></i> Atualizar conta</button>
+            </div>
+
+            <div class="dash-panel">
+                <h4>Disponibilidade no Agendamento Online</h4>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
+                    <div style="max-width:520px;">
+                        <div style="font-weight:600;margin-bottom:4px;">Desativar meu perfil no agendamento online</div>
+                        <div style="color:var(--text-muted);font-size:12.5px;">
+                            Quando desativado, seu perfil some da seleção de novos agendamentos no site (aparece riscado e não pode ser escolhido pelos clientes). Seu cadastro, histórico, serviços e agendamentos já marcados continuam intactos — isso só bloqueia <strong>novos</strong> agendamentos.
+                        </div>
+                    </div>
+                    <label class="switch" style="flex-shrink:0;">
+                        <input type="checkbox" id="cfg-disponivel-online" ${this.barbeiro.recebe_agendamento_online === false ? '' : 'checked'} onchange="admin.alternarDisponibilidadeOnline(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="cfg-disponivel-msg" style="display:${this.barbeiro.recebe_agendamento_online === false ? 'block' : 'none'};color:#e0a35a;font-size:12.5px;margin-top:10px;font-weight:600;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Seu perfil está desativado — clientes não conseguem agendar com você no momento.
+                </div>
             </div>
 
             <div class="dash-panel">
@@ -4906,6 +5620,32 @@ const admin = {
         if(msg){ msg.style.display = 'block'; } else { alert('Configurações salvas com sucesso.'); }
     },
 
+    /* ativa/desativa o próprio perfil no agendamento online (Tradicional e
+       Experiente podem alternar apenas o próprio status). Não exclui nada:
+       só marca "recebe_agendamento_online" na tabela "barbeiros", que já é
+       a mesma coluna consultada pelo site público para montar a lista de
+       barbeiros disponíveis (ver carregarBarbeirosPublicos). */
+    async alternarDisponibilidadeOnline(disponivel){
+        const input = document.getElementById('cfg-disponivel-online');
+        const msg = document.getElementById('cfg-disponivel-msg');
+        if(input) input.disabled = true;
+
+        const { error } = await sb.from('barbeiros')
+            .update({ recebe_agendamento_online: disponivel })
+            .eq('id', this.barbeiro.id);
+
+        if(input) input.disabled = false;
+
+        if(error){
+            alert('Não foi possível atualizar sua disponibilidade: ' + error.message);
+            if(input) input.checked = !disponivel; // desfaz visualmente
+            return;
+        }
+
+        this.barbeiro.recebe_agendamento_online = disponivel;
+        if(msg) msg.style.display = disponivel ? 'none' : 'block';
+    },
+
     async sair(){
         await this.marcarOffline();
         await sb.auth.signOut();
@@ -4970,6 +5710,87 @@ async function handleAdminLogin(event){
   }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 
   reveals.forEach(function(el){ observer.observe(el); });
+})();
+</script>
+
+<!-- ================= ANIMAÇÃO DOS BOTÕES DO HERO (Agendamento Online /
+     Agendamento WhatsApp) =================
+     Script isolado (não mexe em nenhuma outra função do site nem no
+     sistema .reveal acima). Observa os dois botões com a classe
+     .cta-reveal e adiciona .in-view quando eles entram na tela, disparando
+     o fade-in + leve deslocamento vertical via CSS. Ao contrário do
+     .reveal, funciona igual no computador e no celular — só respeita
+     prefers-reduced-motion.
+
+     Além do fade-in, os botões dão uma "batida"/pulso (.cta-pulse) de
+     forma 100% AUTOMÁTICA: nenhum clique, toque ou hover é necessário —
+     o gatilho é só o botão estar visível na tela. A sequência (batida →
+     pausa longa → batida → pausa longa...) roda sozinha em loop enquanto
+     o botão estiver no viewport. Se o cliente rolar a página e o botão
+     sair da tela, o loop é pausado (economiza processamento); se ele
+     voltar a aparecer, o loop volta a rodar sozinho — sem precisar de
+     nenhuma ação do cliente. Um segundo IntersectionObserver (contínuo,
+     sem unobserve) cuida só dessa parte, independente do observer de
+     fade-in acima. ================= -->
+<script>
+(function(){
+  var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ctas = document.querySelectorAll('.cta-reveal');
+
+  if(prefersReduced || !('IntersectionObserver' in window)){
+    ctas.forEach(function(el){ el.classList.add('in-view'); });
+    return;
+  }
+
+  function dispararPulso(el){
+    el.classList.remove('cta-pulse');
+    void el.offsetWidth; // força o navegador a "esquecer" a animação anterior antes de reaplicar
+    el.classList.add('cta-pulse');
+  }
+
+  var INTERVALO_MS = 8000; // pausa longa e discreta entre uma batida e a próxima
+
+  // liga o loop de batidas automáticas do botão (chamado quando ele entra na tela)
+  function ligarLoopPulso(el){
+    if(el._pulseTimeout || el._pulseInterval) return; // já está rodando, não duplica
+
+    el._pulseTimeout = setTimeout(function(){ // pequena espera pro fade-in terminar antes da 1ª batida
+      dispararPulso(el);
+      el._pulseInterval = setInterval(function(){ dispararPulso(el); }, INTERVALO_MS);
+    }, 450);
+  }
+
+  // pausa o loop de batidas do botão (chamado quando ele sai da tela)
+  function desligarLoopPulso(el){
+    if(el._pulseTimeout){ clearTimeout(el._pulseTimeout); el._pulseTimeout = null; }
+    if(el._pulseInterval){ clearInterval(el._pulseInterval); el._pulseInterval = null; }
+  }
+
+  var ctaObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        ctaObserver.unobserve(entry.target); // o fade-in só acontece uma vez
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '0px 0px -20px 0px' });
+
+  // observer separado e contínuo (nunca dá unobserve): liga/desliga o loop
+  // automático de batidas conforme o botão entra e sai da tela visível
+  var pulseObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        ligarLoopPulso(entry.target);
+      } else {
+        desligarLoopPulso(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  ctas.forEach(function(el){
+    ctaObserver.observe(el);
+    pulseObserver.observe(el);
+  });
 })();
 </script>
 </body>
