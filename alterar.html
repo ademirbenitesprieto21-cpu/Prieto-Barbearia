@@ -1301,6 +1301,27 @@
     width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:9px;
     padding:10px 12px;color:var(--text);font-size:13.5px;font-family:'Inter',sans-serif;
   }
+  /* ---------- Relógio de Ponta Porã/MS (exclusivo da seção "Horários") ----------
+     Painel pequeno e discreto, só com preto/cinza/branco, mostrando a hora oficial
+     de Ponta Porã (fuso America/Campo_Grande) atualizada a cada segundo — nunca
+     usa o relógio/fuso do aparelho do usuário. */
+  .relogio-ponta-pora{
+    display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--input-bg);border:1px solid var(--border);border-radius:12px;
+    padding:12px 26px;margin-bottom:20px;
+  }
+  .relogio-ponta-pora .relogio-rotulo{
+    font-size:10.5px;letter-spacing:.6px;color:var(--text-muted);
+    text-transform:uppercase;display:flex;align-items:center;gap:6px;white-space:nowrap;
+  }
+  .relogio-ponta-pora .relogio-hora{
+    font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;color:var(--text);
+    font-variant-numeric:tabular-nums;
+  }
+  .relogio-ponta-pora .relogio-data{font-size:11px;color:var(--text-muted);letter-spacing:.3px;}
+  @media(max-width:600px){
+    .relogio-ponta-pora{width:100%;max-width:100%;padding:12px 16px;box-sizing:border-box;}
+  }
   .dia-semana-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;}
   .dia-semana-row:last-child{border-bottom:none;}
   .dia-semana-row .dia-nome{width:110px;font-weight:600;font-size:13.5px;flex-shrink:0;}
@@ -2591,12 +2612,17 @@ async function carregarDisponibilidadeBarbeiro(){
     }
 }
 
-/* data/hora atual sempre no fuso de Brasília (America/Sao_Paulo), independente
-   do fuso configurado no aparelho do cliente ou do servidor. Usado para nunca
-   mostrar, no dia de hoje, horários que já passaram. */
+/* data/hora atual sempre no fuso de Ponta Porã/MS (America/Campo_Grande),
+   independente do fuso configurado no aparelho do cliente ou do servidor.
+   Usado para nunca mostrar, no dia de hoje, horários que já passaram.
+   O nome da função foi mantido (ainda que o estabelecimento não fique em
+   São Paulo) para não exigir alterações em todo o resto do projeto — é a
+   ÚNICA fonte de hora atual usada pela lógica de agendamento (calendário,
+   geração de horários, bloqueio do dia de hoje, Dashboard, Gestão do
+   Barbeiro etc.), garantindo que tudo concorde sobre "agora". */
 function getAgoraBrasil(){
     const partes = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Sao_Paulo',
+        timeZone: 'America/Campo_Grande',
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', hour12: false
     }).formatToParts(new Date());
@@ -2760,10 +2786,19 @@ async function openBooking(barberId){
     document.getElementById('screen-booking').scrollTop = 0;
     atualizarBotaoVoltarGlobal();
 
-    // carrega horários e bloqueios reais do barbeiro (cadastrados na Área Restrita)
-    renderCalendar();
-    renderSlots();
-    updateContinueButton();
+    // limpa IMEDIATAMENTE qualquer horário/bloqueio/slot que ainda esteja em
+    // memória do barbeiro visto anteriormente, antes de desenhar qualquer
+    // coisa na tela — isso evita que, ao trocar de barbeiro, o calendário ou
+    // os horários de um barbeiro apareçam (nem que seja por um instante)
+    // enquanto os dados do novo barbeiro ainda não chegaram do Supabase
+    horariosPorDia = {};
+    bloqueiosBarbeiro = [];
+    slotsAtuaisCache = [];
+    hojeIndisponivel = false;
+
+    // busca a configuração ATUAL do barbeiro selecionado (Área Restrita →
+    // Horários) e só then desenha calendário/horários — nunca o contrário,
+    // pra nunca mostrar primeiro um horário desatualizado e "corrigir" depois
     await carregarDisponibilidadeBarbeiro();
 
     // verifica se hoje ainda tem algum horário livre pra esse barbeiro; se não
@@ -2774,6 +2809,7 @@ async function openBooking(barberId){
 
     renderCalendar();
     renderSlots();
+    updateContinueButton();
 }
 
 function goToList(){
@@ -3011,7 +3047,7 @@ function renderCalendar(){
     // dia podia aparecer bloqueado/vermelho no calendário sem que nenhum
     // bloqueio tivesse sido cadastrado. Comparando sempre por texto
     // (dateKey, "YYYY-MM-DD") no mesmo fuso, os dois ficam sempre coerentes.
-    const agoraHoje = getAgoraBrasil(); // dateKey de hoje no fuso de Brasília
+    const agoraHoje = getAgoraBrasil(); // dateKey de hoje no fuso de Ponta Porã/MS
 
     for(let i=0;i<firstDay;i++){
         grid.appendChild(document.createElement('div'));
@@ -3201,6 +3237,13 @@ const admin = {
     barbeiroGestao: null,
     gestaoFiltro: 'mes',
     filtro: {texto:'', data:''},
+
+    /* detecção de mobile/tablet: reaproveita o MESMO breakpoint (960px) já
+       usado em todo o site (menu hambúrguer, layouts responsivos etc.), em
+       vez de criar um critério novo — mantém tudo consistente. */
+    ehMobile(){
+        return !!(window.matchMedia && window.matchMedia('(max-width: 960px)').matches);
+    },
 
     async checarSessao(){
         const { data: { session } } = await sb.auth.getSession();
@@ -3395,6 +3438,13 @@ const admin = {
         const permitidas = this.paginasPermitidas();
         if(permitidas !== null && !permitidas.includes(pagina)){ pagina = 'dashboard'; }
         if(pagina === 'gestao-barbeiro' && !this.ehAdmin()){ pagina = 'dashboard'; }
+
+        // o relógio de Ponta Porã só existe na tela "Horários": saindo dela, o timer
+        // é interrompido na hora (não fica rodando em segundo plano sem necessidade)
+        if(pagina !== 'horarios' && this._relogioPontaPoraInterval){
+            clearInterval(this._relogioPontaPoraInterval);
+            this._relogioPontaPoraInterval = null;
+        }
 
         this.paginaAtual = pagina;
         document.querySelectorAll('.admin-menu button').forEach(b => {
@@ -3884,9 +3934,9 @@ const admin = {
     },
 
     /* ============ HELPERS COMPARTILHADOS ============ */
-    /* sempre no fuso de Brasília (America/Sao_Paulo), igual ao resto do
-       sistema — evita que "hoje" fique deslocado se o navegador/servidor
-       estiver rodando em outro fuso horário */
+    /* sempre no fuso de Ponta Porã/MS (America/Campo_Grande, via getAgoraBrasil),
+       igual ao resto do sistema — evita que "hoje" fique deslocado se o
+       navegador/servidor estiver rodando em outro fuso horário */
     hojeISO(){
         return getAgoraBrasil().dateKey;
     },
@@ -4391,6 +4441,11 @@ const admin = {
 
         document.getElementById('admin-content').innerHTML = `
             <div class="dash-panel">
+                <div class="relogio-ponta-pora">
+                    <span class="relogio-rotulo"><i class="fa-regular fa-clock"></i> Hora atual — Ponta Porã/MS</span>
+                    <span class="relogio-hora" id="relogio-hora-ponta-pora">--:--:--</span>
+                    <span class="relogio-data" id="relogio-data-ponta-pora"></span>
+                </div>
                 ${this.diasSemanaNomes.map((nome, i) => {
                     const h = porDia[i] || {};
                     return `
@@ -4406,6 +4461,49 @@ const admin = {
                 <button class="admin-btn-primario" style="margin-top:20px;" onclick="admin.salvarHorarios()"><i class="fa-solid fa-floppy-disk"></i> Salvar horários</button>
             </div>
         `;
+        this.iniciarRelogioPontaPora();
+    },
+
+    /* ---------- Relógio de Ponta Porã/MS (só usado pela tela "Horários") ----------
+       Atualiza a cada segundo usando o fuso America/Campo_Grande (nunca o fuso do
+       aparelho do usuário). Se já existir um timer rodando (ex.: usuário entrou na
+       tela "Horários" de novo), o timer anterior é interrompido antes de criar um
+       novo, para nunca haver dois relógios/timers simultâneos. O próprio timer se
+       auto-encerra caso o elemento não exista mais na tela (usuário saiu da página
+       "Horários"), então também não fica rodando em segundo plano sem necessidade. */
+    _relogioPontaPoraInterval: null,
+    iniciarRelogioPontaPora(){
+        if(this._relogioPontaPoraInterval){
+            clearInterval(this._relogioPontaPoraInterval);
+            this._relogioPontaPoraInterval = null;
+        }
+        const atualizar = () => {
+            const elHora = document.getElementById('relogio-hora-ponta-pora');
+            if(!elHora){
+                clearInterval(this._relogioPontaPoraInterval);
+                this._relogioPontaPoraInterval = null;
+                return;
+            }
+            const agora = new Date();
+            elHora.textContent = new Intl.DateTimeFormat('pt-BR', {
+                timeZone: 'America/Campo_Grande',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            }).format(agora);
+
+            const elData = document.getElementById('relogio-data-ponta-pora');
+            if(elData){
+                const partes = new Intl.DateTimeFormat('pt-BR', {
+                    timeZone: 'America/Campo_Grande',
+                    weekday: 'short', day: '2-digit', month: 'short'
+                }).formatToParts(agora);
+                const obj = {}; partes.forEach(p => obj[p.type] = p.value);
+                const semana = (obj.weekday || '').replace('.', '').toUpperCase();
+                const mes = (obj.month || '').replace('.', '').toUpperCase();
+                elData.textContent = `${semana}, ${obj.day} ${mes}`;
+            }
+        };
+        atualizar();
+        this._relogioPontaPoraInterval = setInterval(atualizar, 1000);
     },
 
     async salvarHorarios(){
@@ -4774,11 +4872,10 @@ const admin = {
         return new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
     },
 
-    /* Fluxo do CSV (Relatórios e Gestão do Barbeiro):
-       Gerar CSV → Pré-visualizar (tabela com os dados exatos) → o usuário confere
-       → só então "Baixar CSV" dispara o download. Nunca baixa sozinho ao gerar.
-       Chamado no lugar do download direto: gera o Blob uma única vez a partir de
-       "linhas", abre a pré-visualização com esse mesmo Blob e, em paralelo,
+    /* Fluxo do CSV (Relatórios e Gestão do Barbeiro): clicar em "Exportar CSV"
+       já baixa o arquivo diretamente para o dispositivo — sem pré-visualização,
+       nova aba, modal ou iframe. Gera o Blob uma única vez a partir de
+       "linhas", dispara o download desse mesmíssimo Blob e, em paralelo,
        registra o relatório no Histórico (mesmo sistema usado pelos PDFs). */
     finalizarGeracaoCSV(linhas, meta){
         let blob;
@@ -4788,98 +4885,23 @@ const admin = {
             alert('Não foi possível gerar o arquivo do relatório em CSV. Tente novamente.');
             return;
         }
-        this.abrirPreviewCSV({ linhas, blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
+        this.baixarBlobCSV(blob, meta.nomeArquivo);
         this.registrarRelatorioNoHistorico({ ...meta, blob, formato: 'csv' });
     },
 
-    csvPreview: null,
 
-    /* Pré-visualização real do CSV em formato de tabela — representa EXATAMENTE
-       os dados que estão (ou estarão) no arquivo CSV, nunca dados fictícios.
-       Aceita OU "linhas" (matriz recém-gerada, ainda em memória, com o Blob já
-       pronto) OU a "visualizarUrl" de um CSV já salvo no Histórico (Visualizar):
-       nesse segundo caso, baixa o arquivo já existente e reconstrói a mesma
-       matriz a partir dele (nunca gera um CSV novo nem duplica nada). Em ambos
-       os casos, "Baixar CSV" sempre baixa o mesmíssimo arquivo mostrado na tabela. */
-    async abrirPreviewCSV({ linhas, blob, visualizarUrl, nomeArquivo, titulo }){
-        this.fecharObjectUrlPreviewCsvAnterior();
-        let matriz = linhas, blobFinal = blob;
-        if(!matriz){
-            try{
-                const resp = await fetch(visualizarUrl);
-                blobFinal = await resp.blob();
-                matriz = this.parsearCSV(await blobFinal.text());
-            }catch(e){
-                alert('Não foi possível carregar a pré-visualização deste relatório em CSV.');
-                return;
-            }
-        }
-        const urlBaixar = URL.createObjectURL(blobFinal);
-        this.csvPreview = { nomeArquivo: nomeArquivo || 'relatorio.csv', baixarUrl: urlBaixar };
-
-        const tituloEl = document.getElementById('admin-page-title');
-        if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
-
-        const maxCol = matriz.reduce((m,l) => Math.max(m, l.length), 1);
-        const escapar = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-        document.getElementById('admin-content').innerHTML = `
-            <div class="admin-search-bar">
-                <button class="ag-btn" onclick="admin.fecharPreviewCSV()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                <button class="admin-btn-primario" onclick="admin.baixarCsvPreview()"><i class="fa-solid fa-file-arrow-down"></i> Baixar CSV</button>
-            </div>
-            <div class="dash-panel pdf-preview-panel">
-                <h4><i class="fa-solid fa-file-csv"></i> Pré-visualização do Relatório${titulo ? ' — '+titulo : ''}</h4>
-                <div class="csv-preview-table-wrap">
-                    <table class="csv-preview-table"><tbody>
-                        ${matriz.map(linha => `<tr>${Array.from({length:maxCol}).map((_,i)=>`<td>${escapar(linha[i])}</td>`).join('')}</tr>`).join('')}
-                    </tbody></table>
-                </div>
-            </div>
-        `;
-        fecharMenuAdminMobile();
-    },
-
-    /* fecha a pré-visualização do CSV e volta para a página de onde ela foi aberta */
-    fecharPreviewCSV(){
-        this.fecharObjectUrlPreviewCsvAnterior();
-        this.csvPreview = null;
-        this.irPara(this.paginaAtual);
-    },
-
-    fecharObjectUrlPreviewCsvAnterior(){
-        if(this.csvPreview && this.csvPreview.baixarUrl){
-            try{ URL.revokeObjectURL(this.csvPreview.baixarUrl); }catch(e){}
-        }
-    },
-
-    /* único ponto do sistema em que um CSV é efetivamente baixado — só acontece
-       quando o usuário clica em "Baixar CSV" na pré-visualização, nunca antes */
-    baixarCsvPreview(){
-        if(!this.csvPreview) return;
+    /* dispara o download de um Blob CSV recém-gerado — usada só por
+       finalizarGeracaoCSV, logo depois de montar o arquivo. É o único ponto
+       que baixa um CSV a partir de um Blob em memória; para relatórios já
+       salvos no Storage (Histórico), o download usa baixarRelatorioHistorico,
+       direto pela URL real do arquivo. */
+    baixarBlobCSV(blob, nomeArquivo){
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = this.csvPreview.baixarUrl;
-        a.download = this.csvPreview.nomeArquivo;
+        a.href = url;
+        a.download = nomeArquivo || 'relatorio.csv';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    },
-
-    /* reconstrói a matriz de linhas a partir do texto de um CSV já salvo,
-       revertendo exatamente o formato usado em construirArquivoCSV (campos entre
-       aspas, separados por ";", aspas duplicadas "" como escape de aspas) */
-    parsearCSV(texto){
-        const semBOM = texto.replace(/^\uFEFF/, '');
-        const linhasTexto = semBOM.split(/\r\n|\n/);
-        if(linhasTexto.length && linhasTexto[linhasTexto.length-1] === '') linhasTexto.pop();
-        return linhasTexto.map(linha => {
-            if(linha === '') return [];
-            const campos = [];
-            const regex = /"((?:[^"]|"")*)"(;|$)/g;
-            let m;
-            while((m = regex.exec(linha)) !== null){
-                campos.push(m[1].replace(/""/g,'"'));
-            }
-            return campos;
-        });
+        setTimeout(() => { try{ URL.revokeObjectURL(url); }catch(e){} }, 60000);
     },
 
     /* Devolve a logo oficial da Prieto Barbearia (já embutida em base64 na
@@ -5552,7 +5574,7 @@ const admin = {
                 return;
             }
             // se a tela de histórico já estiver aberta (em outra aba/momento), atualiza a lista
-            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview && !this.csvPreview) this.renderHistoricoRelatorios();
+            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview) this.renderHistoricoRelatorios();
         }catch(e){
             console.warn('Falha inesperada ao registrar o relatório no Histórico:', e);
         }
@@ -5597,7 +5619,7 @@ const admin = {
             return;
         }
 
-        const secao = (titulo, icone, itens) => !itens.length ? '' : `
+        const secao = (titulo, icone, itens, formato) => !itens.length ? '' : `
             <div class="dash-panel">
                 <h4><i class="fa-solid ${icone}"></i> ${titulo}</h4>
                 <div class="mini-list">
@@ -5610,8 +5632,11 @@ const admin = {
                                 </small>
                             </span>
                             <span class="m pdf-historico-acoes">
-                                <button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
-                                <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
+                                ${formato === 'csv'
+                                    ? `<button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>`
+                                    : `<button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                                       <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>`
+                                }
                                 <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarRelatorioDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
                             </span>
                         </div>
@@ -5631,24 +5656,24 @@ const admin = {
         // ordem: CSV primeiro, PDF depois — cada seção só é impressa quando tem conteúdo
         document.getElementById('admin-content').innerHTML =
             cabecalho +
-            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv) +
-            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf);
+            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv, 'csv') +
+            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf, 'pdf');
     },
 
-    /* reabre a pré-visualização de um relatório já existente — reaproveita o
-       arquivo já salvo no Storage, nunca gera um novo relatório nem duplica o
-       registro. Direciona para a pré-visualização certa conforme o formato. */
+    /* reabre a pré-visualização de um relatório PDF já existente — reaproveita
+       o arquivo já salvo no Storage, nunca gera um novo relatório nem duplica
+       o registro. CSV não tem mais visualização em tela: o botão correspondente
+       ("Exportar CSV") já chama baixarRelatorioHistorico diretamente. */
     visualizarRelatorioHistorico(id){
         const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item) return;
-        const formato = item.formato || 'pdf';
-        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
-        if(formato === 'csv'){
-            this.abrirPreviewCSV({ visualizarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
-        }else{
-            const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
-            this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+        if((item.formato || 'pdf') === 'csv'){
+            this.baixarRelatorioHistorico(id);
+            return;
         }
+        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
     },
 
     baixarRelatorioHistorico(id){

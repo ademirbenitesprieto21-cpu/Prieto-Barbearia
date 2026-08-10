@@ -4872,11 +4872,10 @@ const admin = {
         return new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
     },
 
-    /* Fluxo do CSV (Relatórios e Gestão do Barbeiro):
-       Gerar CSV → Pré-visualizar (tabela com os dados exatos) → o usuário confere
-       → só então "Baixar CSV" dispara o download. Nunca baixa sozinho ao gerar.
-       Chamado no lugar do download direto: gera o Blob uma única vez a partir de
-       "linhas", abre a pré-visualização com esse mesmo Blob e, em paralelo,
+    /* Fluxo do CSV (Relatórios e Gestão do Barbeiro): clicar em "Exportar CSV"
+       já baixa o arquivo diretamente para o dispositivo — sem pré-visualização,
+       nova aba, modal ou iframe. Gera o Blob uma única vez a partir de
+       "linhas", dispara o download desse mesmíssimo Blob e, em paralelo,
        registra o relatório no Histórico (mesmo sistema usado pelos PDFs). */
     finalizarGeracaoCSV(linhas, meta){
         let blob;
@@ -4886,185 +4885,23 @@ const admin = {
             alert('Não foi possível gerar o arquivo do relatório em CSV. Tente novamente.');
             return;
         }
-        this.abrirPreviewCSV({ linhas, blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
+        this.baixarBlobCSV(blob, meta.nomeArquivo);
         this.registrarRelatorioNoHistorico({ ...meta, blob, formato: 'csv' });
     },
 
-    csvPreview: null, // mantido só para o revogamento de Object URL temporária (ver fecharObjectUrlPreviewCsvAnterior)
 
-    /* Visualização do CSV: abre uma NOVA ABA do navegador com uma página HTML
-       própria (nunca o arquivo .csv bruto), mostrando os dados em formato de
-       tabela — assim o navegador (principalmente no celular) nunca interpreta
-       a ação como um download, só como visualização. Funciona igual em
-       celular, tablet e computador. A aba é aberta IMEDIATAMENTE, ainda
-       dentro do clique do usuário e antes de qualquer fetch/await, pra não
-       ser bloqueada como pop-up; o conteúdo é preenchido assim que o CSV
-       termina de carregar. Aceita OU "linhas" (matriz recém-gerada, ainda em
-       memória, com o Blob já pronto — fluxo "Gerar CSV") OU a "visualizarUrl"
-       de um CSV já salvo no Histórico ("Visualizar") — nesse caso busca o
-       arquivo já existente e reconstrói a mesma matriz a partir dele. Nunca
-       gera um CSV novo, nunca duplica e nunca altera o arquivo original no
-       Storage: a página é montada só em memória, dentro da nova aba. */
-    async abrirPreviewCSV({ linhas, blob, visualizarUrl, nomeArquivo, titulo }){
-        this.fecharObjectUrlPreviewCsvAnterior();
-
-        const novaAba = window.open('', '_blank');
-        if(!novaAba){
-            alert('Não foi possível abrir a pré-visualização. Verifique se o navegador está bloqueando pop-ups.');
-            return;
-        }
-        this.escreverCarregandoPreviewCSV(novaAba);
-
-        let matriz = linhas, blobFinal = blob;
-        try{
-            if(!matriz){
-                const resp = await fetch(visualizarUrl);
-                if(!resp.ok) throw new Error('resposta não OK ao buscar o CSV');
-                blobFinal = await resp.blob();
-                matriz = this.parsearCSV(await blobFinal.text());
-            }
-        }catch(e){
-            this.escreverErroPreviewCSV(novaAba);
-            return;
-        }
-
-        // link de "Baixar CSV" dentro da própria página de visualização: usa a
-        // URL real do arquivo já existente no Storage (Histórico) quando ela
-        // existir, ou uma Object URL do mesmíssimo Blob recém-gerado (Gerar
-        // CSV) — nunca cria, duplica ou renomeia arquivo nenhum, só aponta
-        // pro arquivo que já existe / já foi montado em memória
-        const urlBaixar = visualizarUrl || (blobFinal ? URL.createObjectURL(blobFinal) : null);
-        if(!visualizarUrl && urlBaixar) this.csvPreview = { baixarUrl: urlBaixar }; // guardado só pra poder revogar na próxima abertura
-
-        this.escreverPaginaPreviewCSV(novaAba, { matriz, titulo, nomeArquivo, urlBaixar });
-    },
-
-    /* estado inicial de carregamento na nova aba, enquanto o CSV ainda está
-       sendo buscado — evita que o usuário veja uma tela em branco */
-    escreverCarregandoPreviewCSV(novaAba){
-        try{
-            novaAba.document.open();
-            novaAba.document.write(this.montarHtmlBasePreviewCSV('Carregando relatório...', '<p class="pv-msg">Carregando relatório...</p>'));
-            novaAba.document.close();
-        }catch(e){}
-    },
-
-    /* mensagem amigável quando o CSV não pôde ser carregado — nunca deixa a
-       nova aba em branco nem mostra o erro técnico para o usuário */
-    escreverErroPreviewCSV(novaAba){
-        try{
-            novaAba.document.open();
-            novaAba.document.write(this.montarHtmlBasePreviewCSV('Relatório indisponível', '<p class="pv-msg">Não foi possível carregar este relatório.</p>'));
-            novaAba.document.close();
-        }catch(e){}
-    },
-
-    /* monta a página final de visualização: cabeçalho discreto (identidade
-       preto/branco/cinza da Prieto Barbearia, sem dourado), tabela responsiva
-       (a rolagem horizontal fica só dentro do container da tabela, nunca a
-       página inteira) e, quando existir, um botão "Baixar CSV" que baixa o
-       mesmíssimo arquivo mostrado — sem misturar as duas ações. */
-    escreverPaginaPreviewCSV(novaAba, { matriz, titulo, nomeArquivo, urlBaixar }){
-        const escapar = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const tituloSeguro = escapar(titulo) || 'Relatório CSV';
-        const maxCol = matriz.reduce((m,l) => Math.max(m, l.length), 1);
-        const tabela = matriz.length
-            ? `<div class="pv-table-wrap"><table class="pv-table"><tbody>
-                ${matriz.map(linha => `<tr>${Array.from({length:maxCol}).map((_,i)=>`<td>${escapar(linha[i])}</td>`).join('')}</tr>`).join('')}
-               </tbody></table></div>`
-            : '<p class="pv-msg">Este relatório não possui dados.</p>';
-        const botaoBaixar = urlBaixar
-            ? `<a class="pv-btn-baixar" href="${urlBaixar}" download="${escapar(nomeArquivo || 'relatorio.csv')}">&#8681; Baixar CSV</a>`
-            : '';
-        const corpo = `
-            <header class="pv-header">
-                <div>
-                    <div class="pv-eyebrow">Visualização do Relatório</div>
-                    <h1>${tituloSeguro}</h1>
-                </div>
-                ${botaoBaixar}
-            </header>
-            ${tabela}
-        `;
-        try{
-            novaAba.document.title = titulo || 'Relatório CSV';
-            novaAba.document.open();
-            novaAba.document.write(this.montarHtmlBasePreviewCSV(tituloSeguro, corpo));
-            novaAba.document.close();
-        }catch(e){}
-    },
-
-    /* casca HTML compartilhada pelas telas de carregamento/erro/tabela da nova
-       aba: identidade preto/branco/cinza da Prieto Barbearia (sem usar o
-       dourado do site principal), limpa e profissional. */
-    montarHtmlBasePreviewCSV(tituloAba, corpoHtml){
-        return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${tituloAba}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:#0b0b0c;color:#f2f1ee;font-family:Arial,Helvetica,sans-serif;padding:20px;}
-  .pv-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #262629;}
-  .pv-eyebrow{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9a9a9e;margin-bottom:4px;}
-  h1{font-size:19px;font-weight:700;color:#f2f1ee;}
-  .pv-btn-baixar{display:inline-flex;align-items:center;gap:6px;background:#1d1d1f;color:#f2f1ee;border:1px solid rgba(255,255,255,0.15);padding:10px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;}
-  .pv-btn-baixar:hover{background:#28282b;}
-  .pv-table-wrap{background:#131315;border:1px solid #262629;border-radius:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
-  .pv-table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
-  .pv-table td{padding:8px 12px;border-bottom:1px solid #262629;color:#f2f1ee;}
-  .pv-table tr:hover td{background:rgba(255,255,255,.04);}
-  .pv-msg{color:#9a9a9e;font-size:14px;padding:24px 4px;}
-</style>
-</head>
-<body>
-${corpoHtml}
-</body>
-</html>`;
-    },
-
-    /* fecha a pré-visualização do CSV e volta para a página de onde ela foi aberta */
-    fecharPreviewCSV(){
-        this.fecharObjectUrlPreviewCsvAnterior();
-        this.csvPreview = null;
-        this.irPara(this.paginaAtual);
-    },
-
-    fecharObjectUrlPreviewCsvAnterior(){
-        if(this.csvPreview && this.csvPreview.baixarUrl){
-            try{ URL.revokeObjectURL(this.csvPreview.baixarUrl); }catch(e){}
-        }
-    },
-
-    /* único ponto do sistema em que um CSV é efetivamente baixado — só acontece
-       quando o usuário clica em "Baixar CSV" na pré-visualização, nunca antes */
-    baixarCsvPreview(){
-        if(!this.csvPreview) return;
+    /* dispara o download de um Blob CSV recém-gerado — usada só por
+       finalizarGeracaoCSV, logo depois de montar o arquivo. É o único ponto
+       que baixa um CSV a partir de um Blob em memória; para relatórios já
+       salvos no Storage (Histórico), o download usa baixarRelatorioHistorico,
+       direto pela URL real do arquivo. */
+    baixarBlobCSV(blob, nomeArquivo){
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = this.csvPreview.baixarUrl;
-        a.download = this.csvPreview.nomeArquivo;
+        a.href = url;
+        a.download = nomeArquivo || 'relatorio.csv';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    },
-
-    /* reconstrói a matriz de linhas a partir do texto de um CSV já salvo,
-       revertendo exatamente o formato usado em construirArquivoCSV (campos entre
-       aspas, separados por ";", aspas duplicadas "" como escape de aspas) */
-    parsearCSV(texto){
-        const semBOM = texto.replace(/^\uFEFF/, '');
-        const linhasTexto = semBOM.split(/\r\n|\n/);
-        if(linhasTexto.length && linhasTexto[linhasTexto.length-1] === '') linhasTexto.pop();
-        return linhasTexto.map(linha => {
-            if(linha === '') return [];
-            const campos = [];
-            const regex = /"((?:[^"]|"")*)"(;|$)/g;
-            let m;
-            while((m = regex.exec(linha)) !== null){
-                campos.push(m[1].replace(/""/g,'"'));
-            }
-            return campos;
-        });
+        setTimeout(() => { try{ URL.revokeObjectURL(url); }catch(e){} }, 60000);
     },
 
     /* Devolve a logo oficial da Prieto Barbearia (já embutida em base64 na
@@ -5737,7 +5574,7 @@ ${corpoHtml}
                 return;
             }
             // se a tela de histórico já estiver aberta (em outra aba/momento), atualiza a lista
-            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview && !this.csvPreview) this.renderHistoricoRelatorios();
+            if(this.paginaAtual === 'historico-pdfs' && !this.pdfPreview) this.renderHistoricoRelatorios();
         }catch(e){
             console.warn('Falha inesperada ao registrar o relatório no Histórico:', e);
         }
@@ -5782,7 +5619,7 @@ ${corpoHtml}
             return;
         }
 
-        const secao = (titulo, icone, itens) => !itens.length ? '' : `
+        const secao = (titulo, icone, itens, formato) => !itens.length ? '' : `
             <div class="dash-panel">
                 <h4><i class="fa-solid ${icone}"></i> ${titulo}</h4>
                 <div class="mini-list">
@@ -5795,8 +5632,11 @@ ${corpoHtml}
                                 </small>
                             </span>
                             <span class="m pdf-historico-acoes">
-                                <button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
-                                <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>
+                                ${formato === 'csv'
+                                    ? `<button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>`
+                                    : `<button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
+                                       <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>`
+                                }
                                 <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarRelatorioDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
                             </span>
                         </div>
@@ -5816,24 +5656,24 @@ ${corpoHtml}
         // ordem: CSV primeiro, PDF depois — cada seção só é impressa quando tem conteúdo
         document.getElementById('admin-content').innerHTML =
             cabecalho +
-            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv) +
-            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf);
+            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv, 'csv') +
+            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf, 'pdf');
     },
 
-    /* reabre a pré-visualização de um relatório já existente — reaproveita o
-       arquivo já salvo no Storage, nunca gera um novo relatório nem duplica o
-       registro. Direciona para a pré-visualização certa conforme o formato. */
+    /* reabre a pré-visualização de um relatório PDF já existente — reaproveita
+       o arquivo já salvo no Storage, nunca gera um novo relatório nem duplica
+       o registro. CSV não tem mais visualização em tela: o botão correspondente
+       ("Exportar CSV") já chama baixarRelatorioHistorico diretamente. */
     visualizarRelatorioHistorico(id){
         const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item) return;
-        const formato = item.formato || 'pdf';
-        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
-        if(formato === 'csv'){
-            this.abrirPreviewCSV({ visualizarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
-        }else{
-            const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
-            this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
+        if((item.formato || 'pdf') === 'csv'){
+            this.baixarRelatorioHistorico(id);
+            return;
         }
+        const visualizarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path).data.publicUrl;
+        const baixarUrl = sb.storage.from(BUCKET_RELATORIOS_PDF).getPublicUrl(item.arquivo_path, { download: item.nome_arquivo }).data.publicUrl;
+        this.abrirPreviewPDF({ visualizarUrl, baixarUrl, nomeArquivo: item.nome_arquivo, titulo: item.titulo });
     },
 
     baixarRelatorioHistorico(id){
