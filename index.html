@@ -1288,6 +1288,37 @@
   .badge-ativo{background:rgba(94,200,120,.15);color:#7ee6a0;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
   .badge-inativo{background:rgba(150,150,150,.15);color:#9a9a9e;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 
+  /* ---------- CARD DE NOTIFICAÇÃO (Área Restrita) ----------
+     Componente único (mesmo HTML/CSS em qualquer tela): cabeçalho
+     (ícone + tipo) e corpo com a mensagem completa empilhados
+     verticalmente — nunca em colunas/tabela horizontal — e as ações
+     ("Lida"/"Apagar") numa linha própria ao final. O tamanho da tela
+     só muda espaçamento/tamanho de fonte via media query, nunca a
+     estrutura. overflow-wrap/word-break evitam que URLs ou palavras
+     longas estourem a largura do card em qualquer dispositivo. */
+  .notif-card{
+    display:flex;flex-direction:column;gap:14px;
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;margin-bottom:12px;
+    width:100%;max-width:100%;box-sizing:border-box;
+    overflow-wrap:anywhere;word-break:break-word;
+  }
+  .notif-card.lida{opacity:.55;}
+  .notif-card .notif-head{
+    display:flex;align-items:center;gap:8px;
+    font-weight:700;font-size:14.5px;
+  }
+  .notif-card .notif-head i{color:var(--gold);flex-shrink:0;}
+  .notif-card .notif-corpo{
+    color:var(--text-muted);font-size:13px;line-height:1.65;
+    white-space:pre-line;overflow-wrap:anywhere;word-break:break-word;
+    max-width:100%;
+  }
+  .notif-card .notif-acoes{
+    display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;
+  }
+  .notif-card .notif-acoes .ag-btn{flex:0 0 auto;}
+
   /* ---------- TOGGLE / SWITCH ---------- */
   .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
@@ -1517,6 +1548,14 @@
     /* ---------- nenhum scroll horizontal indesejado ---------- */
     .admin-content, .admin-topbar{max-width:100vw;}
     .bar-chart{gap:5px;}
+
+    /* ---------- card de notificação: espaçamento menor, botões ocupam
+       a largura disponível e empilham em duas linhas se não houver
+       espaço para os dois lado a lado ---------- */
+    .notif-card{padding:16px;gap:12px;}
+    .notif-card .notif-corpo{font-size:12.5px;}
+    .notif-card .notif-acoes{justify-content:stretch;}
+    .notif-card .notif-acoes .ag-btn{flex:1 1 140px;justify-content:center;min-height:40px;padding:10px 12px;font-size:12.5px;}
   }
 
   @media(max-width:400px){
@@ -4737,17 +4776,19 @@ const admin = {
         this.atualizarBadgeNotificacoes(this.notificacoesCache.filter(n=>!n.lida).length);
 
         const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day'};
+        // título fixo por tipo (não vem mais da própria mensagem) — é isso que
+        // eliminava a duplicação: antes o título repetia a 1ª linha do texto
+        // e o corpo mostrava a mensagem inteira (incluindo essa mesma linha).
+        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado'};
         document.getElementById('admin-content').innerHTML = `
             <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
                 <button class="ag-btn" onclick="admin.limparNotificacoes()"><i class="fa-solid fa-trash-can"></i> Limpar todas</button>
             </div>
             ${this.notificacoesCache.length ? this.notificacoesCache.map(n => `
-                <div class="item-card" style="${n.lida?'opacity:.55;':''}">
-                    <div class="info">
-                        <div class="t"><i class="fa-solid ${icone[n.tipo]||'fa-bell'}" style="color:var(--gold);margin-right:8px;"></i>${n.mensagem.split('\\n')[0]}</div>
-                        <div class="s" style="white-space:pre-line;">${n.mensagem}</div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid ${icone[n.tipo]||'fa-bell'}"></i>${tituloTipo[n.tipo]||'Notificação'}</div>
+                    <div class="notif-corpo">${n.mensagem}</div>
+                    <div class="notif-acoes">
                         ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
                         <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
                     </div>
