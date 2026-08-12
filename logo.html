@@ -3736,18 +3736,20 @@ const admin = {
 
     async carregarAgendamentos(){
         if(!this.barbeiro) return;
-        // administradores/dono enxergam os agendamentos de TODOS os barbeiros
-        // (necessário para poder corrigir/escolher quem realmente atendeu);
-        // um barbeiro comum continua vendo somente a própria agenda
-        let query = sb
+        // CADA barbeiro (inclusive quem tem nivel_acesso='administrador', como o
+        // Barbeiro Tradicional) só pode ver os PRÓPRIOS agendamentos aqui. Ter
+        // permissão administrativa para funções específicas (ex.: editar
+        // configurações, corrigir qual barbeiro realmente atendeu um cliente já
+        // visível para ele, gerir mensagens de notificação) NÃO significa que
+        // deva enxergar os agendamentos de outro barbeiro. Isso é feito por um
+        // recurso separado e explícito ("Gestão do Barbeiro"), reservado somente
+        // ao dono real (ver ehDono()), nunca automaticamente por aqui.
+        const { data, error } = await sb
             .from('agendamentos')
             .select('*, servicos(nome), barbeiros(nome)')
+            .eq('barbeiro_id', this.barbeiro.id)
             .order('data', {ascending:true})
             .order('horario', {ascending:true});
-        if(!this.ehAdmin()){
-            query = query.eq('barbeiro_id', this.barbeiro.id);
-        }
-        const { data, error } = await query;
 
         if(error){
             document.getElementById('admin-lista-agendamentos').innerHTML =
