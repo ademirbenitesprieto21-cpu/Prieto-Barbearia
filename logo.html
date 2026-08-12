@@ -1288,6 +1288,94 @@
   .badge-ativo{background:rgba(94,200,120,.15);color:#7ee6a0;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
   .badge-inativo{background:rgba(150,150,150,.15);color:#9a9a9e;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 
+  /* ---------- CARD DE NOTIFICAÇÃO (Área Restrita) ----------
+     Componente único (mesmo HTML/CSS em qualquer tela): cabeçalho
+     (ícone + tipo) e corpo com a mensagem completa empilhados
+     verticalmente — nunca em colunas/tabela horizontal — e as ações
+     ("Lida"/"Apagar") numa linha própria ao final. O tamanho da tela
+     só muda espaçamento/tamanho de fonte via media query, nunca a
+     estrutura. overflow-wrap/word-break evitam que URLs ou palavras
+     longas estourem a largura do card em qualquer dispositivo. */
+  .notif-card{
+    display:flex;flex-direction:column;gap:14px;
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;margin-bottom:12px;
+    width:100%;max-width:100%;box-sizing:border-box;
+    overflow-wrap:anywhere;word-break:break-word;
+  }
+  .notif-card.lida{opacity:.55;}
+  .notif-card .notif-head{
+    display:flex;align-items:center;gap:8px;
+    font-weight:700;font-size:14.5px;
+  }
+  .notif-card .notif-head i{color:var(--gold);flex-shrink:0;}
+  .notif-card .notif-corpo{
+    color:var(--text-muted);font-size:13px;line-height:1.65;
+    white-space:pre-line;overflow-wrap:anywhere;word-break:break-word;
+    max-width:100%;
+  }
+  .notif-card .notif-acoes{
+    display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;
+  }
+  .notif-card .notif-acoes .ag-btn{flex:0 0 auto;}
+  /* dourado em destaque para "Lida" e aparência discreta (vermelho só
+     como indicação de exclusão) para "Apagar" — regra restrita às ações
+     do card de notificação, sem alterar os mesmos botões em outras telas */
+  .notif-card .notif-acoes .ag-btn.confirmar{border-color:rgba(201,164,99,.35);color:var(--gold);}
+  .notif-card .notif-acoes .ag-btn.confirmar:hover{background:rgba(201,164,99,.12);border-color:var(--gold);color:var(--gold);}
+  .notif-card .notif-acoes .ag-btn.cancelar{color:var(--text-muted);}
+  .notif-card .notif-acoes .ag-btn.cancelar:hover{border-color:#e6a3a3;color:#e6a3a3;}
+
+  /* ---------- CARD "NOVO AGENDAMENTO" (versão premium) ----------
+     Reaproveita o container .notif-card (fundo/borda/raio já definidos
+     acima) apenas adicionando sombra suave e as sub-seções específicas
+     deste tipo de notificação: cabeçalho com ícone/título/etiqueta
+     dourada + data/hora no canto, grade de informações (2 colunas em
+     telas largas, 1 coluna no mobile), divisória e rodapé de status. */
+  .notif-card.notif-agendamento{
+    box-shadow:0 6px 18px rgba(0,0,0,.28);
+  }
+  .notif-nv-top{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .notif-nv-title-wrap{display:flex;flex-direction:column;gap:6px;}
+  .notif-nv-title{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:var(--text);}
+  .notif-nv-title i{color:var(--gold);font-size:17px;flex-shrink:0;}
+  .notif-nv-badge{
+    display:inline-flex;align-items:center;gap:6px;width:fit-content;
+    background:rgba(201,164,99,.14);color:var(--gold);
+    font-size:10.5px;font-weight:700;letter-spacing:.5px;
+    padding:4px 10px;border-radius:20px;
+  }
+  .notif-nv-datetime{
+    text-align:right;font-size:12.5px;color:var(--text-muted);line-height:1.5;flex-shrink:0;
+  }
+  .notif-nv-datetime b{color:var(--text);font-size:13px;display:block;}
+  .notif-nv-grid{
+    display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(3,auto);
+    gap:14px 20px;
+  }
+  .notif-field{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .notif-field-label{
+    font-size:11.5px;font-weight:700;color:var(--text-muted);letter-spacing:.3px;
+  }
+  .notif-field-value{
+    font-size:13.5px;color:var(--text);overflow-wrap:anywhere;word-break:break-word;
+  }
+  .notif-nv-divider{height:1px;background:var(--border);width:100%;}
+  .notif-nv-status{
+    display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted);font-weight:600;
+  }
+  .notif-status-dot{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#5a5a5e;
+  }
+  .notif-status-dot.novo{background:#3fd06b;box-shadow:0 0 0 3px rgba(63,208,107,.18);}
+  @media(max-width:600px){
+    .notif-nv-grid{grid-template-columns:1fr;grid-auto-flow:row;grid-template-rows:none;gap:12px;}
+    .notif-nv-datetime{text-align:left;}
+    .notif-nv-top{flex-direction:column;}
+  }
+
   /* ---------- TOGGLE / SWITCH ---------- */
   .switch{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
   .switch input{opacity:0;width:0;height:0;}
@@ -1517,6 +1605,14 @@
     /* ---------- nenhum scroll horizontal indesejado ---------- */
     .admin-content, .admin-topbar{max-width:100vw;}
     .bar-chart{gap:5px;}
+
+    /* ---------- card de notificação: espaçamento menor, botões ocupam
+       a largura disponível e empilham em duas linhas se não houver
+       espaço para os dois lado a lado ---------- */
+    .notif-card{padding:16px;gap:12px;}
+    .notif-card .notif-corpo{font-size:12.5px;}
+    .notif-card .notif-acoes{justify-content:stretch;}
+    .notif-card .notif-acoes .ag-btn{flex:1 1 140px;justify-content:center;min-height:40px;padding:10px 12px;font-size:12.5px;}
   }
 
   @media(max-width:400px){
@@ -2116,12 +2212,11 @@
 
         <div class="map-frame">
           <iframe
-            src="https://www.google.com/maps?q=R.+Sindoca+Vasques,+Sanga+Puit%C3%A3,+Ponta+Por%C3%A3+-+MS,+79909-000&output=embed"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2604.1774166871096!2d-55.615137331473!3d-22.621589767002877!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x946273001af8bf05%3A0x43b20ab7b1859820!2sBarbearia%20Prieto!5e0!3m2!1spt-BR!2sbr!4v1786484389627!5m2!1spt-BR!2sbr"
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade">
           </iframe>
         </div>
-
         <p class="endereco-text">R. Sindoca Vasques, Sanga Puitã, Ponta Porã - MS, 79909-000, Brasil</p>
 
         <a class="btn btn-light" id="contato" href="#" onclick="showBooking(); return false;">AGENDAR AGORA!</a>
@@ -4732,27 +4827,89 @@ const admin = {
     /* ============ 7. NOTIFICAÇÕES ============ */
     async renderNotificacoes(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando notificações...</div>';
-        const { data } = await sb.from('notificacoes').select('*').eq('barbeiro_id', this.barbeiro.id).order('created_at', {ascending:false});
+        // Busca a notificação já com os dados reais do agendamento vinculado
+        // (agendamento_id). Essa é a fonte confiável de cliente/telefone/data/
+        // horário — o texto em "mensagem" serve apenas de fallback para
+        // notificações antigas que não tinham agendamento_id preenchido.
+        const { data } = await sb.from('notificacoes')
+            .select('*, agendamento:agendamento_id(cliente_nome, cliente_telefone, data, horario, barbeiro_id, barbeiros(nome))')
+            .eq('barbeiro_id', this.barbeiro.id)
+            .order('created_at', {ascending:false});
         this.notificacoesCache = data || [];
         this.atualizarBadgeNotificacoes(this.notificacoesCache.filter(n=>!n.lida).length);
 
         const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day'};
+        // título fixo por tipo (não vem mais da própria mensagem) — é isso que
+        // eliminava a duplicação: antes o título repetia a 1ª linha do texto
+        // e o corpo mostrava a mensagem inteira (incluindo essa mesma linha).
+        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado'};
         document.getElementById('admin-content').innerHTML = `
             <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
                 <button class="ag-btn" onclick="admin.limparNotificacoes()"><i class="fa-solid fa-trash-can"></i> Limpar todas</button>
             </div>
-            ${this.notificacoesCache.length ? this.notificacoesCache.map(n => `
-                <div class="item-card" style="${n.lida?'opacity:.55;':''}">
-                    <div class="info">
-                        <div class="t"><i class="fa-solid ${icone[n.tipo]||'fa-bell'}" style="color:var(--gold);margin-right:8px;"></i>${n.mensagem.split('\\n')[0]}</div>
-                        <div class="s" style="white-space:pre-line;">${n.mensagem}</div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
+            ${this.notificacoesCache.length ? this.notificacoesCache.map(n => {
+                const acoesHtml = `
+                    <div class="notif-acoes">
                         ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
                         <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
+                    </div>`;
+
+                // "Novo agendamento" ganha o card premium (cabeçalho com etiqueta
+                // dourada + data/hora, grade de infos em 2 colunas e rodapé de
+                // status); os demais tipos continuam com o layout simples já
+                // existente. Nunca exibe link do site nem o texto "Acesse a
+                // Área Restrita..." — mesmo que ainda constem na mensagem salva
+                // no banco (mensagens antigas), eles são descartados aqui.
+                if(n.tipo === 'novo_agendamento'){
+                    // Fallback (só usado quando não há agendamento vinculado, ex.:
+                    // notificações antigas geradas antes de agendamento_id ser
+                    // gravado). Tenta os dois formatos possíveis de template:
+                    // "Rótulo\nValor" (linhas separadas) e "Rótulo: Valor"/"<b>Rótulo:</b> Valor"
+                    // (mesma linha, usado no template de Telegram).
+                    const campo = (label) => {
+                        const linha = n.mensagem.match(new RegExp(label + '\\s*\\n([^\\n]+)', 'i'));
+                        if(linha) return escapeHtml(linha[1].trim());
+                        const inline = n.mensagem.match(new RegExp(label + '\\s*:?\\s*(?:</b>)?\\s*:?\\s*([^\\n<]+)', 'i'));
+                        return inline ? escapeHtml(inline[1].trim()) : null;
+                    };
+
+                    const ag = n.agendamento; // dados reais e estruturados do agendamento vinculado
+                    const cliente      = (ag && ag.cliente_nome) ? escapeHtml(ag.cliente_nome) : (campo('Cliente') || 'Não informado');
+                    const barbeiroNome = (ag && ag.barbeiros && ag.barbeiros.nome) ? escapeHtml(ag.barbeiros.nome) : (campo('Barbeiro') || 'Não informado');
+                    const data         = (ag && ag.data) ? this.formatarDataBR(ag.data) : (campo('Data') || 'Não informado');
+                    const horario      = (ag && ag.horario) ? this.formatarHora(ag.horario) : (campo('Hor[áa]rio') || 'Não informado');
+                    const telefone     = (ag && ag.cliente_telefone) ? escapeHtml(ag.cliente_telefone) : (campo('Telefone') || 'Não informado');
+                    return `
+                <div class="notif-card notif-agendamento${n.lida ? ' lida' : ''}">
+                    <div class="notif-nv-top">
+                        <div class="notif-nv-title-wrap">
+                            <div class="notif-nv-title"><i class="fa-solid ${icone[n.tipo]||'fa-bell'}"></i>Novo agendamento</div>
+                        </div>
+                        <div class="notif-nv-datetime"><b>${data}</b>${horario}</div>
                     </div>
-                </div>
-            `).join('') : '<div class="admin-empty">Nenhuma notificação.</div>'}
+                    <div class="notif-nv-grid">
+                        <div class="notif-field"><span class="notif-field-label">👤 Cliente</span><span class="notif-field-value">${cliente}</span></div>
+                        <div class="notif-field"><span class="notif-field-label">💈 Barbeiro</span><span class="notif-field-value">${barbeiroNome}</span></div>
+                        <div class="notif-field"><span class="notif-field-label">📅 Data</span><span class="notif-field-value">${data}</span></div>
+                        <div class="notif-field"><span class="notif-field-label">🕐 Horário</span><span class="notif-field-value">${horario}</span></div>
+                        <div class="notif-field"><span class="notif-field-label">📞 Telefone</span><span class="notif-field-value">${telefone}</span></div>
+                    </div>
+                    <div class="notif-nv-divider"></div>
+                    <div class="notif-nv-status">
+                        <span class="notif-status-dot${n.lida ? '' : ' novo'}"></span>
+                        <span>Status: NOVO AGENDAMENTO</span>
+                    </div>
+                    ${acoesHtml}
+                </div>`;
+                }
+
+                return `
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid ${icone[n.tipo]||'fa-bell'}"></i>${tituloTipo[n.tipo]||'Notificação'}</div>
+                    <div class="notif-corpo">${n.mensagem}</div>
+                    ${acoesHtml}
+                </div>`;
+            }).join('') : '<div class="admin-empty">Nenhuma notificação.</div>'}
         `;
     },
 
@@ -5426,8 +5583,9 @@ const admin = {
             document.getElementById('admin-content').innerHTML = `<div class="admin-empty">Não foi possível carregar os barbeiros.<br>${error.message||''}</div>`;
             return;
         }
-        // trava fixo: só o Barbeiro Experiente aparece nesse select, independente
-        // de quem estiver logado ou de quantos outros barbeiros existirem
+        // Gestão do Barbeiro é sempre a visão administrativa sobre o Barbeiro
+        // Experiente, independente de qual admin esteja logado (dono ou Barbeiro
+        // Tradicional) — por isso o select fica travado nesse barbeiro específico.
         const barbeiros = (equipe||[]).filter(b => b.nome === 'Barbeiro Experiente');
         if(!barbeiros.length){
             document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Nenhum barbeiro ativo encontrado.</div>';
@@ -5479,27 +5637,71 @@ const admin = {
         const b = this.barbeiroGestao;
         if(!b) return;
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando dados de '+b.nome+'...</div>';
-        const hoje = this.hojeISO();
-        const hojeDate = this.paraData(hoje);
-        const semanaIni = new Date(hojeDate); semanaIni.setDate(semanaIni.getDate()-6);
-        const semanaFim = new Date(hojeDate); semanaFim.setDate(semanaFim.getDate()+6);
+        const hojeDateFetch = this.paraData(this.hojeISO());
 
         const [{data: ags, error: agError}, {data: horariosHoje}] = await Promise.all([
             sb.from('agendamentos').select('*, servicos(nome), clientes(nome,created_at)').eq('barbeiro_id', b.id).order('data',{ascending:true}).order('horario',{ascending:true}),
-            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', b.id).eq('dia_semana', hojeDate.getDay()).eq('ativo', true)
+            sb.from('horarios_funcionamento').select('*').eq('barbeiro_id', b.id).eq('dia_semana', hojeDateFetch.getDay()).eq('ativo', true)
         ]);
         if(agError){
             document.getElementById('admin-content').innerHTML = `<div class="admin-empty">Não foi possível carregar os dados de ${b.nome}.<br>${agError.message||''}</div>`;
             return;
         }
-        const lista = ags || [];
+        // guarda em cache (igual à tela de Relatórios) para trocar de período
+        // (Hoje/Semana/Mês/Ano) instantaneamente, sem precisar recarregar do
+        // banco de novo a cada clique
+        this.gestaoCache = { lista: ags || [], horariosHoje };
+        this.renderStatsGestao();
+    },
+
+    setFiltroGestao(f){ this.gestaoFiltro = f; this.renderStatsGestao(); },
+
+    /* Redesenha a Gestão do Barbeiro a partir do cache já carregado, sempre no
+       período selecionado nos botões Hoje/Semana/Mês/Ano (this.gestaoFiltro).
+       Antes, esses botões só mudavam o rótulo usado no CSV/PDF — a tela sempre
+       exibia hoje/semana/mês/ano juntos, ao mesmo tempo, então clicar em
+       qualquer um deles parecia não mudar nada. Agora funciona igual à tela
+       de Relatórios: um clique, um período, os números mudam de verdade. */
+    renderStatsGestao(){
+        const b = this.barbeiroGestao;
+        if(!b || !this.gestaoCache) return;
+        const { lista, horariosHoje } = this.gestaoCache;
+
+        // "hoje" e os limites de semana/mês/ano são recalculados aqui, na hora
+        // de desenhar — nunca ficam presos ao momento em que os dados foram
+        // buscados do banco.
+        const hoje = this.hojeISO();
+        const hojeDate = this.paraData(hoje);
+        const diaSemanaHojeGestao = hojeDate.getDay(); // 0=domingo ... 6=sábado
+        const semanaIni = new Date(hojeDate); semanaIni.setDate(semanaIni.getDate() - diaSemanaHojeGestao);
+        const semanaFim = new Date(hojeDate); semanaFim.setDate(semanaFim.getDate() + (6 - diaSemanaHojeGestao));
+        const mesAtualGestao = hojeDate.getMonth();
+        const anoAtualGestao = hojeDate.getFullYear();
+
         const hojeAg = lista.filter(a => a.data===hoje && a.status!=='cancelado');
         const semanaAg = lista.filter(a => { const d=this.paraData(a.data); return d>=semanaIni && d<=semanaFim && a.status!=='cancelado'; });
+        const mesAg = lista.filter(a => { const d=this.paraData(a.data); return d.getMonth()===mesAtualGestao && d.getFullYear()===anoAtualGestao && a.status!=='cancelado'; });
+        const anoAg = lista.filter(a => { const d=this.paraData(a.data); return d.getFullYear()===anoAtualGestao && a.status!=='cancelado'; });
         const finalizados = lista.filter(a => a.status==='finalizado');
         const receitaDiaria = hojeAg.filter(a=>a.status==='finalizado').reduce((s,a)=>s+Number(a.servico_valor||0),0);
-        const receitaSemanal = lista.filter(a => a.status==='finalizado' && this.paraData(a.data)>=semanaIni && this.paraData(a.data)<=hojeDate).reduce((s,a)=>s+Number(a.servico_valor||0),0);
-        const receitaMensal = lista.filter(a => { const d=this.paraData(a.data); return a.status==='finalizado' && d.getMonth()===hojeDate.getMonth() && d.getFullYear()===hojeDate.getFullYear(); }).reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaSemanal = semanaAg.filter(a=>a.status==='finalizado').reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaMensal = mesAg.filter(a=>a.status==='finalizado').reduce((s,a)=>s+Number(a.servico_valor||0),0);
+        const receitaAnual = anoAg.filter(a=>a.status==='finalizado').reduce((s,a)=>s+Number(a.servico_valor||0),0);
         const receitaTotal = finalizados.reduce((s,a)=>s+Number(a.servico_valor||0),0);
+
+        // ===== período selecionado (Hoje/Semana/Mês/Ano) =====
+        const filtro = this.gestaoFiltro || 'mes';
+        const porFiltro = {
+            dia:    { ag: hojeAg,   receita: receitaDiaria  },
+            semana: { ag: semanaAg, receita: receitaSemanal },
+            mes:    { ag: mesAg,    receita: receitaMensal  },
+            ano:    { ag: anoAg,    receita: receitaAnual   }
+        }[filtro] || { ag: mesAg, receita: receitaMensal };
+        const periodoLabel = {dia:'Hoje', semana:'Esta semana', mes:'Este mês', ano:'Este ano'}[filtro] || 'Este mês';
+        const agendamentosPeriodo = porFiltro.ag.length;
+        const receitaPeriodo = porFiltro.receita;
+        const finalizadosPeriodo = porFiltro.ag.filter(a=>a.status==='finalizado').length;
+
         const clientesCadastrados = new Set(lista.filter(a=>a.cliente_id).map(a=>a.cliente_id)).size;
         const proximo = lista.find(a => a.data>=hoje && ['pendente','confirmado'].includes(a.status));
         const ultimo = [...finalizados].sort((a,c) => (c.data+' '+(c.horario||'')).localeCompare(a.data+' '+(a.horario||'')))[0];
@@ -5513,10 +5715,7 @@ const admin = {
 
         document.getElementById('admin-content').innerHTML = `
             <div class="admin-search-bar">
-                <button class="ag-btn" onclick="admin.gestaoFiltro='dia';admin.renderGestaoBarbeiro()">Hoje</button>
-                <button class="ag-btn" onclick="admin.gestaoFiltro='semana';admin.renderGestaoBarbeiro()">Semana</button>
-                <button class="ag-btn" onclick="admin.gestaoFiltro='mes';admin.renderGestaoBarbeiro()">Mês</button>
-                <button class="ag-btn" onclick="admin.gestaoFiltro='ano';admin.renderGestaoBarbeiro()">Ano</button>
+                ${['dia','semana','mes','ano'].map(f => `<button class="ag-btn filtro-rapido${filtro===f?' active':''}" onclick="admin.setFiltroGestao('${f}')">${{dia:'Hoje',semana:'Semana',mes:'Mês',ano:'Ano'}[f]}</button>`).join('')}
                 <button class="ag-btn" onclick="admin.exportarGestaoCSV()"><i class="fa-solid fa-file-csv"></i> Relatório CSV</button>
                 <button class="admin-btn-primario" onclick="admin.exportarGestaoPDF()"><i class="fa-solid fa-file-pdf"></i> Relatório PDF</button>
             </div>
@@ -5541,16 +5740,14 @@ const admin = {
             <div class="stat-grid">
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-sack-dollar"></i>Faturamento total</div><div class="value">${this.formatarMoeda(receitaTotal)}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-users"></i>Clientes cadastrados</div><div class="value">${clientesCadastrados}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-day"></i>Agendamentos hoje</div><div class="value">${hojeAg.length}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-week"></i>Agendamentos na semana</div><div class="value">${semanaAg.length}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar-check"></i>Agendamentos (${periodoLabel})</div><div class="value">${agendamentosPeriodo}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-coins"></i>Receita (${periodoLabel})</div><div class="value">${this.formatarMoeda(receitaPeriodo)}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Finalizados (${periodoLabel})</div><div class="value">${finalizadosPeriodo}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-user-clock"></i>Próximo agendamento</div><div class="value" style="font-size:15px;">${proximo?`${this.formatarDataBR(proximo.data)} ${this.formatarHora(proximo.horario)}<br><small style="font-family:Inter;color:var(--text-muted);">${proximo.cliente_nome||'Cliente'}</small>`:'—'}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-user-check"></i>Último atendimento</div><div class="value" style="font-size:15px;">${ultimo?`${this.formatarDataBR(ultimo.data)}${ultimo.horario?' '+this.formatarHora(ultimo.horario):''}<br><small style="font-family:Inter;color:var(--text-muted);">${ultimo.cliente_nome||'Cliente'}</small>`:'—'}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-square-check"></i>Horários disponíveis hoje</div><div class="value">${disponiveisHoje}</div></div>
                 <div class="stat-card"><div class="label"><i class="fa-solid fa-square-xmark"></i>Horários ocupados hoje</div><div class="value">${ocupadosHoje}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-coins"></i>Receita diária</div><div class="value">${this.formatarMoeda(receitaDiaria)}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-money-bill-trend-up"></i>Receita semanal</div><div class="value">${this.formatarMoeda(receitaSemanal)}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-calendar"></i>Receita mensal</div><div class="value">${this.formatarMoeda(receitaMensal)}</div></div>
-                <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Atendimentos finalizados</div><div class="value">${finalizados.length}</div></div>
+                <div class="stat-card"><div class="label"><i class="fa-solid fa-scissors"></i>Atendimentos finalizados (total)</div><div class="value">${finalizados.length}</div></div>
             </div>
             <div class="dash-columns">
                 <div>
@@ -5560,7 +5757,7 @@ const admin = {
                 <div>
                     <div class="dash-panel"><h4>Resumo de produção</h4><div class="mini-list">
                         <div class="mini-list-item"><span class="n">Hoje</span><span class="m">${hojeAg.filter(a=>a.status==='finalizado').length} finalizado(s)</span></div>
-                        <div class="mini-list-item"><span class="n">Últimos 7 dias</span><span class="m">${semanaAg.filter(a=>a.status==='finalizado').length} finalizado(s)</span></div>
+                        <div class="mini-list-item"><span class="n">Esta semana</span><span class="m">${semanaAg.filter(a=>a.status==='finalizado').length} finalizado(s)</span></div>
                         <div class="mini-list-item"><span class="n">Faturamento total</span><span class="m">${this.formatarMoeda(receitaTotal)}</span></div>
                     </div></div>
                 </div>
@@ -5575,7 +5772,14 @@ const admin = {
         const filtro=this.gestaoFiltro||'mes';
         const dentro=d=>{
             if(filtro==='dia') return d.toDateString()===hoje.toDateString();
-            if(filtro==='semana'){const ini=new Date(hoje);ini.setDate(ini.getDate()-6);return d>=ini&&d<=hoje;}
+            if(filtro==='semana'){
+                // semana ATUAL (domingo a sábado corrente), mesma regra usada nos
+                // indicadores da tela — não é mais uma janela fixa de 7 dias corridos.
+                const diaSemana=hoje.getDay();
+                const ini=new Date(hoje); ini.setDate(ini.getDate()-diaSemana);
+                const fim=new Date(hoje); fim.setDate(fim.getDate()+(6-diaSemana));
+                return d>=ini&&d<=fim;
+            }
             if(filtro==='mes') return d.getMonth()===hoje.getMonth()&&d.getFullYear()===hoje.getFullYear();
             if(filtro==='ano') return d.getFullYear()===hoje.getFullYear();
             return true;
@@ -5584,7 +5788,7 @@ const admin = {
         const finalizados=periodo.filter(a=>a.status==='finalizado');
         const faturamento=finalizados.reduce((s,a)=>s+Number(a.servico_valor||0),0);
         const clientes=new Set(periodo.filter(a=>a.cliente_id).map(a=>a.cliente_id));
-        return {lista:periodo,finalizados,faturamento,clientes,periodoLabel:{dia:'Hoje',semana:'Últimos 7 dias',mes:'Este mês',ano:'Este ano'}[filtro]||filtro};
+        return {lista:periodo,finalizados,faturamento,clientes,periodoLabel:{dia:'Hoje',semana:'Esta semana',mes:'Este mês',ano:'Este ano'}[filtro]||filtro};
     },
 
     async exportarGestaoCSV(){
@@ -5790,9 +5994,10 @@ const admin = {
 
     /* chamado ao final de exportarPDF() / exportarGestaoPDF() no lugar de doc.save():
        transforma o documento jsPDF já pronto em um arquivo (blob) real uma única
-       vez, abre a pré-visualização imediatamente com esse arquivo e, em paralelo,
-       tenta registrá-lo no histórico (sem travar a pré-visualização caso a rede
-       esteja lenta ou indisponível). */
+       vez e abre a pré-visualização com esse arquivo. IMPORTANTE: só abrir a
+       pré-visualização NÃO é uma exportação — por isso não registra nada no
+       Histórico aqui. O registro só acontece se/quando o usuário clicar em
+       "Baixar PDF" dentro da pré-visualização (ver baixarPdfPreview). */
     finalizarGeracaoPDF(doc, meta){
         let blob;
         try{
@@ -5801,15 +6006,20 @@ const admin = {
             alert('Não foi possível gerar o arquivo do relatório em PDF. Tente novamente.');
             return;
         }
-        this.abrirPreviewPDF({ blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo });
-        this.registrarRelatorioNoHistorico({ ...meta, blob, formato: 'pdf' });
+        this.abrirPreviewPDF({ blob, nomeArquivo: meta.nomeArquivo, titulo: meta.titulo, registrarMeta: meta });
     },
 
     /* pré-visualização do PDF real (não é imagem nem HTML fingindo ser PDF):
        aceita OU um "blob" recém-gerado (Emitir PDF) OU as URLs já salvas de um
        item do Histórico (Visualizar). Em ambos os casos, o link usado para
-       "Baixar PDF" aponta exatamente para o mesmo arquivo mostrado no iframe. */
-    abrirPreviewPDF({ blob, visualizarUrl, baixarUrl, nomeArquivo, titulo }){
+       "Baixar PDF" aponta exatamente para o mesmo arquivo mostrado no iframe.
+       "registrarMeta" só vem preenchido quando o PDF acabou de ser gerado
+       nesta sessão (fluxo Exportar PDF); ao reabrir um item que já existe no
+       Histórico (fluxo Visualizar), vem undefined — então baixar esse PDF de
+       novo nunca cria um registro duplicado no Histórico. Abrir esta tela,
+       por si só, nunca registra nada — isso só acontece em baixarPdfPreview(),
+       quando o usuário realmente pede para baixar o arquivo. */
+    abrirPreviewPDF({ blob, visualizarUrl, baixarUrl, nomeArquivo, titulo, registrarMeta }){
         this.fecharObjectUrlPreviewAnterior();
         let urlVisualizar = visualizarUrl, urlBaixar = baixarUrl, isBlob = false;
         if(blob){
@@ -5817,7 +6027,10 @@ const admin = {
             urlBaixar = urlVisualizar; // mesmíssimo arquivo para visualizar e baixar
             isBlob = true;
         }
-        this.pdfPreview = { visualizarUrl: urlVisualizar, baixarUrl: urlBaixar, nomeArquivo: nomeArquivo || 'relatorio.pdf', isBlob };
+        this.pdfPreview = {
+            visualizarUrl: urlVisualizar, baixarUrl: urlBaixar, nomeArquivo: nomeArquivo || 'relatorio.pdf', isBlob,
+            blob: blob || null, registrarMeta: registrarMeta || null, jaRegistrado: false
+        };
 
         const tituloEl = document.getElementById('admin-page-title');
         if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
@@ -5863,6 +6076,13 @@ const admin = {
         }
     },
 
+    /* ÚNICO ponto que conta como exportação de fato: o usuário pediu para
+       baixar o PDF que estava sendo pré-visualizado. Só aqui — nunca ao abrir
+       a pré-visualização — é que o relatório é registrado no Histórico.
+       "jaRegistrado" evita duplicar o registro se o usuário clicar em
+       "Baixar PDF" mais de uma vez para o mesmo arquivo. Quando o PDF veio do
+       próprio Histórico (reabertura via "Visualizar"), registrarMeta é nulo e
+       nada é registrado de novo, pois esse relatório já está lá. */
     baixarPdfPreview(){
         if(!this.pdfPreview) return;
         const a = document.createElement('a');
@@ -5870,6 +6090,11 @@ const admin = {
         a.download = this.pdfPreview.nomeArquivo;
         a.target = '_blank';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+        if(this.pdfPreview.registrarMeta && this.pdfPreview.blob && !this.pdfPreview.jaRegistrado){
+            this.pdfPreview.jaRegistrado = true;
+            this.registrarRelatorioNoHistorico({ ...this.pdfPreview.registrarMeta, blob: this.pdfPreview.blob, formato: 'pdf' });
+        }
     },
 
     /* envia o arquivo (PDF ou CSV) já gerado — mesmo blob mostrado na
