@@ -5415,12 +5415,14 @@ const admin = {
         }catch(e){ return null; }
     },
 
-    /* Exportação em PDF real, gerado com jsPDF + AutoTable a partir dos mesmos dados
+        /* Exportação em PDF real, gerado com jsPDF + AutoTable a partir dos mesmos dados
        calculados em calcularRelatorio() — texto real, tabelas reais e valores reais,
        NUNCA uma captura/print da tela (nada de window.print() ou html2canvas aqui).
-       O visual segue a identidade da Prieto Barbearia: fundo escuro, texto branco/cinza
-       e detalhes dourados, com cabeçalho, cartões de resumo, tabelas e rodapé com
-       numeração de página em todas as páginas geradas. */
+       Modelo visual: papel branco com moldura preta, logo da Prieto Barbearia, título
+       com friso dourado, cartão "Período analisado / Gerado em", cartões de resumo
+       com ícone + número + rótulo, seções com título ladeado por linhas douradas e
+       tabelas em duas colunas com cabeçalho preto — seguindo o relatório modelo
+       fornecido pela barbearia (relatorio_prieto_barbearia_alta_qualidade.pdf). */
     async exportarPDF(){
         if(!window.jspdf || !window.jspdf.jsPDF){
             alert('Não foi possível carregar o gerador de PDF. Verifique sua conexão com a internet e tente novamente.');
@@ -5431,137 +5433,240 @@ const admin = {
         const doc = new jsPDF({unit:'mm', format:'a4'});
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const margem = 14;
+        const margem = 16;
 
         const C = {
-            bg: [11,11,12], card: [24,24,27], border: [40,40,44],
-            texto: [242,241,238], muted: [154,154,158],
-            dourado: [201,164,99], douradoEscuro: [166,131,71]
+            bg: [255,255,255], texto: [17,17,17], muted: [120,120,120],
+            dourado: [201,164,99], cardBorda: [214,209,199], linhaTabela: [227,224,217],
+            headerTabela: [17,17,17], zebra: [247,246,242]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
+        const moldura = () => { doc.setDrawColor(...C.texto); doc.setLineWidth(0.6); doc.roundedRect(6,6,pageW-12,pageH-12,3,3,'S'); };
+        const preparaPagina = () => { fundo(); moldura(); };
 
-        const rodape = (numero) => {
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.35);
-            doc.line(margem, pageH-14, pageW-margem, pageH-14);
-            doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.muted);
-            doc.text('PRIETO BARBEARIA', margem, pageH-9);
-            doc.text(`Página ${numero}`, pageW-margem, pageH-9, {align:'right'});
+        const rodape = (numero, totalPaginas) => {
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
+            doc.line(margem, pageH-16, pageW-margem, pageH-16);
+            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.texto);
+            doc.text('PRIETO BARBEARIA', pageW/2, pageH-10.5, {align:'center'});
+            if(totalPaginas > 1){
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
+                doc.text(`Página ${numero}`, pageW-margem, pageH-10.5, {align:'right'});
+            }
         };
 
-        // página 1: fundo escuro + cabeçalho com a logo original (sem alterar cores/recorte)
-        fundo();
+        // título centralizado com um friso dourado partido por um losango no meio
+        const tituloComFriso = (texto, y) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C.texto);
+            doc.text(texto, pageW/2, y, {align:'center'}); y += 6;
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.55);
+            doc.line(pageW/2-42, y, pageW/2-5, y);
+            doc.line(pageW/2+5, y, pageW/2+42, y);
+            doc.setFillColor(...C.dourado);
+            doc.rect(pageW/2-1.1, y-1.1, 2.2, 2.2, 'F');
+            return y + 10;
+        };
+
+        // título de seção com pequenas linhas douradas nas laterais (usado tanto
+        // acima do cartão de resumo quanto acima de cada tabela do relatório)
+        const tituloSecao = (texto, y, largura, centroX) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(largura < pageW-margem*2 ? 9.5 : 12); doc.setTextColor(...C.texto);
+            doc.text(texto, centroX, y, {align:'center'});
+            const largTexto = doc.getTextWidth(texto);
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
+            const meioLinha = y - 1.4;
+            doc.line(centroX-largura/2, meioLinha, centroX-largTexto/2-5, meioLinha);
+            doc.line(centroX+largTexto/2+5, meioLinha, centroX+largura/2, meioLinha);
+        };
+
+        // ícones simples desenhados em vetor (sem depender de fontes de ícones)
+        const iconePessoas = (cx,cy) => {
+            doc.setFillColor(...C.texto);
+            doc.circle(cx-1.7, cy-1.1, 1.05, 'F');
+            doc.circle(cx+1.7, cy-1.1, 1.05, 'F');
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.4); doc.setFillColor(255,255,255);
+            doc.ellipse(cx-1.7, cy+2.1, 1.9, 1.7, 'FD');
+            doc.ellipse(cx+1.7, cy+2.1, 1.9, 1.7, 'FD');
+        };
+        const iconeDinheiro = (cx,cy) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.texto);
+            doc.text('$', cx, cy+1.5, {align:'center'});
+        };
+        const iconeCancelado = (cx,cy) => {
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.55);
+            doc.line(cx-2.1, cy-2.1, cx+2.1, cy+2.1);
+            doc.line(cx-2.1, cy+2.1, cx+2.1, cy-2.1);
+        };
+        const desenhaIcone = (tipo, cx, cy) => {
+            if(tipo === 'pessoas') iconePessoas(cx,cy);
+            else if(tipo === 'dinheiro') iconeDinheiro(cx,cy);
+            else iconeCancelado(cx,cy);
+        };
+
+        // página 1: papel branco com moldura preta + logo original da barbearia
+        preparaPagina();
         let y = 20;
 
         const logoData = await this.carregarLogoBase64();
         if(logoData){
             try{
                 const props = doc.getImageProperties(logoData);
-                const larguraLogo = 64;
+                const larguraLogo = 58;
                 const alturaLogo = (props.height/props.width)*larguraLogo;
                 doc.addImage(logoData, props.fileType || 'PNG', (pageW-larguraLogo)/2, y, larguraLogo, alturaLogo);
-                y += alturaLogo + 9;
+                y += alturaLogo + 8;
             }catch(e){ /* segue sem logo se a imagem não puder ser lida */ }
         }
 
-        doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
-        doc.text(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
-        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
-        doc.text('PRIETO BARBEARIA', pageW/2, y, {align:'center'}); y += 5;
-        doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
-        doc.line(pageW/2-16, y, pageW/2+16, y); y += 10;
+        y = tituloComFriso(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', y);
 
-        // cartão: período analisado / gerado em
-        const altInfo = 18;
-        doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+        tituloSecao('RESUMO DO PERÍODO', y, pageW-margem*2, pageW/2); y += 8;
+
+        // cartão "Período analisado / Gerado em", com ícone de calendário
+        const altInfo = 20;
+        doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
         doc.roundedRect(margem, y, pageW-margem*2, altInfo, 2, 2, 'FD');
-        doc.setDrawColor(...C.border);
-        doc.line(pageW/2, y+3, pageW/2, y+altInfo-3);
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C.muted);
-        doc.text('PERÍODO ANALISADO', margem+6, y+7);
-        doc.text('GERADO EM', pageW/2+6, y+7);
-        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...C.texto);
-        doc.text(r.periodoLabel, margem+6, y+13.5);
-        doc.text(this.formatarDataHoraBR(new Date().toISOString()), pageW/2+6, y+13.5);
-        y += altInfo + 11;
+        doc.setDrawColor(...C.cardBorda);
+        doc.line(margem+46, y+4, margem+46, y+altInfo-4);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
+        doc.text('PERÍODO ANALISADO', margem+6, y+8);
+        doc.text('GERADO EM', margem+6, y+altInfo-6);
+        doc.setDrawColor(...C.texto); doc.setLineWidth(0.35);
+        doc.roundedRect(margem+54, y+5.5, 4.6, 4, 0.6, 0.6, 'S');
+        doc.line(margem+54, y+7, margem+58.6, y+7);
+        doc.line(margem+55.4, y+4.6, margem+55.4, y+6.2);
+        doc.line(margem+57.2, y+4.6, margem+57.2, y+6.2);
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.texto);
+        doc.text(r.periodoLabel, margem+62, y+9);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C.muted);
+        doc.text(this.formatarDataHoraBR(new Date().toISOString()), margem+54, y+altInfo-6);
+        y += altInfo + 12;
 
-        // resumo do período
-        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...C.texto);
-        doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
-
+        // cartões de resumo: clientes recorrentes / faturamento / cancelamentos
         const cartoes = [
-            {valor: String(r.clientesRecorrentes), label: 'CLIENTES RECORRENTES'},
-            {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
-            {valor: String(r.cancelados.length), label: 'CANCELAMENTOS'}
+            {tipo:'pessoas', valor: String(r.clientesRecorrentes), label:'CLIENTES RECORRENTES'},
+            {tipo:'dinheiro', valor: this.formatarMoeda(r.faturamento), label:'FATURAMENTO'},
+            {tipo:'cancelado', valor: String(r.cancelados.length), label:'CANCELAMENTOS'}
         ];
-        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
+        const gap = 6, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 34;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
-            doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+            const cx = x + largCartao/2;
+            doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
             doc.roundedRect(x, y, largCartao, altCartao, 2, 2, 'FD');
-            doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...C.dourado);
-            doc.text(c.valor, x+largCartao/2, y+11, {align:'center'});
-            doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(...C.muted);
-            doc.text(c.label, x+largCartao/2, y+17.5, {align:'center', maxWidth: largCartao-3});
+            const iconY = y+9;
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.45);
+            doc.circle(cx, iconY, 5.2, 'S');
+            desenhaIcone(c.tipo, cx, iconY);
+            doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...C.texto);
+            doc.text(c.valor, cx, y+22, {align:'center'});
+            doc.setFont('helvetica','bold'); doc.setFontSize(6.6); doc.setTextColor(...C.muted);
+            doc.text(c.label, cx, y+28, {align:'center', maxWidth: largCartao-4});
         });
         y += altCartao + 12;
 
         // paginação manual (entre seções, quando o título+tabela não cabem mais na página)
         const garantirEspaco = (alturaMinima) => {
-            if(y + alturaMinima > pageH - 22){
-                doc.addPage(); fundo(); y = 20;
+            if(y + alturaMinima > pageH - 24){
+                doc.addPage(); preparaPagina(); y = 20;
             }
         };
 
-        // no modo consolidado, tabela extra logo após os cartões de resumo mostrando
-        // o desempenho de cada barbeiro separadamente dentro do total da barbearia
-        if(r.modoBarbearia && r.porBarbeiro.length){
-            garantirEspaco(30);
-            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
-            doc.text('FATURAMENTO POR BARBEIRO', margem, y); y += 5;
-            doc.autoTable({
-                startY: y,
-                margin: {left: margem, right: margem, bottom: 20},
-                head: [['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO']],
-                body: r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
-                theme: 'grid',
-                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
-                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [20,20,23] },
-                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
-            });
-            y = doc.lastAutoTable.finalY + 10;
-        }
-
-        const secao = (titulo, corpo, colunas) => {
-            garantirEspaco(30);
-            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
-            doc.text(titulo, margem, y); y += 5;
-            doc.autoTable({
-                startY: y,
-                margin: {left: margem, right: margem, bottom: 20},
-                head: [colunas],
-                body: corpo.length ? corpo : [['Sem dados no período', '']],
-                theme: 'grid',
-                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
-                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [20,20,23] },
-                // só repinta o fundo em páginas NOVAS criadas pela própria tabela
-                // (pageNumber > 1 dentro desta chamada) — a página atual já está pintada.
-                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
-            });
-            y = doc.lastAutoTable.finalY + 10;
+        const estiloTabela = {
+            theme: 'grid',
+            styles: { fontSize: 9, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 3 },
+            headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8.5 },
+            alternateRowStyles: { fillColor: C.zebra },
+            // só repinta o fundo/moldura em páginas NOVAS criadas pela própria tabela
+            // (pageNumber > 1 dentro desta chamada) — a página atual já está pronta.
+            willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
         };
 
-        secao('HORÁRIOS MAIS MOVIMENTADOS', r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]), ['HORÁRIO','AGENDAMENTOS']);
-        secao('SERVIÇOS REALIZADOS', r.servicosOrdenados.map(([k,v]) => [k, String(v)]), ['SERVIÇO','QUANTIDADE']);
-        secao('DIAS MAIS MOVIMENTADOS', r.diasOrdenados.map(([k,v]) => [k, `${v} agendamento(s)`]), ['DIA','AGENDAMENTOS']);
+        // estilo compacto para as tabelas em duas colunas (cabem menos caracteres
+        // por linha, então usam fonte um pouco menor para não quebrar palavras
+        // dos cabeçalhos como "ATENDIMENTOS")
+        const estiloTabelaCompacta = {
+            theme: 'grid',
+            styles: { fontSize: 7.8, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 2.4 },
+            headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold', fontSize: 7 },
+            alternateRowStyles: { fillColor: C.zebra },
+            willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
+        };
 
-        // rodapé com linha dourada e numeração em todas as páginas do documento
+        const secaoUnica = (titulo, corpo, colunas) => {
+            garantirEspaco(34);
+            tituloSecao(titulo, y, pageW-margem*2, pageW/2); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: {left: margem, right: margem, bottom: 22},
+                head: [colunas],
+                body: corpo.length ? corpo : [['Sem dados no período', '']],
+                ...estiloTabela
+            });
+            y = doc.lastAutoTable.finalY + 12;
+        };
+
+        // duas tabelas lado a lado (mesmo padrão do relatório modelo), com a
+        // largura de cada uma limitada à metade da página menos o espaçamento
+        const secaoDupla = (tituloEsq, corpoEsq, colunasEsq, tituloDir, corpoDir, colunasDir) => {
+            garantirEspaco(38);
+            const largColuna = (pageW - margem*2 - 8)/2;
+            const xEsq = margem, xDir = margem + largColuna + 8;
+            tituloSecao(tituloEsq, y, largColuna, xEsq+largColuna/2);
+            tituloSecao(tituloDir, y, largColuna, xDir+largColuna/2);
+            const yTabela = y + 5;
+            doc.autoTable({
+                startY: yTabela,
+                margin: {left: xEsq, right: pageW-xEsq-largColuna, bottom: 22},
+                tableWidth: largColuna,
+                head: [colunasEsq],
+                body: corpoEsq.length ? corpoEsq : [['Sem dados no período', '']],
+                ...estiloTabelaCompacta
+            });
+            const finalYEsq = doc.lastAutoTable.finalY;
+            doc.autoTable({
+                startY: yTabela,
+                margin: {left: xDir, right: pageW-xDir-largColuna, bottom: 22},
+                tableWidth: largColuna,
+                head: [colunasDir],
+                body: corpoDir.length ? corpoDir : [['Sem dados no período', '']],
+                ...estiloTabelaCompacta
+            });
+            const finalYDir = doc.lastAutoTable.finalY;
+            y = Math.max(finalYEsq, finalYDir) + 12;
+        };
+
+        // no modo consolidado, a tabela "Faturamento por barbeiro" acompanha
+        // "Horários mais movimentados" lado a lado, exatamente como no modelo;
+        // fora do modo consolidado, "Horários" ocupa a largura toda sozinha.
+        if(r.modoBarbearia && r.porBarbeiro.length){
+            secaoDupla(
+                'FATURAMENTO POR BARBEIRO',
+                r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
+                ['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO'],
+                'HORÁRIOS MAIS MOVIMENTADOS',
+                r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]),
+                ['HORÁRIO','AGENDAMENTOS']
+            );
+        } else {
+            secaoUnica('HORÁRIOS MAIS MOVIMENTADOS', r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]), ['HORÁRIO','AGENDAMENTOS']);
+        }
+
+        secaoDupla(
+            'SERVIÇOS REALIZADOS',
+            r.servicosOrdenados.map(([k,v]) => [k, String(v)]),
+            ['SERVIÇO','QUANTIDADE'],
+            'DIAS MAIS MOVIMENTADOS',
+            r.diasOrdenados.map(([k,v]) => [k, `${v} agendamento(s)`]),
+            ['DIA','AGENDAMENTOS']
+        );
+
+        // rodapé com linha dourada, marca da barbearia e numeração de página
         const totalPaginas = doc.internal.getNumberOfPages();
         for(let p = 1; p <= totalPaginas; p++){
             doc.setPage(p);
-            rodape(p);
+            rodape(p, totalPaginas);
         }
 
         // não baixa mais automaticamente: gera o arquivo PDF real uma única vez e
@@ -5576,7 +5681,7 @@ const admin = {
         });
     },
 
-    /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
+/* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
     async renderGestaoBarbeiro(){
         if(!this.ehAdmin()){ this.irPara('dashboard'); return; }
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando gestão do barbeiro...</div>';
@@ -5806,11 +5911,12 @@ const admin = {
         });
     },
 
-    /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
-       estrutural do PDF de Relatórios já existente no sistema (mesmo fundo,
-       logo, título com linha dourada, cartão de período/geração, cartões de
-       resumo, tabelas no mesmo estilo e rodapé com numeração de página).
-       Só o conteúdo muda: aqui é o desempenho de UM barbeiro específico. */
+        /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
+       estrutural do PDF de Relatórios já existente no sistema (mesmo papel
+       branco com moldura preta, logo, título com friso dourado, cartão de
+       período/geração, cartões de resumo com ícone e tabela no mesmo estilo,
+       com rodapé e numeração de página), seguindo o relatório modelo fornecido
+       pela barbearia. Só o conteúdo muda: aqui é o desempenho de UM barbeiro. */
     async exportarGestaoPDF(){
         if(!this.ehAdmin()){ return; }
         if(!window.jspdf || !window.jspdf.jsPDF){
@@ -5824,106 +5930,162 @@ const admin = {
         const doc = new jsPDF({unit:'mm', format:'a4'});
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const margem = 14;
+        const margem = 16;
 
         const C = {
-            bg: [11,11,12], card: [24,24,27], border: [40,40,44],
-            texto: [242,241,238], muted: [154,154,158],
-            dourado: [201,164,99], douradoEscuro: [166,131,71]
+            bg: [255,255,255], texto: [17,17,17], muted: [120,120,120],
+            dourado: [201,164,99], cardBorda: [214,209,199], linhaTabela: [227,224,217],
+            headerTabela: [17,17,17], zebra: [247,246,242]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
+        const moldura = () => { doc.setDrawColor(...C.texto); doc.setLineWidth(0.6); doc.roundedRect(6,6,pageW-12,pageH-12,3,3,'S'); };
+        const preparaPagina = () => { fundo(); moldura(); };
 
-        const rodape = (numero) => {
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.35);
-            doc.line(margem, pageH-14, pageW-margem, pageH-14);
-            doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.muted);
-            doc.text('PRIETO BARBEARIA', margem, pageH-9);
-            doc.text(`Página ${numero}`, pageW-margem, pageH-9, {align:'right'});
+        const rodape = (numero, totalPaginas) => {
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
+            doc.line(margem, pageH-16, pageW-margem, pageH-16);
+            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.texto);
+            doc.text('PRIETO BARBEARIA', pageW/2, pageH-10.5, {align:'center'});
+            if(totalPaginas > 1){
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
+                doc.text(`Página ${numero}`, pageW-margem, pageH-10.5, {align:'right'});
+            }
         };
 
-        // página 1: fundo escuro + cabeçalho com a logo original (sem alterar cores/recorte)
-        fundo();
+        const tituloComFriso = (texto, y) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C.texto);
+            doc.text(texto, pageW/2, y, {align:'center'}); y += 6;
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.55);
+            doc.line(pageW/2-42, y, pageW/2-5, y);
+            doc.line(pageW/2+5, y, pageW/2+42, y);
+            doc.setFillColor(...C.dourado);
+            doc.rect(pageW/2-1.1, y-1.1, 2.2, 2.2, 'F');
+            return y + 10;
+        };
+
+        const tituloSecao = (texto, y, largura, centroX) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(largura < pageW-margem*2 ? 9.5 : 12); doc.setTextColor(...C.texto);
+            doc.text(texto, centroX, y, {align:'center'});
+            const largTexto = doc.getTextWidth(texto);
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
+            const meioLinha = y - 1.4;
+            doc.line(centroX-largura/2, meioLinha, centroX-largTexto/2-5, meioLinha);
+            doc.line(centroX+largTexto/2+5, meioLinha, centroX+largura/2, meioLinha);
+        };
+
+        const iconeDinheiro = (cx,cy) => {
+            doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.texto);
+            doc.text('$', cx, cy+1.5, {align:'center'});
+        };
+        const iconeCheck = (cx,cy) => {
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.6);
+            doc.line(cx-2.3, cy+0.3, cx-0.5, cy+2.1);
+            doc.line(cx-0.5, cy+2.1, cx+2.6, cy-2.3);
+        };
+        const iconePessoas = (cx,cy) => {
+            doc.setFillColor(...C.texto);
+            doc.circle(cx-1.7, cy-1.1, 1.05, 'F');
+            doc.circle(cx+1.7, cy-1.1, 1.05, 'F');
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.4); doc.setFillColor(255,255,255);
+            doc.ellipse(cx-1.7, cy+2.1, 1.9, 1.7, 'FD');
+            doc.ellipse(cx+1.7, cy+2.1, 1.9, 1.7, 'FD');
+        };
+        const desenhaIcone = (tipo, cx, cy) => {
+            if(tipo === 'dinheiro') iconeDinheiro(cx,cy);
+            else if(tipo === 'check') iconeCheck(cx,cy);
+            else iconePessoas(cx,cy);
+        };
+
+        // página 1: papel branco com moldura preta + logo original da barbearia
+        preparaPagina();
         let y = 20;
 
         const logoData = await this.carregarLogoBase64();
         if(logoData){
             try{
                 const props = doc.getImageProperties(logoData);
-                const larguraLogo = 64;
+                const larguraLogo = 58;
                 const alturaLogo = (props.height/props.width)*larguraLogo;
                 doc.addImage(logoData, props.fileType || 'PNG', (pageW-larguraLogo)/2, y, larguraLogo, alturaLogo);
-                y += alturaLogo + 9;
+                y += alturaLogo + 8;
             }catch(e){ /* segue sem logo se a imagem não puder ser lida */ }
         }
 
-        doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
-        doc.text('RELATÓRIO DO BARBEIRO', pageW/2, y, {align:'center'}); y += 7;
+        y = tituloComFriso('RELATÓRIO DO BARBEIRO', y);
+
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
-        doc.text(this.barbeiroGestao.nome, pageW/2, y, {align:'center'}); y += 5;
-        doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
-        doc.line(pageW/2-16, y, pageW/2+16, y); y += 10;
+        doc.text(this.barbeiroGestao.nome.toUpperCase(), pageW/2, y, {align:'center'}); y += 12;
 
-        // cartão: período analisado / gerado em
-        const altInfo = 18;
-        doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+        tituloSecao('RESUMO DO PERÍODO', y, pageW-margem*2, pageW/2); y += 8;
+
+        // cartão "Período analisado / Gerado em", com ícone de calendário
+        const altInfo = 20;
+        doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
         doc.roundedRect(margem, y, pageW-margem*2, altInfo, 2, 2, 'FD');
-        doc.setDrawColor(...C.border);
-        doc.line(pageW/2, y+3, pageW/2, y+altInfo-3);
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C.muted);
-        doc.text('PERÍODO ANALISADO', margem+6, y+7);
-        doc.text('GERADO EM', pageW/2+6, y+7);
-        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...C.texto);
-        doc.text(r.periodoLabel, margem+6, y+13.5);
-        doc.text(this.formatarDataHoraBR(new Date().toISOString()), pageW/2+6, y+13.5);
-        y += altInfo + 11;
+        doc.setDrawColor(...C.cardBorda);
+        doc.line(margem+46, y+4, margem+46, y+altInfo-4);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
+        doc.text('PERÍODO ANALISADO', margem+6, y+8);
+        doc.text('GERADO EM', margem+6, y+altInfo-6);
+        doc.setDrawColor(...C.texto); doc.setLineWidth(0.35);
+        doc.roundedRect(margem+54, y+5.5, 4.6, 4, 0.6, 0.6, 'S');
+        doc.line(margem+54, y+7, margem+58.6, y+7);
+        doc.line(margem+55.4, y+4.6, margem+55.4, y+6.2);
+        doc.line(margem+57.2, y+4.6, margem+57.2, y+6.2);
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.texto);
+        doc.text(r.periodoLabel, margem+62, y+9);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C.muted);
+        doc.text(this.formatarDataHoraBR(new Date().toISOString()), margem+54, y+altInfo-6);
+        y += altInfo + 12;
 
-        // resumo do período
-        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...C.texto);
-        doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
-
+        // cartões de resumo: faturamento / atendimentos finalizados / clientes atendidos
         const cartoes = [
-            {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
-            {valor: String(r.finalizados.length), label: 'ATENDIMENTOS FINALIZADOS'},
-            {valor: String(r.clientes.size), label: 'CLIENTES ATENDIDOS'}
+            {tipo:'dinheiro', valor: this.formatarMoeda(r.faturamento), label:'FATURAMENTO'},
+            {tipo:'check', valor: String(r.finalizados.length), label:'ATENDIMENTOS FINALIZADOS'},
+            {tipo:'pessoas', valor: String(r.clientes.size), label:'CLIENTES ATENDIDOS'}
         ];
-        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
+        const gap = 6, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 34;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
-            doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
+            const cx = x + largCartao/2;
+            doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
             doc.roundedRect(x, y, largCartao, altCartao, 2, 2, 'FD');
-            doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...C.dourado);
-            doc.text(c.valor, x+largCartao/2, y+11, {align:'center'});
-            doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(...C.muted);
-            doc.text(c.label, x+largCartao/2, y+17.5, {align:'center', maxWidth: largCartao-3});
+            const iconY = y+9;
+            doc.setDrawColor(...C.texto); doc.setLineWidth(0.45);
+            doc.circle(cx, iconY, 5.2, 'S');
+            desenhaIcone(c.tipo, cx, iconY);
+            doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...C.texto);
+            doc.text(c.valor, cx, y+22, {align:'center'});
+            doc.setFont('helvetica','bold'); doc.setFontSize(6.6); doc.setTextColor(...C.muted);
+            doc.text(c.label, cx, y+28, {align:'center', maxWidth: largCartao-4});
         });
         y += altCartao + 12;
 
         // paginação manual (entre seções, quando o título+tabela não cabem mais na página)
         const garantirEspaco = (alturaMinima) => {
-            if(y + alturaMinima > pageH - 22){
-                doc.addPage(); fundo(); y = 20;
+            if(y + alturaMinima > pageH - 24){
+                doc.addPage(); preparaPagina(); y = 20;
             }
         };
 
         const secao = (titulo, corpo, colunas) => {
-            garantirEspaco(30);
-            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
-            doc.text(titulo, margem, y); y += 5;
+            garantirEspaco(34);
+            tituloSecao(titulo, y, pageW-margem*2, pageW/2); y += 5;
             doc.autoTable({
                 startY: y,
-                margin: {left: margem, right: margem, bottom: 20},
+                margin: {left: margem, right: margem, bottom: 22},
                 head: [colunas],
                 body: corpo.length ? corpo : [['Sem dados no período', '', '', '', '', '', '']],
                 theme: 'grid',
-                styles: { fontSize: 8.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
-                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [20,20,23] },
-                // só repinta o fundo em páginas NOVAS criadas pela própria tabela
-                // (pageNumber > 1 dentro desta chamada) — a página atual já está pintada.
-                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
+                styles: { fontSize: 8.5, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+                // só repinta o fundo/moldura em páginas NOVAS criadas pela própria tabela
+                // (pageNumber > 1 dentro desta chamada) — a página atual já está pronta.
+                willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
             });
-            y = doc.lastAutoTable.finalY + 10;
+            y = doc.lastAutoTable.finalY + 12;
         };
 
         secao(
@@ -5940,11 +6102,11 @@ const admin = {
             ['CLIENTE','SERVIÇO','VALOR','DATA','HORÁRIO','STATUS','ORIGEM']
         );
 
-        // rodapé com linha dourada e numeração em todas as páginas do documento
+        // rodapé com linha dourada, marca da barbearia e numeração de página
         const totalPaginas = doc.internal.getNumberOfPages();
         for(let p = 1; p <= totalPaginas; p++){
             doc.setPage(p);
-            rodape(p);
+            rodape(p, totalPaginas);
         }
 
         const nomeArquivo = `relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
@@ -5956,7 +6118,7 @@ const admin = {
         });
     },
 
-    formatarDataHoraBR(iso){
+formatarDataHoraBR(iso){
         const d = new Date(iso);
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
