@@ -11,8 +11,11 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
-<!-- PWA: manifest e ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS -->
-<link rel="manifest" href="/manifest.json">
+<!-- PWA: ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS.
+     Propositalmente NÃO há <link rel="manifest"> aqui: o site público não
+     deve ser elegível para instalação. O <link rel="manifest"> só é criado
+     dinamicamente (via JS) quando o usuário entra na Área Restrita — ver
+     prepararPWABarbeiros() mais abaixo no arquivo. -->
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0b0b0c">
 <meta name="color-scheme" content="dark">
@@ -3455,46 +3458,51 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
 /* =========================================================
-   PWA — DUAS INSTALAÇÕES NATIVAS DISTINTAS (sem nenhuma UI própria)
+   PWA — INSTALAÇÃO EXCLUSIVA DA ÁREA RESTRITA (sem nenhuma UI própria)
    =========================================================
    O Chrome é sempre quem decide QUANDO e COMO mostrar o prompt de
    instalação — o site só garante os requisitos técnicos (manifest válido
-   + service worker ativo) pra cada um dos dois apps abaixo.
+   + service worker ativo), e só faz isso dentro da Área Restrita.
 
-   1) INSTALAÇÃO GERAL DO SITE
-      - Manifest: /manifest.json (o que já fica linkado por padrão no
-        <head>, id "/"). Cobre o site inteiro: Home + Agendamento +
-        Área Restrita, tudo dentro do mesmo escopo "/".
-      - Fica disponível assim que a página carrega, em qualquer tela.
+   SITE PÚBLICO (Home + Agendamento): NÃO existe <link rel="manifest">
+   nenhum enquanto o usuário está aqui, de propósito — sem manifest
+   linkado no <head>, o Chrome não tem como considerar a página
+   instalável, então nenhum prompt/convite/ícone de instalação aparece
+   em nenhum momento da navegação pública. Não há listener de
+   beforeinstallprompt em lugar nenhum do site.
 
-   2) INSTALAÇÃO EXCLUSIVA DA ÁREA RESTRITA
+   ÁREA RESTRITA (login + painel dos barbeiros):
       - Manifest: /manifest-barbeiros.json (id "/?area-restrita=app"),
-        nome "Barbearia Prieto", start_url "/?area-restrita=app".
-      - Só fica disponível quando o usuário entra na Área Restrita:
-        trocamos o <link rel="manifest"> pra esse manifest só enquanto
-        showAdmin() está ativo, e devolvemos o /manifest.json ao sair
-        (adminVoltarSite()) — assim o Chrome nunca oferece esse app fora
-        desse contexto.
+        nome "Prieto Flow", start_url "/?area-restrita=app".
+      - O <link rel="manifest"> é CRIADO dinamicamente só quando o
+        usuário entra na Área Restrita (prepararPWABarbeiros(), chamada
+        de dentro de showAdmin()) e REMOVIDO do <head> ao sair
+        (restaurarManifestSite(), chamada de adminVoltarSite()) — assim
+        o Chrome só considera o app instalável enquanto o usuário está
+        de fato na Área Restrita, e volta a não considerar nada
+        instalável assim que ele volta pro site público.
       - Ao abrir o app instalado, o index.html detecta o parâmetro
-        ?area-restrita=app (bloco no fim do arquivo) e chama showAdmin()
-        direto, sem passar pela Home.
+        ?area-restrita=app (bloco mais acima neste arquivo) e chama
+        showAdmin() direto, sem passar pela Home — o que também já
+        cria o <link rel="manifest"> correto nesse load.
 
-   O SERVICE WORKER é único (sw.js) e fica registrado desde o primeiro
-   carregamento da página, pra qualquer um dos dois manifests já
-   encontrar um SW ativo — sem ele, o Chrome não considera nenhum dos
-   dois instalável. É puro passthrough de rede (sem cache), então não
-   interfere em login, sessão, agendamentos, financeiro ou relatórios.
+   O SERVICE WORKER é único (sw.js) e continua registrado desde o
+   primeiro carregamento da página (site público incluso) — ele sozinho,
+   sem um <link rel="manifest"> presente, NÃO deixa nada instalável; ele
+   só passa a valer quando o manifest da Área Restrita é linkado acima.
+   É puro passthrough de rede (sem cache), então não interfere em login,
+   sessão, agendamentos, financeiro ou relatórios.
 
-   Não há botão, modal, card ou banner criado pelo site — cada um dos
-   dois prompts ("Instalar Prieto Barbearia" / "Instalar Barbearia
-   Prieto") é 100% do Chrome. */
+   Não há botão, modal, card ou banner criado pelo site — o prompt
+   ("Instalar Prieto Flow") é 100% do Chrome, e só pode aparecer dentro
+   da Área Restrita. */
 
-const MANIFEST_SITE_HREF = '/manifest.json';
 const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
 
-/* registrado uma única vez, no carregamento da página — cobre tanto o
-   site geral quanto a Área Restrita, já que os dois vivem no mesmo
-   escopo "/". */
+/* registrado uma única vez, no carregamento da página. Por si só NÃO
+   torna nada instalável (falta o <link rel="manifest">) — é só o
+   requisito técnico que a Área Restrita vai aproveitar quando o
+   usuário entrar nela. */
 if('serviceWorker' in navigator){
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
         // instalação do PWA não é crítica pro funcionamento do site —
@@ -3503,18 +3511,27 @@ if('serviceWorker' in navigator){
     });
 }
 
-/* troca o manifest do <head> pro da Área Restrita. Chamada ao entrar em
-   showAdmin(); não mexe no service worker (já está ativo desde o load). */
+/* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
+   pro manifest exclusivo da Área Restrita. Chamada ao entrar em
+   showAdmin(); não mexe no service worker (já está ativo desde o load).
+   Antes dessa chamada não existe nenhum <link rel="manifest"> no <head>
+   — é isso que mantém o site público não instalável. */
 function prepararPWABarbeiros(){
-    const linkManifest = document.querySelector('link[rel="manifest"]');
-    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+    let linkManifest = document.querySelector('link[rel="manifest"]');
+    if(!linkManifest){
+        linkManifest = document.createElement('link');
+        linkManifest.setAttribute('rel', 'manifest');
+        document.head.appendChild(linkManifest);
+    }
+    linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
 }
 
-/* devolve o manifest geral do site ao sair da Área Restrita, restaurando
-   a instalação "site inteiro" como a única disponível fora desse contexto. */
+/* remove o <link rel="manifest"> do <head> ao sair da Área Restrita —
+   sem nenhum manifest linkado, o site público volta a não ser elegível
+   pra instalação (não existe "manifest do site" pra restaurar mais). */
 function restaurarManifestSite(){
     const linkManifest = document.querySelector('link[rel="manifest"]');
-    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_SITE_HREF);
+    if(linkManifest) linkManifest.remove();
 }
 
 function showAdmin(){
