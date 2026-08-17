@@ -1,7 +1,7 @@
 {
   "id": "/?area-restrita=app",
-  "name": "Prieto Flow",
-  "short_name": "Prieto Flow",
+  "name": "Barbearia Prieto",
+  "short_name": "Barbearia Prieto",
   "description": "Área Restrita dos Barbeiros da Barbearia Prieto — agendamentos, agenda, clientes, financeiro e relatórios.",
   "start_url": "/?area-restrita=app",
   "scope": "/",
