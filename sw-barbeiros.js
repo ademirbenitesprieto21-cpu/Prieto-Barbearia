@@ -1,7 +1,8 @@
 /* Service Worker da Área Restrita dos Barbeiros (Barbearia Prieto)
  * --------------------------------------------------------------
  * Único propósito: satisfazer o requisito técnico de instalabilidade do
- * PWA (beforeinstallprompt só dispara com um service worker ativo).
+ * PWA (o Chrome só considera um site instalável com um service worker
+ * ativo e um manifest válido).
  *
  * DE PROPÓSITO não faz cache de nada: login, sessão, agendamentos,
  * financeiro e relatórios sempre precisam vir da rede, nunca de uma cópia

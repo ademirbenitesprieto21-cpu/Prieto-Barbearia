@@ -1,7 +1,7 @@
 {
   "id": "/?area-restrita=app",
   "name": "Barbearia Prieto",
-  "short_name": "Prieto",
+  "short_name": "Barbearia Prieto",
   "description": "Área Restrita dos Barbeiros da Barbearia Prieto — agendamentos, agenda, clientes, financeiro e relatórios.",
   "start_url": "/?area-restrita=app",
   "scope": "/",
@@ -12,28 +12,16 @@
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "/icons/icon-barbeiros-192.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-barbeiros-512.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-barbeiros-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-barbeiros-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
