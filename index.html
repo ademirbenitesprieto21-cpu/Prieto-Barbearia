@@ -3444,57 +3444,63 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
 /* =========================================================
-   PWA — ÁREA RESTRITA DOS BARBEIROS (instalação 100% nativa)
+   PWA — DUAS INSTALAÇÕES NATIVAS DISTINTAS (sem nenhuma UI própria)
    =========================================================
-   Nenhuma interface própria de instalação. O site só garante os
-   requisitos técnicos (manifest correto + service worker ativo) para o
-   Chrome reconhecer o app como instalável — quem decide QUANDO e COMO
-   mostrar o prompt de instalação é o próprio navegador.
+   O Chrome é sempre quem decide QUANDO e COMO mostrar o prompt de
+   instalação — o site só garante os requisitos técnicos (manifest válido
+   + service worker ativo) pra cada um dos dois apps abaixo.
 
-   Regras:
-   - O site público NUNCA vira app: o manifest/service worker daqui só
-     são ativados quando o usuário entra na Área Restrita (showAdmin()).
-     Fora dela, continua valendo o /manifest.json genérico do site.
-   - Trocamos o <link rel="manifest"> pro manifest-barbeiros.json
-     ENQUANTO o usuário está na Área Restrita, e devolvemos o original
-     ao sair (adminVoltarSite()) — assim o Chrome nunca associa o resto
-     do site a esse app instalável.
-   - start_url do manifest-barbeiros.json = "/?area-restrita=app": ao
-     abrir o app instalado, o próprio index.html detecta esse parâmetro
-     (ver bloco no fim do arquivo) e chama showAdmin() direto, sem
-     passar pela Home.
-   - Nenhum cache agressivo: o service worker (sw-barbeiros.js) é só
-     passthrough de rede — não guarda login/sessão/dados em cache.
-   - Não há botão, modal, card ou banner criado pelo site. Se o Chrome
-     considerar o app instalável, ele mesmo mostra a opção nativa
-     ("Instalar Barbearia Prieto") — nós não interferimos nisso. */
+   1) INSTALAÇÃO GERAL DO SITE
+      - Manifest: /manifest.json (o que já fica linkado por padrão no
+        <head>, id "/"). Cobre o site inteiro: Home + Agendamento +
+        Área Restrita, tudo dentro do mesmo escopo "/".
+      - Fica disponível assim que a página carrega, em qualquer tela.
+
+   2) INSTALAÇÃO EXCLUSIVA DA ÁREA RESTRITA
+      - Manifest: /manifest-barbeiros.json (id "/?area-restrita=app"),
+        nome "Barbearia Prieto", start_url "/?area-restrita=app".
+      - Só fica disponível quando o usuário entra na Área Restrita:
+        trocamos o <link rel="manifest"> pra esse manifest só enquanto
+        showAdmin() está ativo, e devolvemos o /manifest.json ao sair
+        (adminVoltarSite()) — assim o Chrome nunca oferece esse app fora
+        desse contexto.
+      - Ao abrir o app instalado, o index.html detecta o parâmetro
+        ?area-restrita=app (bloco no fim do arquivo) e chama showAdmin()
+        direto, sem passar pela Home.
+
+   O SERVICE WORKER é único (sw.js) e fica registrado desde o primeiro
+   carregamento da página, pra qualquer um dos dois manifests já
+   encontrar um SW ativo — sem ele, o Chrome não considera nenhum dos
+   dois instalável. É puro passthrough de rede (sem cache), então não
+   interfere em login, sessão, agendamentos, financeiro ou relatórios.
+
+   Não há botão, modal, card ou banner criado pelo site — cada um dos
+   dois prompts ("Instalar Prieto Barbearia" / "Instalar Barbearia
+   Prieto") é 100% do Chrome. */
 
 const MANIFEST_SITE_HREF = '/manifest.json';
 const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
-let pwaBarbeirosPreparado = false;
 
-/* troca o manifest do <head> e registra o service worker da Área Restrita.
-   Chamado uma única vez por sessão de navegação, ao entrar na Área Restrita.
-   Não captura nem intercepta o beforeinstallprompt — o Chrome cuida disso
-   sozinho a partir daqui. */
-function prepararPWABarbeiros(){
-    if(pwaBarbeirosPreparado) return;
-    pwaBarbeirosPreparado = true;
-
-    const linkManifest = document.querySelector('link[rel="manifest"]');
-    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
-
-    if('serviceWorker' in navigator){
-        navigator.serviceWorker.register('/sw-barbeiros.js', { scope: '/' }).catch(()=>{
-            // instalação do app não é crítica pro funcionamento da Área
-            // Restrita — se o SW falhar (ex.: offline no primeiro load),
-            // o painel continua funcionando normalmente, só sem o PWA.
-        });
-    }
+/* registrado uma única vez, no carregamento da página — cobre tanto o
+   site geral quanto a Área Restrita, já que os dois vivem no mesmo
+   escopo "/". */
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
+        // instalação do PWA não é crítica pro funcionamento do site —
+        // se o SW falhar (ex.: offline no primeiro load), tudo continua
+        // funcionando normalmente, só sem o prompt de instalação.
+    });
 }
 
-/* devolve o manifest original do site ao sair da Área Restrita, pra não
-   deixar o app dos barbeiros "ativo" fora desse contexto. */
+/* troca o manifest do <head> pro da Área Restrita. Chamada ao entrar em
+   showAdmin(); não mexe no service worker (já está ativo desde o load). */
+function prepararPWABarbeiros(){
+    const linkManifest = document.querySelector('link[rel="manifest"]');
+    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+}
+
+/* devolve o manifest geral do site ao sair da Área Restrita, restaurando
+   a instalação "site inteiro" como a única disponível fora desse contexto. */
 function restaurarManifestSite(){
     const linkManifest = document.querySelector('link[rel="manifest"]');
     if(linkManifest) linkManifest.setAttribute('href', MANIFEST_SITE_HREF);

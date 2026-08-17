@@ -1,8 +1,13 @@
-/* Service Worker da Área Restrita dos Barbeiros (Barbearia Prieto)
- * --------------------------------------------------------------
- * Único propósito: satisfazer o requisito técnico de instalabilidade do
- * PWA (o Chrome só considera um site instalável com um service worker
- * ativo e um manifest válido).
+/* Service Worker da Barbearia Prieto — cobre as duas instalações do PWA
+ * ----------------------------------------------------------------------
+ * (1) instalação geral do site (manifest.json) e
+ * (2) instalação exclusiva da Área Restrita (manifest-barbeiros.json).
+ *
+ * Único propósito: satisfazer o requisito técnico de instalabilidade
+ * (o Chrome só considera um site/app instalável com um service worker
+ * ativo). Registrado uma única vez, no carregamento da página — como as
+ * duas instalações vivem no mesmo escopo "/", esse único SW serve pras
+ * duas.
  *
  * DE PROPÓSITO não faz cache de nada: login, sessão, agendamentos,
  * financeiro e relatórios sempre precisam vir da rede, nunca de uma cópia
