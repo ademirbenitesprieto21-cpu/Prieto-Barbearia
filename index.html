@@ -1127,6 +1127,17 @@
     color:#e6a3a3;font-size:12.5px;border-radius:8px;padding:10px 12px;margin-bottom:16px;text-align:left;
   }
   .admin-login-error.show{display:block;}
+  /* botão "Instalar aplicativo" — só aparece quando o navegador confirma que o
+     PWA da Área Restrita pode ser instalado (ver bloco "PWA — ÁREA RESTRITA
+     DOS BARBEIROS" no JS). Fica escondido por padrão. */
+  .admin-install-btn{
+    display:none;width:100%;padding:12px;border-radius:10px;margin-top:14px;
+    background:transparent;border:1px solid var(--gold);color:var(--gold);
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;
+    align-items:center;justify-content:center;gap:8px;transition:.2s;
+  }
+  .admin-install-btn.show{display:flex;}
+  .admin-install-btn:hover{background:rgba(201,164,99,.1);}
   .admin-voltar-home{
     display:inline-flex;align-items:center;gap:6px;
     color:var(--text-muted);font-size:12.5px;margin-top:22px;cursor:pointer;
@@ -2553,6 +2564,12 @@
           <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
         </form>
 
+        <!-- só fica visível quando o navegador confirma que o PWA da Área
+             Restrita pode ser instalado (evento beforeinstallprompt) -->
+        <button type="button" class="admin-install-btn" id="btn-instalar-app-barbeiros" onclick="instalarAppBarbeiros()">
+          <i class="fa-solid fa-arrow-down"></i> Instalar aplicativo
+        </button>
+
         <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
       </div>
     </div>
@@ -3412,6 +3429,19 @@ renderBarberList();
 // carregar (aqui já garantimos que o cliente "sb", criado no script mais abaixo,
 // já existe — por isso não chamamos isso direto, e sim após o DOMContentLoaded)
 window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
+
+/* app instalado (PWA da Área Restrita) abre com start_url = "/?area-restrita=app".
+   Se detectarmos esse parâmetro, vamos direto pro login/painel dos barbeiros
+   em vez de mostrar a Home pública — é o único gatilho de abertura direta;
+   acessando o site normalmente (sem o parâmetro) tudo continua como sempre. */
+window.addEventListener('DOMContentLoaded', function(){
+    try{
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('area-restrita') === 'app'){
+            showAdmin();
+        }
+    }catch(e){}
+});
 </script>
 
 
@@ -3430,11 +3460,104 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    dessa funcionalidade. */
 const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
+/* =========================================================
+   PWA — ÁREA RESTRITA DOS BARBEIROS (instalação exclusiva)
+   =========================================================
+   Regras:
+   - O site público NUNCA vira app. O manifest/service worker daqui só são
+     ativados quando o usuário entra na Área Restrita (showAdmin()).
+   - O manifest genérico do <head> (/manifest.json, já existente) não é
+     tocado nesse fluxo público; só trocamos o href do <link rel="manifest">
+     ENQUANTO o usuário está dentro da Área Restrita, e devolvemos o original
+     ao sair (adminVoltarSite()).
+   - start_url do manifest-barbeiros.json = "/?area-restrita=app": ao abrir
+     o app instalado, o próprio index.html detecta esse parâmetro (ver bloco
+     no fim do arquivo) e chama showAdmin() direto, sem passar pela Home.
+   - Nenhum cache agressivo: o service worker (sw-barbeiros.js) é só
+     passthrough de rede, não guarda login/sessão/dados em cache. */
+
+const MANIFEST_SITE_HREF = '/manifest.json';
+const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
+let deferredInstallPrompt = null;
+let pwaBarbeirosPreparado = false;
+
+/* dispara assim que o navegador achar o app instalável — precisa ser
+   capturado desde o carregamento da página (não dá pra "pedir" esse evento
+   sob demanda), mas o BOTÃO só é exibido quando o usuário está na tela de
+   login da Área Restrita (ver atualizarBotaoInstalarAppBarbeiros). */
+window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    atualizarBotaoInstalarAppBarbeiros();
+});
+
+window.addEventListener('appinstalled', ()=>{
+    deferredInstallPrompt = null;
+    try{ localStorage.setItem('prietoAppBarbeirosInstalado','1'); }catch(e){}
+    atualizarBotaoInstalarAppBarbeiros();
+});
+
+/* true se: já está rodando como app instalado (standalone) OU já detectamos
+   uma instalação concluída antes (appinstalled) nesse navegador/dispositivo. */
+function appBarbeirosJaInstalado(){
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true; // iOS Safari
+    let flag = false;
+    try{ flag = localStorage.getItem('prietoAppBarbeirosInstalado') === '1'; }catch(e){}
+    return standalone || flag;
+}
+
+/* troca o manifest do <head> e registra o service worker da Área Restrita.
+   Chamado uma única vez por sessão de navegação, ao entrar na Área Restrita. */
+function prepararPWABarbeiros(){
+    if(pwaBarbeirosPreparado) return;
+    pwaBarbeirosPreparado = true;
+
+    const linkManifest = document.querySelector('link[rel="manifest"]');
+    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+
+    if('serviceWorker' in navigator){
+        navigator.serviceWorker.register('/sw-barbeiros.js', { scope: '/' }).catch(()=>{
+            // instalação do app não é crítica pro funcionamento da Área
+            // Restrita — se o SW falhar (ex.: offline no primeiro load),
+            // o painel continua funcionando normalmente, só sem o prompt.
+        });
+    }
+
+    atualizarBotaoInstalarAppBarbeiros();
+}
+
+/* devolve o manifest original do site ao sair da Área Restrita, pra não
+   deixar o app dos barbeiros "ativo" fora desse contexto. */
+function restaurarManifestSite(){
+    const linkManifest = document.querySelector('link[rel="manifest"]');
+    if(linkManifest) linkManifest.setAttribute('href', MANIFEST_SITE_HREF);
+}
+
+function atualizarBotaoInstalarAppBarbeiros(){
+    const btn = document.getElementById('btn-instalar-app-barbeiros');
+    if(!btn) return;
+    const podeMostrar = !!deferredInstallPrompt && !appBarbeirosJaInstalado();
+    btn.classList.toggle('show', podeMostrar);
+}
+
+async function instalarAppBarbeiros(){
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const escolha = await deferredInstallPrompt.userChoice;
+    if(escolha && escolha.outcome === 'accepted'){
+        try{ localStorage.setItem('prietoAppBarbeirosInstalado','1'); }catch(e){}
+    }
+    deferredInstallPrompt = null;
+    atualizarBotaoInstalarAppBarbeiros();
+}
+
 function showAdmin(){
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('booking-view').classList.remove('active');
     document.getElementById('admin-view').classList.add('active');
     window.scrollTo(0,0);
+    prepararPWABarbeiros();
     admin.checarSessao();
 }
 
@@ -3444,6 +3567,7 @@ function adminVoltarSite(){
     document.getElementById('home-view').style.display = 'block';
     window.scrollTo(0,0);
     fecharMenuAdminMobile();
+    restaurarManifestSite();
 }
 
 /* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
