@@ -216,6 +216,21 @@
   .services-grid{
     display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
   }
+  /* wrappers do carrossel mobile: no desktop/tablet ficam "transparentes"
+     no layout (display:contents), então .service-card continua se
+     comportando como filho direto do grid — 100% preservado acima de
+     600px. Só dentro do @media(max-width:600px) eles viram a "trilha"
+     do carrossel. Idem para .ambiente-track mais abaixo. */
+  .services-track,
+  .ambiente-track{
+    display:contents;
+  }
+  /* setas e bolinhas do carrossel mobile: ocultas por padrão em qualquer
+     largura; só aparecem dentro do @media(max-width:600px) abaixo. */
+  .carousel-arrow,
+  .carousel-dots{
+    display:none;
+  }
   .service-card{
     position:relative;border-radius:10px;overflow:hidden;
     aspect-ratio:3/4;border:1px solid var(--border);
@@ -330,26 +345,86 @@
     .services-grid{grid-template-columns:1fr;}
     .hero-logo{max-width:260px;}
 
-    /* ---------- Cards de Serviços no celular: retângulo horizontal,
-       como os cards de Ambiente, em vez do card vertical alto do desktop.
-       Estrutura muda de "imagem + texto em overlay" para
-       "imagem no topo + bloco de texto abaixo", sem esconder nada. ---------- */
+    /* ---------- SERVIÇOS e AMBIENTE no celular: galeria/carrossel
+       horizontal — uma imagem principal por vez, com setas sobrepostas
+       à foto (não ocupam espaço no layout) e bolinhas abaixo da imagem.
+       Sem cards, sem empilhar verticalmente. Não altera o desktop/tablet
+       (tudo isolado aqui dentro do breakpoint de 600px). ---------- */
+    .services-grid,
+    .ambiente-gallery{
+      display:block;
+      position:relative;
+      overflow:hidden;
+      border-radius:14px;
+      margin-bottom:0;
+    }
+    .services-track,
+    .ambiente-track{
+      display:flex;
+      transition:transform .35s ease;
+    }
+    .services-track .service-card,
+    .ambiente-track img{
+      flex:0 0 100%;
+      width:100%;
+    }
+
+    /* imagem principal: ocupa toda a largura, altura controlada para a
+       página não ficar exageradamente comprida, sem deformar a foto */
     .service-card{
       aspect-ratio:auto;
-      display:flex;flex-direction:column;
+      height:320px;
     }
-    .service-card img{
-      height:170px;width:100%;flex-shrink:0;
+    .ambiente-track img{
+      height:320px;
+      margin:0;
     }
-    .service-overlay{
-      position:static;
-      background:var(--card);
-      background-image:none;
-      padding:16px 18px 18px;
-      flex:1;
+
+    /* setas sobre a imagem (camada absoluta, fora do fluxo do layout) */
+    .carousel-arrow{
+      display:flex;
+      align-items:center;justify-content:center;
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      z-index:20;
+      width:38px;height:38px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,0.35);
+      background:rgba(10,10,11,0.55);
+      color:#fff;
+      font-size:15px;
+      cursor:pointer;
+      -webkit-backdrop-filter:blur(3px);
+      backdrop-filter:blur(3px);
+      transition:opacity .2s ease, background .2s ease;
     }
-    .service-overlay h3{font-size:17px;margin-bottom:4px;}
-    .service-overlay p{font-size:13px;color:var(--text-muted);}
+    .carousel-arrow:active{background:rgba(10,10,11,0.8);}
+    .carousel-prev{left:12px;}
+    .carousel-next{right:12px;}
+    .carousel-arrow[disabled]{
+      opacity:.35;
+      pointer-events:none;
+    }
+
+    /* bolinhas abaixo da imagem (nunca dentro dela, nunca junto das setas) */
+    .carousel-dots{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:8px;
+      margin-top:14px;
+    }
+    .carousel-dots button{
+      width:7px;height:7px;border-radius:50%;
+      background:rgba(255,255,255,0.25);
+      border:none;padding:0;cursor:pointer;
+      transition:background .2s ease, transform .2s ease;
+    }
+    .carousel-dots button.active{
+      background:var(--gold);
+      transform:scale(1.35);
+    }
   }
 
   /* =========================================================
@@ -2164,35 +2239,40 @@
     <div class="container">
       <h2 class="section-title reveal">SERVIÇOS</h2>
       <div class="services-grid" style="margin-top:50px;">
-        <div class="service-card reveal">
-          <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
-          <div class="service-overlay">
-            <h3>CORTE MASCULINO</h3>
-            <p>Seu estilo, do seu jeito.</p>
+        <div class="services-track">
+          <div class="service-card reveal">
+            <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
+            <div class="service-overlay">
+              <h3>CORTE MASCULINO</h3>
+              <p>Seu estilo, do seu jeito.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
+            <div class="service-overlay">
+              <h3>CORTE INFANTIL</h3>
+              <p>Estilo para os pequenos.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
+            <div class="service-overlay">
+              <h3>BARBA</h3>
+              <p>Cuidado e estilo em cada detalhe.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
+            <div class="service-overlay">
+              <h3>SOBRANCELHA</h3>
+              <p>Mais definição para o seu visual.</p>
+            </div>
           </div>
         </div>
-        <div class="service-card reveal">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
-          <div class="service-overlay">
-            <h3>CORTE INFANTIL</h3>
-            <p>Estilo para os pequenos.</p>
-          </div>
-        </div>
-        <div class="service-card reveal">
-          <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
-          <div class="service-overlay">
-            <h3>BARBA</h3>
-            <p>Cuidado e estilo em cada detalhe.</p>
-          </div>
-        </div>
-        <div class="service-card reveal">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
-          <div class="service-overlay">
-            <h3>SOBRANCELHA</h3>
-            <p>Mais definição para o seu visual.</p>
-          </div>
-        </div>
+        <button type="button" class="carousel-arrow carousel-prev" aria-label="Serviço anterior" onclick="mobileCarouselNav('servicos', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <button type="button" class="carousel-arrow carousel-next" aria-label="Próximo serviço" onclick="mobileCarouselNav('servicos', 1)"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
+      <div class="carousel-dots" id="servicos-dots"></div>
 
       <!-- SOBRE / QUEM SOMOS -->
       <div class="about-card reveal" id="sobre">
@@ -2210,10 +2290,15 @@
       <p class="section-kicker reveal">Conheça nosso espaço</p>
 
       <div class="ambiente-gallery">
-        <img class="reveal" src="fachada1.png" alt="Ambiente 1">
-        <img class="reveal" src="fachada2.png" alt="Ambiente 2">
-        <img class="reveal" src="fachada3.png" alt="Ambiente 3">
+        <div class="ambiente-track">
+          <img class="reveal" src="fachada1.png" alt="Ambiente 1">
+          <img class="reveal" src="fachada2.png" alt="Ambiente 2">
+          <img class="reveal" src="fachada3.png" alt="Ambiente 3">
+        </div>
+        <button type="button" class="carousel-arrow carousel-prev" aria-label="Ambiente anterior" onclick="mobileCarouselNav('ambiente', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <button type="button" class="carousel-arrow carousel-next" aria-label="Próximo ambiente" onclick="mobileCarouselNav('ambiente', 1)"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
+      <div class="carousel-dots" id="ambiente-dots"></div>
 
       <!-- ENDEREÇO -->
       <div class="endereco reveal" id="endereco">
@@ -6598,6 +6683,104 @@ async function handleAdminLogin(event){
     ctaObserver.observe(el);
     pulseObserver.observe(el);
   });
+})();
+</script>
+
+<!-- ================= CARROSSEL MOBILE — SERVIÇOS E AMBIENTE =================
+     Script isolado (não mexe em nenhuma outra função do site). Controla a
+     galeria/carrossel horizontal usado no celular pelas seções SERVIÇOS e
+     AMBIENTE: troca de slide (setas, bolinhas ou swipe), sem loop infinito
+     e sem duplicar imagens. No desktop/tablet os wrappers .services-track e
+     .ambiente-track ficam com display:contents (ver CSS), então mover o
+     "track" via transform aqui não tem nenhum efeito visual acima de
+     600px — a função existe, mas é inofensiva fora do celular. ================= -->
+<script>
+(function(){
+  var carrosseis = {};
+
+  function montar(nome, viewportSel, trackSel, dotsSel){
+    var viewport = document.querySelector(viewportSel);
+    var track = document.querySelector(trackSel);
+    var dotsEl = document.querySelector(dotsSel);
+    if(!viewport || !track || !dotsEl) return;
+
+    var total = track.children.length;
+    carrosseis[nome] = { viewport: viewport, track: track, dotsEl: dotsEl, index: 0, total: total };
+
+    // monta uma bolinha por imagem/slide, sem duplicar nada
+    dotsEl.innerHTML = '';
+    for(var i = 0; i < total; i++){
+      var dot = document.createElement('button');
+      dot.type = 'button';
+      dot.setAttribute('aria-label', 'Ir para o item ' + (i + 1));
+      dot.addEventListener('click', (function(idx){
+        return function(){ irPara(nome, idx); };
+      })(i));
+      dotsEl.appendChild(dot);
+    }
+
+    // swipe (arrastar o dedo) — só troca de slide em gesto horizontal
+    var startX = 0, startY = 0, arrastando = false;
+    viewport.addEventListener('touchstart', function(e){
+      if(!e.touches || !e.touches.length) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      arrastando = true;
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', function(e){
+      if(!arrastando) return;
+      arrastando = false;
+      var toque = e.changedTouches && e.changedTouches[0];
+      if(!toque) return;
+      var dx = toque.clientX - startX;
+      var dy = toque.clientY - startY;
+      if(Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // gesto vertical ou curto demais: ignora
+      navegar(nome, dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    renderizar(nome);
+  }
+
+  function renderizar(nome){
+    var c = carrosseis[nome];
+    if(!c) return;
+
+    c.track.style.transform = 'translateX(-' + (c.index * 100) + '%)';
+
+    var dots = c.dotsEl.children;
+    for(var i = 0; i < dots.length; i++){
+      dots[i].classList.toggle('active', i === c.index);
+    }
+
+    var setaPrev = c.viewport.querySelector('.carousel-prev');
+    var setaNext = c.viewport.querySelector('.carousel-next');
+    if(setaPrev) setaPrev.disabled = (c.index <= 0);
+    if(setaNext) setaNext.disabled = (c.index >= c.total - 1);
+  }
+
+  // navega +1/-1 slide; nunca ultrapassa os limites (sem loop infinito)
+  function navegar(nome, direcao){
+    var c = carrosseis[nome];
+    if(!c) return;
+    var novoIndex = c.index + direcao;
+    if(novoIndex < 0 || novoIndex > c.total - 1) return;
+    c.index = novoIndex;
+    renderizar(nome);
+  }
+
+  function irPara(nome, indice){
+    var c = carrosseis[nome];
+    if(!c) return;
+    if(indice < 0 || indice > c.total - 1) return;
+    c.index = indice;
+    renderizar(nome);
+  }
+
+  window.mobileCarouselNav = navegar;
+
+  montar('servicos', '#servicos .services-grid', '#servicos .services-track', '#servicos-dots');
+  montar('ambiente', '#ambiente .ambiente-gallery', '#ambiente .ambiente-track', '#ambiente-dots');
 })();
 </script>
 </body>
