@@ -2553,7 +2553,7 @@
           <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
         </form>
 
-        <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+        <a class="admin-voltar-home" id="link-voltar-site-login" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
       </div>
     </div>
   </div>
@@ -2584,7 +2584,7 @@
         <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
       <div class="admin-sidebar-footer">
-        <button class="admin-sair-btn" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
+        <button class="admin-sair-btn" id="btn-ver-site-sidebar" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
         <button class="admin-sair-btn" onclick="admin.sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
       </div>
     </aside>
@@ -3416,12 +3416,22 @@ window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
 /* app instalado (PWA da Área Restrita) abre com start_url = "/?area-restrita=app".
    Se detectarmos esse parâmetro, vamos direto pro login/painel dos barbeiros
    em vez de mostrar a Home pública — é o único gatilho de abertura direta;
-   acessando o site normalmente (sem o parâmetro) tudo continua como sempre. */
+   acessando o site normalmente (sem o parâmetro) tudo continua como sempre.
+
+   Como esse app instalado NÃO contém o site público (só a Área Restrita),
+   também escondemos aqui os links "Voltar para o site" / "Ver site": nesse
+   contexto não existe "o site" pra voltar — a Home nem faz parte desse app. */
+window.APP_SOMENTE_AREA_RESTRITA = false;
 window.addEventListener('DOMContentLoaded', function(){
     try{
         const params = new URLSearchParams(window.location.search);
         if(params.get('area-restrita') === 'app'){
+            window.APP_SOMENTE_AREA_RESTRITA = true;
             showAdmin();
+            const linkLogin = document.getElementById('link-voltar-site-login');
+            if(linkLogin) linkLogin.style.display = 'none';
+            const btnSidebar = document.getElementById('btn-ver-site-sidebar');
+            if(btnSidebar) btnSidebar.style.display = 'none';
         }
     }catch(e){}
 });
@@ -3515,8 +3525,11 @@ function showAdmin(){
     admin.checarSessao();
 }
 
-/* volta pro site a partir de qualquer tela da área restrita */
+/* volta pro site a partir de qualquer tela da área restrita — não faz nada
+   se estivermos no app instalado exclusivo da Área Restrita, já que esse
+   app não contém a Home pública. */
 function adminVoltarSite(){
+    if(window.APP_SOMENTE_AREA_RESTRITA) return;
     document.getElementById('admin-view').classList.remove('active');
     document.getElementById('home-view').style.display = 'block';
     window.scrollTo(0,0);
