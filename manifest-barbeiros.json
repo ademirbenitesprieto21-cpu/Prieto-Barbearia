@@ -1,7 +1,7 @@
 {
   "id": "/?area-restrita=app",
-  "name": "Barbearia Prieto",
-  "short_name": "Barbearia Prieto",
+  "name": "Prieto Club",
+  "short_name": "Prieto Club",
   "description": "Área Restrita dos Barbeiros da Barbearia Prieto — agendamentos, agenda, clientes, financeiro e relatórios.",
   "start_url": "/?area-restrita=app",
   "scope": "/",
