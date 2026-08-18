@@ -332,6 +332,8 @@
     text-align:center;font-size:13px;color:var(--text-muted);
   }
   .footer-bottom a{color:var(--text-muted);text-decoration:underline;}
+  .footer-bottom-divider{margin:0 8px;color:var(--border);}
+  .footer-link-restrito:hover{color:var(--gold);}
 
   /* ICONS via inline svg helper */
   .icon{width:16px;height:16px;flex-shrink:0;}
@@ -2198,7 +2200,6 @@
         <a href="#sobre">Quem Somos</a>
         <a href="#ambiente">Ambiente</a>
         <a href="#contato">Contato</a>
-        <a href="#" onclick="showAdmin(); return false;">Área Restrita</a>
       </nav>
       
       <div class="logo-mini logo-principal">
@@ -2220,7 +2221,6 @@
       <a href="#sobre" onclick="closeMobileMenu()">Quem Somos</a>
       <a href="#ambiente" onclick="closeMobileMenu()">Ambiente</a>
       <a href="#contato" onclick="closeMobileMenu()">Contato</a>
-      <a href="#" class="mobile-link-restrita" onclick="closeMobileMenu(); showAdmin(); return false;"><i class="fa-solid fa-lock"></i> Área Restrita</a>
     </nav>
   </header>
 
@@ -2360,6 +2360,8 @@
 
       <div class="footer-bottom">
         &copy; 2026 Prieto Barbearia. Todos os direitos reservados.
+        <span class="footer-bottom-divider">•</span>
+        <a href="#" class="footer-link-restrito" onclick="showAdmin(); return false;">Acesso Restrito</a>
       </div>
     </div>
   </footer>

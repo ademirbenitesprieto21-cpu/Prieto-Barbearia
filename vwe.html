@@ -11,10 +11,14 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
-<!-- PWA: manifest e ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS -->
-<link rel="manifest" href="/manifest.json">
+<!-- PWA: ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS.
+     Propositalmente NÃO há <link rel="manifest"> aqui: o site público não
+     deve ser elegível para instalação. O <link rel="manifest"> só é criado
+     dinamicamente (via JS) quando o usuário entra na Área Restrita — ver
+     prepararPWABarbeiros() mais abaixo no arquivo. -->
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#c9a463">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Prieto">
@@ -328,6 +332,8 @@
     text-align:center;font-size:13px;color:var(--text-muted);
   }
   .footer-bottom a{color:var(--text-muted);text-decoration:underline;}
+  .footer-bottom-divider{margin:0 8px;color:var(--border);}
+  .footer-link-restrito:hover{color:var(--gold);}
 
   /* ICONS via inline svg helper */
   .icon{width:16px;height:16px;flex-shrink:0;}
@@ -2194,7 +2200,6 @@
         <a href="#sobre">Quem Somos</a>
         <a href="#ambiente">Ambiente</a>
         <a href="#contato">Contato</a>
-        <a href="#" onclick="showAdmin(); return false;">Área Restrita</a>
       </nav>
       
       <div class="logo-mini logo-principal">
@@ -2216,7 +2221,6 @@
       <a href="#sobre" onclick="closeMobileMenu()">Quem Somos</a>
       <a href="#ambiente" onclick="closeMobileMenu()">Ambiente</a>
       <a href="#contato" onclick="closeMobileMenu()">Contato</a>
-      <a href="#" class="mobile-link-restrita" onclick="closeMobileMenu(); showAdmin(); return false;"><i class="fa-solid fa-lock"></i> Área Restrita</a>
     </nav>
   </header>
 
@@ -2356,6 +2360,8 @@
 
       <div class="footer-bottom">
         &copy; 2026 Prieto Barbearia. Todos os direitos reservados.
+        <span class="footer-bottom-divider">•</span>
+        <a href="#" class="footer-link-restrito" onclick="showAdmin(); return false;">Acesso Restrito</a>
       </div>
     </div>
   </footer>
@@ -2553,7 +2559,7 @@
           <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
         </form>
 
-        <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+        <a class="admin-voltar-home" id="link-voltar-site-login" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
       </div>
     </div>
   </div>
@@ -2584,7 +2590,7 @@
         <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
       <div class="admin-sidebar-footer">
-        <button class="admin-sair-btn" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
+        <button class="admin-sair-btn" id="btn-ver-site-sidebar" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
         <button class="admin-sair-btn" onclick="admin.sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
       </div>
     </aside>
@@ -3412,6 +3418,29 @@ renderBarberList();
 // carregar (aqui já garantimos que o cliente "sb", criado no script mais abaixo,
 // já existe — por isso não chamamos isso direto, e sim após o DOMContentLoaded)
 window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
+
+/* app instalado (PWA da Área Restrita) abre com start_url = "/?area-restrita=app".
+   Se detectarmos esse parâmetro, vamos direto pro login/painel dos barbeiros
+   em vez de mostrar a Home pública — é o único gatilho de abertura direta;
+   acessando o site normalmente (sem o parâmetro) tudo continua como sempre.
+
+   Como esse app instalado NÃO contém o site público (só a Área Restrita),
+   também escondemos aqui os links "Voltar para o site" / "Ver site": nesse
+   contexto não existe "o site" pra voltar — a Home nem faz parte desse app. */
+window.APP_SOMENTE_AREA_RESTRITA = false;
+window.addEventListener('DOMContentLoaded', function(){
+    try{
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('area-restrita') === 'app'){
+            window.APP_SOMENTE_AREA_RESTRITA = true;
+            showAdmin();
+            const linkLogin = document.getElementById('link-voltar-site-login');
+            if(linkLogin) linkLogin.style.display = 'none';
+            const btnSidebar = document.getElementById('btn-ver-site-sidebar');
+            if(btnSidebar) btnSidebar.style.display = 'none';
+        }
+    }catch(e){}
+});
 </script>
 
 
@@ -3430,20 +3459,102 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    dessa funcionalidade. */
 const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
+/* =========================================================
+   PWA — INSTALAÇÃO EXCLUSIVA DA ÁREA RESTRITA (sem nenhuma UI própria)
+   =========================================================
+   O Chrome é sempre quem decide QUANDO e COMO mostrar o prompt de
+   instalação — o site só garante os requisitos técnicos (manifest válido
+   + service worker ativo), e só faz isso dentro da Área Restrita.
+
+   SITE PÚBLICO (Home + Agendamento): NÃO existe <link rel="manifest">
+   nenhum enquanto o usuário está aqui, de propósito — sem manifest
+   linkado no <head>, o Chrome não tem como considerar a página
+   instalável, então nenhum prompt/convite/ícone de instalação aparece
+   em nenhum momento da navegação pública. Não há listener de
+   beforeinstallprompt em lugar nenhum do site.
+
+   ÁREA RESTRITA (login + painel dos barbeiros):
+      - Manifest: /manifest-barbeiros.json (id "/?area-restrita=app"),
+        nome "Prieto Flow", start_url "/?area-restrita=app".
+      - O <link rel="manifest"> é CRIADO dinamicamente só quando o
+        usuário entra na Área Restrita (prepararPWABarbeiros(), chamada
+        de dentro de showAdmin()) e REMOVIDO do <head> ao sair
+        (restaurarManifestSite(), chamada de adminVoltarSite()) — assim
+        o Chrome só considera o app instalável enquanto o usuário está
+        de fato na Área Restrita, e volta a não considerar nada
+        instalável assim que ele volta pro site público.
+      - Ao abrir o app instalado, o index.html detecta o parâmetro
+        ?area-restrita=app (bloco mais acima neste arquivo) e chama
+        showAdmin() direto, sem passar pela Home — o que também já
+        cria o <link rel="manifest"> correto nesse load.
+
+   O SERVICE WORKER é único (sw.js) e continua registrado desde o
+   primeiro carregamento da página (site público incluso) — ele sozinho,
+   sem um <link rel="manifest"> presente, NÃO deixa nada instalável; ele
+   só passa a valer quando o manifest da Área Restrita é linkado acima.
+   É puro passthrough de rede (sem cache), então não interfere em login,
+   sessão, agendamentos, financeiro ou relatórios.
+
+   Não há botão, modal, card ou banner criado pelo site — o prompt
+   ("Instalar Prieto Flow") é 100% do Chrome, e só pode aparecer dentro
+   da Área Restrita. */
+
+const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
+
+/* registrado uma única vez, no carregamento da página. Por si só NÃO
+   torna nada instalável (falta o <link rel="manifest">) — é só o
+   requisito técnico que a Área Restrita vai aproveitar quando o
+   usuário entrar nela. */
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
+        // instalação do PWA não é crítica pro funcionamento do site —
+        // se o SW falhar (ex.: offline no primeiro load), tudo continua
+        // funcionando normalmente, só sem o prompt de instalação.
+    });
+}
+
+/* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
+   pro manifest exclusivo da Área Restrita. Chamada ao entrar em
+   showAdmin(); não mexe no service worker (já está ativo desde o load).
+   Antes dessa chamada não existe nenhum <link rel="manifest"> no <head>
+   — é isso que mantém o site público não instalável. */
+function prepararPWABarbeiros(){
+    let linkManifest = document.querySelector('link[rel="manifest"]');
+    if(!linkManifest){
+        linkManifest = document.createElement('link');
+        linkManifest.setAttribute('rel', 'manifest');
+        document.head.appendChild(linkManifest);
+    }
+    linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+}
+
+/* remove o <link rel="manifest"> do <head> ao sair da Área Restrita —
+   sem nenhum manifest linkado, o site público volta a não ser elegível
+   pra instalação (não existe "manifest do site" pra restaurar mais). */
+function restaurarManifestSite(){
+    const linkManifest = document.querySelector('link[rel="manifest"]');
+    if(linkManifest) linkManifest.remove();
+}
+
 function showAdmin(){
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('booking-view').classList.remove('active');
     document.getElementById('admin-view').classList.add('active');
     window.scrollTo(0,0);
+    prepararPWABarbeiros();
     admin.checarSessao();
 }
 
-/* volta pro site a partir de qualquer tela da área restrita */
+/* volta pro site a partir de qualquer tela da área restrita — não faz nada
+   se estivermos no app instalado exclusivo da Área Restrita, já que esse
+   app não contém a Home pública. */
 function adminVoltarSite(){
+    if(window.APP_SOMENTE_AREA_RESTRITA) return;
     document.getElementById('admin-view').classList.remove('active');
     document.getElementById('home-view').style.display = 'block';
     window.scrollTo(0,0);
     fecharMenuAdminMobile();
+    restaurarManifestSite();
 }
 
 /* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
