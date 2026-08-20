@@ -9,6 +9,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<!-- PWA: ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS.
+     Propositalmente NÃO há <link rel="manifest"> aqui: o site público não
+     deve ser elegível para instalação. O <link rel="manifest"> só é criado
+     dinamicamente (via JS) quando o usuário entra na Área Restrita — ver
+     prepararPWABarbeiros() mais abaixo no arquivo. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Prieto">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
   /* =========================================================
      SITE PRINCIPAL (Home) — estilos originais do index.html
@@ -206,6 +220,21 @@
   .services-grid{
     display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
   }
+  /* wrappers do carrossel mobile: no desktop/tablet ficam "transparentes"
+     no layout (display:contents), então .service-card continua se
+     comportando como filho direto do grid — 100% preservado acima de
+     600px. Só dentro do @media(max-width:600px) eles viram a "trilha"
+     do carrossel. Idem para .ambiente-track mais abaixo. */
+  .services-track,
+  .ambiente-track{
+    display:contents;
+  }
+  /* setas e bolinhas do carrossel mobile: ocultas por padrão em qualquer
+     largura; só aparecem dentro do @media(max-width:600px) abaixo. */
+  .carousel-arrow,
+  .carousel-dots{
+    display:none;
+  }
   .service-card{
     position:relative;border-radius:10px;overflow:hidden;
     aspect-ratio:3/4;border:1px solid var(--border);
@@ -303,6 +332,8 @@
     text-align:center;font-size:13px;color:var(--text-muted);
   }
   .footer-bottom a{color:var(--text-muted);text-decoration:underline;}
+  .footer-bottom-divider{margin:0 8px;color:var(--border);}
+  .footer-link-restrito:hover{color:var(--gold);}
 
   /* ICONS via inline svg helper */
   .icon{width:16px;height:16px;flex-shrink:0;}
@@ -320,26 +351,86 @@
     .services-grid{grid-template-columns:1fr;}
     .hero-logo{max-width:260px;}
 
-    /* ---------- Cards de Serviços no celular: retângulo horizontal,
-       como os cards de Ambiente, em vez do card vertical alto do desktop.
-       Estrutura muda de "imagem + texto em overlay" para
-       "imagem no topo + bloco de texto abaixo", sem esconder nada. ---------- */
+    /* ---------- SERVIÇOS e AMBIENTE no celular: galeria/carrossel
+       horizontal — uma imagem principal por vez, com setas sobrepostas
+       à foto (não ocupam espaço no layout) e bolinhas abaixo da imagem.
+       Sem cards, sem empilhar verticalmente. Não altera o desktop/tablet
+       (tudo isolado aqui dentro do breakpoint de 600px). ---------- */
+    .services-grid,
+    .ambiente-gallery{
+      display:block;
+      position:relative;
+      overflow:hidden;
+      border-radius:14px;
+      margin-bottom:0;
+    }
+    .services-track,
+    .ambiente-track{
+      display:flex;
+      transition:transform .35s ease;
+    }
+    .services-track .service-card,
+    .ambiente-track img{
+      flex:0 0 100%;
+      width:100%;
+    }
+
+    /* imagem principal: ocupa toda a largura, altura controlada para a
+       página não ficar exageradamente comprida, sem deformar a foto */
     .service-card{
       aspect-ratio:auto;
-      display:flex;flex-direction:column;
+      height:320px;
     }
-    .service-card img{
-      height:170px;width:100%;flex-shrink:0;
+    .ambiente-track img{
+      height:320px;
+      margin:0;
     }
-    .service-overlay{
-      position:static;
-      background:var(--card);
-      background-image:none;
-      padding:16px 18px 18px;
-      flex:1;
+
+    /* setas sobre a imagem (camada absoluta, fora do fluxo do layout) */
+    .carousel-arrow{
+      display:flex;
+      align-items:center;justify-content:center;
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      z-index:20;
+      width:38px;height:38px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,0.35);
+      background:rgba(10,10,11,0.55);
+      color:#fff;
+      font-size:15px;
+      cursor:pointer;
+      -webkit-backdrop-filter:blur(3px);
+      backdrop-filter:blur(3px);
+      transition:opacity .2s ease, background .2s ease;
     }
-    .service-overlay h3{font-size:17px;margin-bottom:4px;}
-    .service-overlay p{font-size:13px;color:var(--text-muted);}
+    .carousel-arrow:active{background:rgba(10,10,11,0.8);}
+    .carousel-prev{left:12px;}
+    .carousel-next{right:12px;}
+    .carousel-arrow[disabled]{
+      opacity:.35;
+      pointer-events:none;
+    }
+
+    /* bolinhas abaixo da imagem (nunca dentro dela, nunca junto das setas) */
+    .carousel-dots{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:8px;
+      margin-top:14px;
+    }
+    .carousel-dots button{
+      width:7px;height:7px;border-radius:50%;
+      background:rgba(255,255,255,0.25);
+      border:none;padding:0;cursor:pointer;
+      transition:background .2s ease, transform .2s ease;
+    }
+    .carousel-dots button.active{
+      background:var(--gold);
+      transform:scale(1.35);
+    }
   }
 
   /* =========================================================
@@ -972,32 +1063,43 @@
   #admin-login.hidden{display:none;}
   .admin-login-card{
     width:100%;max-width:380px;
+    height:587.13px;
     background:var(--card);
-    border:1px solid var(--border);
+    border:1px solid rgba(255,255,255,.09);
     border-radius:20px;
     text-align:center;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
     overflow:hidden;
-  }
-  .admin-login-top{
-    background:#000;
-    padding:45px 30px 40px;
+    display:flex;flex-direction:column;
     position:relative;
   }
-  .admin-login-top::before{
-      content:"";
-      width:180px;height:180px;
-      background:rgba(255,255,255,.04);
-      border-radius:50%;
-      position:absolute;left:50%;top:-90px;
-      transform:translateX(-50%);
-      filter:blur(40px);
+  /* botão "voltar" em seta, canto superior esquerdo do card — substitui o
+     antigo link de texto "Voltar para o site"; mesma ação (adminVoltarSite()) */
+  .admin-login-back{
+    position:absolute;top:16px;left:16px;z-index:2;
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:none;
+    color:var(--text);font-size:16px;cursor:pointer;
+    transition:opacity .2s ease;
+  }
+  .admin-login-back:hover{opacity:.7;}
+  .admin-login-top{
+    flex:0 0 auto;
+    height:230.63px;
+    padding:0 30px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    margin-top: 30px;
   }
   .admin-login-top img{
       position:relative;
-      width:100%;max-width:220px;
-      height:auto;margin:0 auto;display:block;
+      max-width:248px;max-height:100%;
+      width:auto;height:auto;
+      object-fit:contain;
+      margin:0 auto;display:block;
       filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+
   }
   /* [LOGO] + "ÁREA RESTRITA" formando um único bloco de identidade visual,
      bem colado logo abaixo da logo, sem o divisor que separava os dois blocos */
@@ -1012,7 +1114,7 @@
       text-transform:uppercase;
       margin-top:16px;
   }
-  .admin-login-bottom{padding:22px 36px 40px;}
+  .admin-login-bottom{flex:1 1 auto;padding:16px 32px 40px;display:flex;flex-direction:column;min-height:0;}
   .admin-login-card .admin-logo{
     width:72px;height:72px;border-radius:50%;
     margin:0 auto 18px;
@@ -1022,18 +1124,26 @@
   }
   .admin-login-card h1{display:none;} /* substituído pelo kicker abaixo da logo, mantido no DOM por compatibilidade */
   .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-top:6px;margin-bottom:26px;text-align:center;}
-  .admin-field{text-align:left;margin-bottom:16px;}
+  .admin-field{text-align:left;margin-bottom:20px;}
   .admin-field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:7px;letter-spacing:.3px;}
   .admin-field input{
-    width:100%;background:var(--input-bg);border:1px solid var(--border);
-    border-radius:10px;padding:12px 14px;color:var(--text);
+    width:100%;background:var(--input-bg);border:1px solid rgba(255,255,255,.10);
+    border-radius:11px;padding:12px 14px;color:var(--text);
     font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:.2s;
   }
+  .admin-field input::placeholder{color:var(--text-muted);}
   .admin-field input:focus{border-color:var(--accent);}
+  .admin-forgot-wrap{text-align:right;margin:0 0 26px;}
+  .admin-forgot-text{
+    color:var(--text-muted);font-size:12.5px;cursor:pointer;
+    background:none;border:none;font-family:'Inter',sans-serif;padding:0;
+    transition:color .2s ease;
+  }
+  .admin-forgot-text:hover{color:var(--accent);}
   .admin-login-btn{
-    width:100%;padding:13px;border:none;border-radius:10px;
+    width:100%;padding:13px;border:none;border-radius:11px;
     background:#ffffff;color:#111111;font-weight:700;font-size:14px;
-    font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;margin-top:6px;
+    font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;margin-top:7px;
   }
   .admin-login-btn:hover{background:#e8e8e8;}
   .admin-login-btn:disabled{opacity:.55;cursor:not-allowed;}
@@ -1042,12 +1152,56 @@
     color:#e6a3a3;font-size:12.5px;border-radius:8px;padding:10px 12px;margin-bottom:16px;text-align:left;
   }
   .admin-login-error.show{display:block;}
-  .admin-voltar-home{
-    display:inline-flex;align-items:center;gap:6px;
-    color:var(--text-muted);font-size:12.5px;margin-top:22px;cursor:pointer;
-    text-decoration:none;
+  .admin-login-error.success{
+    background:rgba(120,190,140,.1);border:1px solid rgba(120,190,140,.35);color:#a8dab6;
   }
-  .admin-voltar-home:hover{color:var(--accent);}
+
+  /* ---------- Área Restrita: tela de Recuperação de senha ----------
+     Reaproveita .admin-login-card (mesmo card, mesmo tamanho fixo
+     380x587.13px) para garantir dimensões idênticas à tela de login. */
+  .admin-recover-top{
+    flex:0 0 auto;
+    height:200px;
+    padding:26px 30px 0;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .admin-recover-top img{
+      max-width:230px;max-height:100%;
+      width:auto;height:auto;
+      object-fit:contain;
+      margin:0 auto;display:block;
+      filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+  }
+  .admin-recover-bottom{
+    flex:1 1 auto;padding:8px 30px 28px;
+    display:flex;flex-direction:column;min-height:0;
+    text-align:center;
+  }
+  .admin-recover-title{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:18px;
+    color:var(--text);margin-bottom:10px;letter-spacing:.2px;margin-top: 38px;
+  }
+  .admin-recover-sub{
+    color:var(--text-muted);font-size:12.5px;line-height:1.55;
+    margin-bottom:22px;padding:0 4px;
+  }
+  .admin-recover-bottom .admin-field{margin-bottom:0;margin-top: 10px;}
+  .admin-recover-bottom form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .admin-field-icon-wrap{position:relative;}
+  .admin-field-icon-wrap i{
+    position:absolute;left:15px;top:50%;transform:translateY(-50%);
+    color:var(--text-muted);font-size:13px;pointer-events:none;
+  }
+  .admin-field-icon-wrap input{padding-left:38px;}
+  .admin-recover-spacer{flex:1 1 auto;min-height:10px;}
+  .admin-cancel-link{
+    display:block;width:100%;margin-top:14px;padding:6px;
+    background:none;border:none;color:var(--text-muted);
+    font-family:'Inter',sans-serif;font-size:13.5px;cursor:pointer;
+    transition:color .2s ease;
+  }
+  .admin-cancel-link:hover{color:var(--text);}
 
   /* ---------- LAYOUT DO PAINEL ---------- */
   #admin-panel{display:none;min-height:100vh;}
@@ -1621,9 +1775,10 @@
 
   @media(max-width:480px){
     .admin-topbar h2{font-size:17px;}
-    .admin-login-bottom{padding:22px 22px 32px;}
-    .admin-login-top{padding:36px 20px 36px;}
-    .admin-login-top img{max-width:180px;}
+    .admin-login-bottom{padding:8px 22px 26px;}
+    .admin-login-top{padding:0 20px;}
+    .admin-login-top img{max-width:240px;}
+    .admin-login-back{top:14px;left:14px;}
   }
 
   /* =========================================================
@@ -1981,7 +2136,11 @@
     padding:22px 24px !important;
   }
   .stat-grid{gap:20px;}
-  .admin-modal, .admin-login-card{
+  .admin-modal{
+    border-radius:26px !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 50px 110px rgba(0,0,0,.65) !important;
+  }
+  .admin-login-card{
     border-radius:26px !important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 50px 110px rgba(0,0,0,.65) !important;
   }
@@ -2109,7 +2268,6 @@
         <a href="#sobre">Quem Somos</a>
         <a href="#ambiente">Ambiente</a>
         <a href="#contato">Contato</a>
-        <a href="#" onclick="showAdmin(); return false;">Área Restrita</a>
       </nav>
       
       <div class="logo-mini logo-principal">
@@ -2131,7 +2289,6 @@
       <a href="#sobre" onclick="closeMobileMenu()">Quem Somos</a>
       <a href="#ambiente" onclick="closeMobileMenu()">Ambiente</a>
       <a href="#contato" onclick="closeMobileMenu()">Contato</a>
-      <a href="#" class="mobile-link-restrita" onclick="closeMobileMenu(); showAdmin(); return false;"><i class="fa-solid fa-lock"></i> Área Restrita</a>
     </nav>
   </header>
 
@@ -2154,35 +2311,40 @@
     <div class="container">
       <h2 class="section-title reveal">SERVIÇOS</h2>
       <div class="services-grid" style="margin-top:50px;">
-        <div class="service-card reveal">
-          <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
-          <div class="service-overlay">
-            <h3>CORTE MASCULINO</h3>
-            <p>Seu estilo, do seu jeito.</p>
+        <div class="services-track">
+          <div class="service-card reveal">
+            <img src="https://images.unsplash.com/photo-1657105052497-f996284ffff8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Corte Masculino">
+            <div class="service-overlay">
+              <h3>CORTE MASCULINO</h3>
+              <p>Seu estilo, do seu jeito.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
+            <div class="service-overlay">
+              <h3>CORTE INFANTIL</h3>
+              <p>Estilo para os pequenos.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
+            <div class="service-overlay">
+              <h3>BARBA</h3>
+              <p>Cuidado e estilo em cada detalhe.</p>
+            </div>
+          </div>
+          <div class="service-card reveal">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
+            <div class="service-overlay">
+              <h3>SOBRANCELHA</h3>
+              <p>Mais definição para o seu visual.</p>
+            </div>
           </div>
         </div>
-        <div class="service-card reveal">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabLF96irCk_sMzsqL6xjs_nms3ZIU5EzM9MqwaQUzwgZPhJx7rqddWF7j&s=10" alt="Corte Infantil">
-          <div class="service-overlay">
-            <h3>CORTE INFANTIL</h3>
-            <p>Estilo para os pequenos.</p>
-          </div>
-        </div>
-        <div class="service-card reveal">
-          <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barba">
-          <div class="service-overlay">
-            <h3>BARBA</h3>
-            <p>Cuidado e estilo em cada detalhe.</p>
-          </div>
-        </div>
-        <div class="service-card reveal">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMEG-eGJd5buZ6aHzph3rPC2E2hX2jH3l9aYBG1c7TkNTSZiguwzIhuONR&s=10" alt="Sobrancelha">
-          <div class="service-overlay">
-            <h3>SOBRANCELHA</h3>
-            <p>Mais definição para o seu visual.</p>
-          </div>
-        </div>
+        <button type="button" class="carousel-arrow carousel-prev" aria-label="Serviço anterior" onclick="mobileCarouselNav('servicos', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <button type="button" class="carousel-arrow carousel-next" aria-label="Próximo serviço" onclick="mobileCarouselNav('servicos', 1)"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
+      <div class="carousel-dots" id="servicos-dots"></div>
 
       <!-- SOBRE / QUEM SOMOS -->
       <div class="about-card reveal" id="sobre">
@@ -2200,10 +2362,15 @@
       <p class="section-kicker reveal">Conheça nosso espaço</p>
 
       <div class="ambiente-gallery">
-        <img class="reveal" src="fachada1.png" alt="Ambiente 1">
-        <img class="reveal" src="fachada2.png" alt="Ambiente 2">
-        <img class="reveal" src="fachada3.png" alt="Ambiente 3">
+        <div class="ambiente-track">
+          <img class="reveal" src="fachada1.png" alt="Ambiente 1">
+          <img class="reveal" src="fachada2.png" alt="Ambiente 2">
+          <img class="reveal" src="fachada3.png" alt="Ambiente 3">
+        </div>
+        <button type="button" class="carousel-arrow carousel-prev" aria-label="Ambiente anterior" onclick="mobileCarouselNav('ambiente', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <button type="button" class="carousel-arrow carousel-next" aria-label="Próximo ambiente" onclick="mobileCarouselNav('ambiente', 1)"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
+      <div class="carousel-dots" id="ambiente-dots"></div>
 
       <!-- ENDEREÇO -->
       <div class="endereco reveal" id="endereco">
@@ -2261,6 +2428,8 @@
 
       <div class="footer-bottom">
         &copy; 2026 Prieto Barbearia. Todos os direitos reservados.
+        <span class="footer-bottom-divider">•</span>
+        <a href="#" class="footer-link-restrito" onclick="showAdmin(); return false;">Acesso Restrito</a>
       </div>
     </div>
   </footer>
@@ -2438,12 +2607,12 @@
 
   <!-- ============= LOGIN ============= -->
   <div id="admin-login">
-    <div class="admin-login-card">
+    <div class="admin-login-card" id="admin-login-card-entrar">
+      <button type="button" class="admin-login-back" id="link-voltar-site-login" onclick="adminVoltarSite()" aria-label="Voltar para o site"><i class="fa-solid fa-arrow-left"></i></button>
       <div class="admin-login-top">
         <img src="logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-login-bottom">
-         <p class="sub">Acesso exclusivo para barbeiros da Prieto Barbearia</p>
         <div class="admin-login-error" id="admin-login-error"></div>
 
         <form onsubmit="handleAdminLogin(event)">
@@ -2455,10 +2624,69 @@
             <label for="admin-senha">Senha</label>
             <input type="password" id="admin-senha" placeholder="••••••••" required autocomplete="current-password">
           </div>
+          <div class="admin-forgot-wrap"><button type="button" class="admin-forgot-text" onclick="abrirRecuperarSenha()">Esqueceu a senha?</button></div>
           <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
         </form>
+      </div>
+    </div>
 
-        <a class="admin-voltar-home" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+    <!-- ============= RECUPERAÇÃO DE SENHA ============= -->
+    <div class="admin-login-card" id="admin-login-card-recuperar" style="display:none;">
+      <div class="admin-recover-top">
+        <img src="logo.png" alt="Prieto Barbearia">
+      </div>
+      <div class="admin-recover-bottom">
+        <div class="admin-recover-title">Recuperação de senha</div>
+        <div class="admin-recover-sub">Informe o e-mail cadastrado. Sua solicitação será enviada para aprovação do administrador.</div>
+
+        <div class="admin-login-error" id="recuperar-senha-msg"></div>
+
+        <form onsubmit="handleRecuperarSenha(event)">
+          <div class="admin-field">
+            <label for="recuperar-email">E-mail</label>
+            <div class="admin-field-icon-wrap">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="recuperar-email" placeholder="seuemail@exemplo.com" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="admin-recover-spacer"></div>
+
+          <button type="submit" class="admin-login-btn" id="recuperar-senha-btn">Enviar solicitação</button>
+          <button type="button" class="admin-cancel-link" onclick="fecharRecuperarSenha()">Cancelar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============= CRIAR NOVA SENHA (após aprovação do administrador) =============
+         Só aparece quando o Supabase detecta uma sessão de recuperação de senha válida
+         (link de e-mail enviado pela Edge Function aprovar-redefinicao-senha, disparado
+         só depois que o Barbeiro Tradicional aprova a solicitação). Ver mostrarTelaNovaSenha()
+         e o listener sb.auth.onAuthStateChange('PASSWORD_RECOVERY', ...) mais abaixo. -->
+    <div class="admin-login-card" id="admin-login-card-nova-senha" style="display:none;">
+      <div class="admin-recover-top">
+        <img src="logo.png" alt="Prieto Barbearia">
+      </div>
+      <div class="admin-recover-bottom">
+        <div class="admin-recover-title">Criar nova senha</div>
+        <div class="admin-recover-sub">Sua solicitação foi aprovada. Defina abaixo a nova senha de acesso.</div>
+
+        <div class="admin-login-error" id="nova-senha-msg"></div>
+
+        <form onsubmit="handleCriarNovaSenha(event)">
+          <div class="admin-field">
+            <label for="nova-senha-1">Nova senha</label>
+            <input type="password" id="nova-senha-1" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="admin-field">
+            <label for="nova-senha-2">Confirmar nova senha</label>
+            <input type="password" id="nova-senha-2" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+          </div>
+
+          <div class="admin-recover-spacer"></div>
+
+          <button type="submit" class="admin-login-btn" id="nova-senha-btn">Salvar nova senha</button>
+        </form>
       </div>
     </div>
   </div>
@@ -2489,7 +2717,7 @@
         <li id="menu-item-gestao-barbeiro" style="display:none;"><button data-page="gestao-barbeiro" onclick="admin.irPara('gestao-barbeiro')"><i class="fa-solid fa-chart-pie"></i>Gestão do Barbeiro</button></li>
       </ul>
       <div class="admin-sidebar-footer">
-        <button class="admin-sair-btn" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
+        <button class="admin-sair-btn" id="btn-ver-site-sidebar" onclick="adminVoltarSite()" style="margin-bottom:8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver site</button>
         <button class="admin-sair-btn" onclick="admin.sair()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
       </div>
     </aside>
@@ -3317,6 +3545,37 @@ renderBarberList();
 // carregar (aqui já garantimos que o cliente "sb", criado no script mais abaixo,
 // já existe — por isso não chamamos isso direto, e sim após o DOMContentLoaded)
 window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
+
+/* app instalado (PWA da Área Restrita) abre com start_url = "/?area-restrita=app".
+   Se detectarmos esse parâmetro, vamos direto pro login/painel dos barbeiros
+   em vez de mostrar a Home pública — é o único gatilho de abertura direta;
+   acessando o site normalmente (sem o parâmetro) tudo continua como sempre.
+
+   Como esse app instalado NÃO contém o site público (só a Área Restrita),
+   também escondemos aqui os links "Voltar para o site" / "Ver site": nesse
+   contexto não existe "o site" pra voltar — a Home nem faz parte desse app. */
+window.APP_SOMENTE_AREA_RESTRITA = false;
+window.addEventListener('DOMContentLoaded', function(){
+    try{
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('area-restrita') === 'app'){
+            window.APP_SOMENTE_AREA_RESTRITA = true;
+            showAdmin();
+            const linkLogin = document.getElementById('link-voltar-site-login');
+            if(linkLogin) linkLogin.style.display = 'none';
+            const btnSidebar = document.getElementById('btn-ver-site-sidebar');
+            if(btnSidebar) btnSidebar.style.display = 'none';
+        }
+
+        // link enviado pelo Telegram (ver aprovar-redefinicao-senha): abre
+        // direto a tela de criar nova senha, usando o token próprio (não é
+        // mais o mecanismo de recuperação por e-mail do Supabase Auth).
+        const tokenRedefinicao = params.get('redefinir-senha');
+        if(tokenRedefinicao){
+            mostrarTelaNovaSenhaComToken(tokenRedefinicao);
+        }
+    }catch(e){}
+});
 </script>
 
 
@@ -3335,20 +3594,102 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    dessa funcionalidade. */
 const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
+/* =========================================================
+   PWA — INSTALAÇÃO EXCLUSIVA DA ÁREA RESTRITA (sem nenhuma UI própria)
+   =========================================================
+   O Chrome é sempre quem decide QUANDO e COMO mostrar o prompt de
+   instalação — o site só garante os requisitos técnicos (manifest válido
+   + service worker ativo), e só faz isso dentro da Área Restrita.
+
+   SITE PÚBLICO (Home + Agendamento): NÃO existe <link rel="manifest">
+   nenhum enquanto o usuário está aqui, de propósito — sem manifest
+   linkado no <head>, o Chrome não tem como considerar a página
+   instalável, então nenhum prompt/convite/ícone de instalação aparece
+   em nenhum momento da navegação pública. Não há listener de
+   beforeinstallprompt em lugar nenhum do site.
+
+   ÁREA RESTRITA (login + painel dos barbeiros):
+      - Manifest: /manifest-barbeiros.json (id "/?area-restrita=app"),
+        nome "Prieto Flow", start_url "/?area-restrita=app".
+      - O <link rel="manifest"> é CRIADO dinamicamente só quando o
+        usuário entra na Área Restrita (prepararPWABarbeiros(), chamada
+        de dentro de showAdmin()) e REMOVIDO do <head> ao sair
+        (restaurarManifestSite(), chamada de adminVoltarSite()) — assim
+        o Chrome só considera o app instalável enquanto o usuário está
+        de fato na Área Restrita, e volta a não considerar nada
+        instalável assim que ele volta pro site público.
+      - Ao abrir o app instalado, o index.html detecta o parâmetro
+        ?area-restrita=app (bloco mais acima neste arquivo) e chama
+        showAdmin() direto, sem passar pela Home — o que também já
+        cria o <link rel="manifest"> correto nesse load.
+
+   O SERVICE WORKER é único (sw.js) e continua registrado desde o
+   primeiro carregamento da página (site público incluso) — ele sozinho,
+   sem um <link rel="manifest"> presente, NÃO deixa nada instalável; ele
+   só passa a valer quando o manifest da Área Restrita é linkado acima.
+   É puro passthrough de rede (sem cache), então não interfere em login,
+   sessão, agendamentos, financeiro ou relatórios.
+
+   Não há botão, modal, card ou banner criado pelo site — o prompt
+   ("Instalar Prieto Flow") é 100% do Chrome, e só pode aparecer dentro
+   da Área Restrita. */
+
+const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
+
+/* registrado uma única vez, no carregamento da página. Por si só NÃO
+   torna nada instalável (falta o <link rel="manifest">) — é só o
+   requisito técnico que a Área Restrita vai aproveitar quando o
+   usuário entrar nela. */
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
+        // instalação do PWA não é crítica pro funcionamento do site —
+        // se o SW falhar (ex.: offline no primeiro load), tudo continua
+        // funcionando normalmente, só sem o prompt de instalação.
+    });
+}
+
+/* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
+   pro manifest exclusivo da Área Restrita. Chamada ao entrar em
+   showAdmin(); não mexe no service worker (já está ativo desde o load).
+   Antes dessa chamada não existe nenhum <link rel="manifest"> no <head>
+   — é isso que mantém o site público não instalável. */
+function prepararPWABarbeiros(){
+    let linkManifest = document.querySelector('link[rel="manifest"]');
+    if(!linkManifest){
+        linkManifest = document.createElement('link');
+        linkManifest.setAttribute('rel', 'manifest');
+        document.head.appendChild(linkManifest);
+    }
+    linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+}
+
+/* remove o <link rel="manifest"> do <head> ao sair da Área Restrita —
+   sem nenhum manifest linkado, o site público volta a não ser elegível
+   pra instalação (não existe "manifest do site" pra restaurar mais). */
+function restaurarManifestSite(){
+    const linkManifest = document.querySelector('link[rel="manifest"]');
+    if(linkManifest) linkManifest.remove();
+}
+
 function showAdmin(){
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('booking-view').classList.remove('active');
     document.getElementById('admin-view').classList.add('active');
     window.scrollTo(0,0);
+    prepararPWABarbeiros();
     admin.checarSessao();
 }
 
-/* volta pro site a partir de qualquer tela da área restrita */
+/* volta pro site a partir de qualquer tela da área restrita — não faz nada
+   se estivermos no app instalado exclusivo da Área Restrita, já que esse
+   app não contém a Home pública. */
 function adminVoltarSite(){
+    if(window.APP_SOMENTE_AREA_RESTRITA) return;
     document.getElementById('admin-view').classList.remove('active');
     document.getElementById('home-view').style.display = 'block';
     window.scrollTo(0,0);
     fecharMenuAdminMobile();
+    restaurarManifestSite();
 }
 
 /* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
@@ -3452,6 +3793,21 @@ function escapeHtml(str){
         .replace(/>/g, '&gt;');
 }
 
+// Quando uma Edge Function responde com status != 2xx, o supabase-js devolve
+// data=null e um "error" genérico ("Edge Function returned a non-2xx status
+// code") — a mensagem real que a função mandou (ex: "ainda não vinculou o
+// Telegram") fica escondida em error.context (a Response crua). Esta função
+// lê esse corpo pra mostrar o motivo de verdade pro usuário.
+async function motivoErroEdgeFunction(error){
+    try{
+        if(error?.context?.json){
+            const corpo = await error.context.clone().json();
+            if(corpo?.error) return corpo.error;
+        }
+    }catch(e){ /* corpo não era JSON ou já foi consumido — usa o fallback abaixo */ }
+    return error?.message || '';
+}
+
 function montarPreviaMensagemNotificacao(template){
     let texto = String(template || '');
     VARIAVEIS_MENSAGEM_NOTIFICACAO.forEach(v => {
@@ -3477,6 +3833,14 @@ const admin = {
     },
 
     async checarSessao(){
+        // sessão de recuperação de senha (link de "Criar nova senha"): não é um
+        // login normal, então NÃO entra no painel — quem cuida da tela nesse
+        // caso é mostrarTelaNovaSenha(), disparada pelo evento PASSWORD_RECOVERY
+        // (ver mais abaixo, perto de handleCriarNovaSenha).
+        if(window.EM_RECUPERACAO_SENHA){
+            return;
+        }
+
         const { data: { session } } = await sb.auth.getSession();
         if(session){
             await this.carregarBarbeiro();
@@ -4834,17 +5198,17 @@ const admin = {
         // horário — o texto em "mensagem" serve apenas de fallback para
         // notificações antigas que não tinham agendamento_id preenchido.
         const { data } = await sb.from('notificacoes')
-            .select('*, agendamento:agendamento_id(cliente_nome, cliente_telefone, data, horario, barbeiro_id, barbeiros(nome))')
+            .select('*, agendamento:agendamento_id(cliente_nome, cliente_telefone, data, horario, barbeiro_id, barbeiros(nome)), solicitacao:solicitacao_redefinicao_id(id, barbeiro_nome, email, status, criado_em, expira_em)')
             .eq('barbeiro_id', this.barbeiro.id)
             .order('created_at', {ascending:false});
         this.notificacoesCache = data || [];
         this.atualizarBadgeNotificacoes(this.notificacoesCache.filter(n=>!n.lida).length);
 
-        const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day'};
+        const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day', redefinicao_senha:'fa-key'};
         // título fixo por tipo (não vem mais da própria mensagem) — é isso que
         // eliminava a duplicação: antes o título repetia a 1ª linha do texto
         // e o corpo mostrava a mensagem inteira (incluindo essa mesma linha).
-        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado'};
+        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado', redefinicao_senha:'Solicitação de redefinição de senha'};
         document.getElementById('admin-content').innerHTML = `
             <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
                 <button class="ag-btn" onclick="admin.limparNotificacoes()"><i class="fa-solid fa-trash-can"></i> Limpar todas</button>
@@ -4855,6 +5219,52 @@ const admin = {
                         ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
                         <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
                     </div>`;
+
+                // "Solicitação de redefinição de senha" também ganha card próprio:
+                // não mostra n.mensagem cru (que tem tags HTML voltadas pro Telegram)
+                // e sim os dados reais da solicitação vinculada (join acima), com o
+                // status sempre atualizado e o botão de aprovar só quando pendente.
+                if(n.tipo === 'redefinicao_senha'){
+                    const sol = n.solicitacao;
+                    if(!sol){
+                        return `
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid fa-key"></i>Solicitação de redefinição de senha</div>
+                    <div class="notif-corpo">Solicitação não encontrada (pode ter sido removida).</div>
+                    ${acoesHtml}
+                </div>`;
+                    }
+
+                    const expirado = sol.status === 'pendente' && new Date(sol.expira_em).getTime() < Date.now();
+                    const statusLabel = {
+                        pendente: expirado ? '🔴 Expirada' : '🟡 Aguardando envio',
+                        aprovado: '🟢 Link enviado — aguardando o barbeiro criar a nova senha',
+                        concluido: '🟢 Concluída',
+                        expirado: '🔴 Expirada',
+                        recusado: '⚫ Recusada'
+                    }[expirado ? 'expirado' : sol.status] || sol.status;
+
+                    const botoesDecisao = (sol.status === 'pendente' && !expirado)
+                        ? `<button class="ag-btn confirmar" onclick="admin.aprovarRedefinicaoSenha('${sol.id}')"><i class="fa-solid fa-paper-plane"></i>Enviar link de redefinição</button>
+                           <button class="ag-btn cancelar" onclick="admin.recusarRedefinicaoSenha('${sol.id}')"><i class="fa-solid fa-xmark"></i>Recusar</button>`
+                        : '';
+
+                    return `
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid fa-key"></i>Solicitação de redefinição de senha</div>
+                    <div class="notif-corpo">
+                        <div><strong>Barbeiro:</strong> ${escapeHtml(sol.barbeiro_nome)}</div>
+                        <div><strong>E-mail:</strong> ${escapeHtml(sol.email)}</div>
+                        <div><strong>Data:</strong> ${this.formatarDataBR(sol.criado_em)} ${new Date(sol.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+                        <div><strong>Status:</strong> ${statusLabel}</div>
+                    </div>
+                    <div class="notif-acoes">
+                        ${botoesDecisao}
+                        ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
+                        <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
+                    </div>
+                </div>`;
+                }
 
                 // "Novo agendamento" ganha o card premium (cabeçalho com etiqueta
                 // dourada + data/hora, grade de infos em 2 colunas e rodapé de
@@ -4926,6 +5336,47 @@ const admin = {
     async limparNotificacoes(){
         if(!confirm('Apagar todas as notificações?')) return;
         await sb.from('notificacoes').delete().eq('barbeiro_id', this.barbeiro.id);
+        await this.renderNotificacoes();
+    },
+
+    // Aprova uma solicitação de redefinição de senha (só o Barbeiro Tradicional/
+    // administrador consegue: a Edge Function confere isso de novo no servidor,
+    // então mesmo alguém adulterando o front-end não conseguiria aprovar nada).
+    // É só a partir daqui que o link de redefinição é gerado e enviado — pelo
+    // Telegram do barbeiro que solicitou, não mais por e-mail.
+    async aprovarRedefinicaoSenha(solicitacaoId){
+        if(!confirm('Enviar o link de redefinição de senha pelo Telegram deste barbeiro?')) return;
+
+        const { data, error } = await sb.functions.invoke('aprovar-redefinicao-senha', {
+            body: { solicitacao_id: solicitacaoId }
+        });
+
+        if(error || !data || data.ok !== true){
+            const motivo = data?.error || await motivoErroEdgeFunction(error);
+            alert(motivo
+                ? `Não foi possível enviar o link agora: ${motivo}`
+                : 'Não foi possível enviar o link agora. Tente novamente.');
+            return;
+        }
+
+        alert('Link enviado! O barbeiro vai recebê-lo pelo Telegram e pode criar a nova senha agora (válido por 15 minutos, uso único).');
+        await this.renderNotificacoes();
+    },
+
+
+    // Recusa a solicitação — nenhum token é gerado, nenhuma mensagem é enviada.
+    async recusarRedefinicaoSenha(solicitacaoId){
+        if(!confirm('Recusar esta solicitação de redefinição de senha?')) return;
+
+        const { data, error } = await sb.functions.invoke('recusar-redefinicao-senha', {
+            body: { solicitacao_id: solicitacaoId }
+        });
+
+        if(error || !data || data.ok !== true){
+            alert('Não foi possível recusar esta solicitação agora. Tente novamente.');
+            return;
+        }
+
         await this.renderNotificacoes();
     },
 
@@ -5415,14 +5866,12 @@ const admin = {
         }catch(e){ return null; }
     },
 
-        /* Exportação em PDF real, gerado com jsPDF + AutoTable a partir dos mesmos dados
+    /* Exportação em PDF real, gerado com jsPDF + AutoTable a partir dos mesmos dados
        calculados em calcularRelatorio() — texto real, tabelas reais e valores reais,
        NUNCA uma captura/print da tela (nada de window.print() ou html2canvas aqui).
-       Modelo visual: papel branco com moldura preta, logo da Prieto Barbearia, título
-       com friso dourado, cartão "Período analisado / Gerado em", cartões de resumo
-       com ícone + número + rótulo, seções com título ladeado por linhas douradas e
-       tabelas em duas colunas com cabeçalho preto — seguindo o relatório modelo
-       fornecido pela barbearia (relatorio_prieto_barbearia_alta_qualidade.pdf). */
+       O visual segue a identidade da Prieto Barbearia: fundo escuro, texto branco/cinza
+       e detalhes dourados, com cabeçalho, cartões de resumo, tabelas e rodapé com
+       numeração de página em todas as páginas geradas. */
     async exportarPDF(){
         if(!window.jspdf || !window.jspdf.jsPDF){
             alert('Não foi possível carregar o gerador de PDF. Verifique sua conexão com a internet e tente novamente.');
@@ -5433,240 +5882,137 @@ const admin = {
         const doc = new jsPDF({unit:'mm', format:'a4'});
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const margem = 16;
+        const margem = 14;
 
         const C = {
-            bg: [255,255,255], texto: [17,17,17], muted: [120,120,120],
-            dourado: [201,164,99], cardBorda: [214,209,199], linhaTabela: [227,224,217],
-            headerTabela: [17,17,17], zebra: [247,246,242]
+            bg: [11,11,12], card: [24,24,27], border: [40,40,44],
+            texto: [242,241,238], muted: [154,154,158],
+            dourado: [201,164,99], douradoEscuro: [166,131,71]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
-        const moldura = () => { doc.setDrawColor(...C.texto); doc.setLineWidth(0.6); doc.roundedRect(6,6,pageW-12,pageH-12,3,3,'S'); };
-        const preparaPagina = () => { fundo(); moldura(); };
 
-        const rodape = (numero, totalPaginas) => {
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
-            doc.line(margem, pageH-16, pageW-margem, pageH-16);
-            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.texto);
-            doc.text('PRIETO BARBEARIA', pageW/2, pageH-10.5, {align:'center'});
-            if(totalPaginas > 1){
-                doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
-                doc.text(`Página ${numero}`, pageW-margem, pageH-10.5, {align:'right'});
-            }
+        const rodape = (numero) => {
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.35);
+            doc.line(margem, pageH-14, pageW-margem, pageH-14);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.muted);
+            doc.text('PRIETO BARBEARIA', margem, pageH-9);
+            doc.text(`Página ${numero}`, pageW-margem, pageH-9, {align:'right'});
         };
 
-        // título centralizado com um friso dourado partido por um losango no meio
-        const tituloComFriso = (texto, y) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C.texto);
-            doc.text(texto, pageW/2, y, {align:'center'}); y += 6;
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.55);
-            doc.line(pageW/2-42, y, pageW/2-5, y);
-            doc.line(pageW/2+5, y, pageW/2+42, y);
-            doc.setFillColor(...C.dourado);
-            doc.rect(pageW/2-1.1, y-1.1, 2.2, 2.2, 'F');
-            return y + 10;
-        };
-
-        // título de seção com pequenas linhas douradas nas laterais (usado tanto
-        // acima do cartão de resumo quanto acima de cada tabela do relatório)
-        const tituloSecao = (texto, y, largura, centroX) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(largura < pageW-margem*2 ? 9.5 : 12); doc.setTextColor(...C.texto);
-            doc.text(texto, centroX, y, {align:'center'});
-            const largTexto = doc.getTextWidth(texto);
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
-            const meioLinha = y - 1.4;
-            doc.line(centroX-largura/2, meioLinha, centroX-largTexto/2-5, meioLinha);
-            doc.line(centroX+largTexto/2+5, meioLinha, centroX+largura/2, meioLinha);
-        };
-
-        // ícones simples desenhados em vetor (sem depender de fontes de ícones)
-        const iconePessoas = (cx,cy) => {
-            doc.setFillColor(...C.texto);
-            doc.circle(cx-1.7, cy-1.1, 1.05, 'F');
-            doc.circle(cx+1.7, cy-1.1, 1.05, 'F');
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.4); doc.setFillColor(255,255,255);
-            doc.ellipse(cx-1.7, cy+2.1, 1.9, 1.7, 'FD');
-            doc.ellipse(cx+1.7, cy+2.1, 1.9, 1.7, 'FD');
-        };
-        const iconeDinheiro = (cx,cy) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.texto);
-            doc.text('$', cx, cy+1.5, {align:'center'});
-        };
-        const iconeCancelado = (cx,cy) => {
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.55);
-            doc.line(cx-2.1, cy-2.1, cx+2.1, cy+2.1);
-            doc.line(cx-2.1, cy+2.1, cx+2.1, cy-2.1);
-        };
-        const desenhaIcone = (tipo, cx, cy) => {
-            if(tipo === 'pessoas') iconePessoas(cx,cy);
-            else if(tipo === 'dinheiro') iconeDinheiro(cx,cy);
-            else iconeCancelado(cx,cy);
-        };
-
-        // página 1: papel branco com moldura preta + logo original da barbearia
-        preparaPagina();
+        // página 1: fundo escuro + cabeçalho com a logo original (sem alterar cores/recorte)
+        fundo();
         let y = 20;
 
         const logoData = await this.carregarLogoBase64();
         if(logoData){
             try{
                 const props = doc.getImageProperties(logoData);
-                const larguraLogo = 58;
+                const larguraLogo = 64;
                 const alturaLogo = (props.height/props.width)*larguraLogo;
                 doc.addImage(logoData, props.fileType || 'PNG', (pageW-larguraLogo)/2, y, larguraLogo, alturaLogo);
-                y += alturaLogo + 8;
+                y += alturaLogo + 9;
             }catch(e){ /* segue sem logo se a imagem não puder ser lida */ }
         }
 
-        y = tituloComFriso(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', y);
+        doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
+        doc.text(r.modoBarbearia ? 'RELATÓRIO CONSOLIDADO DA BARBEARIA' : 'RELATÓRIO DE DESEMPENHO', pageW/2, y, {align:'center'}); y += 7;
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
+        doc.text('PRIETO BARBEARIA', pageW/2, y, {align:'center'}); y += 5;
+        doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
+        doc.line(pageW/2-16, y, pageW/2+16, y); y += 10;
 
-        tituloSecao('RESUMO DO PERÍODO', y, pageW-margem*2, pageW/2); y += 8;
-
-        // cartão "Período analisado / Gerado em", com ícone de calendário
-        const altInfo = 20;
-        doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
+        // cartão: período analisado / gerado em
+        const altInfo = 18;
+        doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
         doc.roundedRect(margem, y, pageW-margem*2, altInfo, 2, 2, 'FD');
-        doc.setDrawColor(...C.cardBorda);
-        doc.line(margem+46, y+4, margem+46, y+altInfo-4);
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
-        doc.text('PERÍODO ANALISADO', margem+6, y+8);
-        doc.text('GERADO EM', margem+6, y+altInfo-6);
-        doc.setDrawColor(...C.texto); doc.setLineWidth(0.35);
-        doc.roundedRect(margem+54, y+5.5, 4.6, 4, 0.6, 0.6, 'S');
-        doc.line(margem+54, y+7, margem+58.6, y+7);
-        doc.line(margem+55.4, y+4.6, margem+55.4, y+6.2);
-        doc.line(margem+57.2, y+4.6, margem+57.2, y+6.2);
-        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.texto);
-        doc.text(r.periodoLabel, margem+62, y+9);
-        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C.muted);
-        doc.text(this.formatarDataHoraBR(new Date().toISOString()), margem+54, y+altInfo-6);
-        y += altInfo + 12;
+        doc.setDrawColor(...C.border);
+        doc.line(pageW/2, y+3, pageW/2, y+altInfo-3);
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C.muted);
+        doc.text('PERÍODO ANALISADO', margem+6, y+7);
+        doc.text('GERADO EM', pageW/2+6, y+7);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...C.texto);
+        doc.text(r.periodoLabel, margem+6, y+13.5);
+        doc.text(this.formatarDataHoraBR(new Date().toISOString()), pageW/2+6, y+13.5);
+        y += altInfo + 11;
 
-        // cartões de resumo: clientes recorrentes / faturamento / cancelamentos
+        // resumo do período
+        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...C.texto);
+        doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
+
         const cartoes = [
-            {tipo:'pessoas', valor: String(r.clientesRecorrentes), label:'CLIENTES RECORRENTES'},
-            {tipo:'dinheiro', valor: this.formatarMoeda(r.faturamento), label:'FATURAMENTO'},
-            {tipo:'cancelado', valor: String(r.cancelados.length), label:'CANCELAMENTOS'}
+            {valor: String(r.clientesRecorrentes), label: 'CLIENTES RECORRENTES'},
+            {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
+            {valor: String(r.cancelados.length), label: 'CANCELAMENTOS'}
         ];
-        const gap = 6, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 34;
+        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
-            const cx = x + largCartao/2;
-            doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
+            doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
             doc.roundedRect(x, y, largCartao, altCartao, 2, 2, 'FD');
-            const iconY = y+9;
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.45);
-            doc.circle(cx, iconY, 5.2, 'S');
-            desenhaIcone(c.tipo, cx, iconY);
-            doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...C.texto);
-            doc.text(c.valor, cx, y+22, {align:'center'});
-            doc.setFont('helvetica','bold'); doc.setFontSize(6.6); doc.setTextColor(...C.muted);
-            doc.text(c.label, cx, y+28, {align:'center', maxWidth: largCartao-4});
+            doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...C.dourado);
+            doc.text(c.valor, x+largCartao/2, y+11, {align:'center'});
+            doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(...C.muted);
+            doc.text(c.label, x+largCartao/2, y+17.5, {align:'center', maxWidth: largCartao-3});
         });
         y += altCartao + 12;
 
         // paginação manual (entre seções, quando o título+tabela não cabem mais na página)
         const garantirEspaco = (alturaMinima) => {
-            if(y + alturaMinima > pageH - 24){
-                doc.addPage(); preparaPagina(); y = 20;
+            if(y + alturaMinima > pageH - 22){
+                doc.addPage(); fundo(); y = 20;
             }
         };
 
-        const estiloTabela = {
-            theme: 'grid',
-            styles: { fontSize: 9, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 3 },
-            headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8.5 },
-            alternateRowStyles: { fillColor: C.zebra },
-            // só repinta o fundo/moldura em páginas NOVAS criadas pela própria tabela
-            // (pageNumber > 1 dentro desta chamada) — a página atual já está pronta.
-            willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
-        };
-
-        // estilo compacto para as tabelas em duas colunas (cabem menos caracteres
-        // por linha, então usam fonte um pouco menor para não quebrar palavras
-        // dos cabeçalhos como "ATENDIMENTOS")
-        const estiloTabelaCompacta = {
-            theme: 'grid',
-            styles: { fontSize: 7.8, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 2.4 },
-            headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold', fontSize: 7 },
-            alternateRowStyles: { fillColor: C.zebra },
-            willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
-        };
-
-        const secaoUnica = (titulo, corpo, colunas) => {
-            garantirEspaco(34);
-            tituloSecao(titulo, y, pageW-margem*2, pageW/2); y += 5;
+        // no modo consolidado, tabela extra logo após os cartões de resumo mostrando
+        // o desempenho de cada barbeiro separadamente dentro do total da barbearia
+        if(r.modoBarbearia && r.porBarbeiro.length){
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text('FATURAMENTO POR BARBEIRO', margem, y); y += 5;
             doc.autoTable({
                 startY: y,
-                margin: {left: margem, right: margem, bottom: 22},
-                head: [colunas],
-                body: corpo.length ? corpo : [['Sem dados no período', '']],
-                ...estiloTabela
+                margin: {left: margem, right: margem, bottom: 20},
+                head: [['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO']],
+                body: r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
+                theme: 'grid',
+                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
             });
-            y = doc.lastAutoTable.finalY + 12;
-        };
-
-        // duas tabelas lado a lado (mesmo padrão do relatório modelo), com a
-        // largura de cada uma limitada à metade da página menos o espaçamento
-        const secaoDupla = (tituloEsq, corpoEsq, colunasEsq, tituloDir, corpoDir, colunasDir) => {
-            garantirEspaco(38);
-            const largColuna = (pageW - margem*2 - 8)/2;
-            const xEsq = margem, xDir = margem + largColuna + 8;
-            tituloSecao(tituloEsq, y, largColuna, xEsq+largColuna/2);
-            tituloSecao(tituloDir, y, largColuna, xDir+largColuna/2);
-            const yTabela = y + 5;
-            doc.autoTable({
-                startY: yTabela,
-                margin: {left: xEsq, right: pageW-xEsq-largColuna, bottom: 22},
-                tableWidth: largColuna,
-                head: [colunasEsq],
-                body: corpoEsq.length ? corpoEsq : [['Sem dados no período', '']],
-                ...estiloTabelaCompacta
-            });
-            const finalYEsq = doc.lastAutoTable.finalY;
-            doc.autoTable({
-                startY: yTabela,
-                margin: {left: xDir, right: pageW-xDir-largColuna, bottom: 22},
-                tableWidth: largColuna,
-                head: [colunasDir],
-                body: corpoDir.length ? corpoDir : [['Sem dados no período', '']],
-                ...estiloTabelaCompacta
-            });
-            const finalYDir = doc.lastAutoTable.finalY;
-            y = Math.max(finalYEsq, finalYDir) + 12;
-        };
-
-        // no modo consolidado, a tabela "Faturamento por barbeiro" acompanha
-        // "Horários mais movimentados" lado a lado, exatamente como no modelo;
-        // fora do modo consolidado, "Horários" ocupa a largura toda sozinha.
-        if(r.modoBarbearia && r.porBarbeiro.length){
-            secaoDupla(
-                'FATURAMENTO POR BARBEIRO',
-                r.porBarbeiro.map(b => [b.nome, String(b.finalizados), String(b.clientes), this.formatarMoeda(b.faturamento)]),
-                ['BARBEIRO','ATENDIMENTOS','CLIENTES','FATURAMENTO'],
-                'HORÁRIOS MAIS MOVIMENTADOS',
-                r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]),
-                ['HORÁRIO','AGENDAMENTOS']
-            );
-        } else {
-            secaoUnica('HORÁRIOS MAIS MOVIMENTADOS', r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]), ['HORÁRIO','AGENDAMENTOS']);
+            y = doc.lastAutoTable.finalY + 10;
         }
 
-        secaoDupla(
-            'SERVIÇOS REALIZADOS',
-            r.servicosOrdenados.map(([k,v]) => [k, String(v)]),
-            ['SERVIÇO','QUANTIDADE'],
-            'DIAS MAIS MOVIMENTADOS',
-            r.diasOrdenados.map(([k,v]) => [k, `${v} agendamento(s)`]),
-            ['DIA','AGENDAMENTOS']
-        );
+        const secao = (titulo, corpo, colunas) => {
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text(titulo, margem, y); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: {left: margem, right: margem, bottom: 20},
+                head: [colunas],
+                body: corpo.length ? corpo : [['Sem dados no período', '']],
+                theme: 'grid',
+                styles: { fontSize: 9.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                // só repinta o fundo em páginas NOVAS criadas pela própria tabela
+                // (pageNumber > 1 dentro desta chamada) — a página atual já está pintada.
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        };
 
-        // rodapé com linha dourada, marca da barbearia e numeração de página
+        secao('HORÁRIOS MAIS MOVIMENTADOS', r.horariosOrdenados.map(([k,v]) => [this.formatarHora(k), `${v} agendamento(s)`]), ['HORÁRIO','AGENDAMENTOS']);
+        secao('SERVIÇOS REALIZADOS', r.servicosOrdenados.map(([k,v]) => [k, String(v)]), ['SERVIÇO','QUANTIDADE']);
+        secao('DIAS MAIS MOVIMENTADOS', r.diasOrdenados.map(([k,v]) => [k, `${v} agendamento(s)`]), ['DIA','AGENDAMENTOS']);
+
+        // rodapé com linha dourada e numeração em todas as páginas do documento
         const totalPaginas = doc.internal.getNumberOfPages();
         for(let p = 1; p <= totalPaginas; p++){
             doc.setPage(p);
-            rodape(p, totalPaginas);
+            rodape(p);
         }
 
         // não baixa mais automaticamente: gera o arquivo PDF real uma única vez e
@@ -5681,7 +6027,7 @@ const admin = {
         });
     },
 
-/* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
+    /* ============ 10. GESTÃO DO BARBEIRO — somente para o dono ============ */
     async renderGestaoBarbeiro(){
         if(!this.ehAdmin()){ this.irPara('dashboard'); return; }
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando gestão do barbeiro...</div>';
@@ -5911,12 +6257,11 @@ const admin = {
         });
     },
 
-        /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
-       estrutural do PDF de Relatórios já existente no sistema (mesmo papel
-       branco com moldura preta, logo, título com friso dourado, cartão de
-       período/geração, cartões de resumo com ícone e tabela no mesmo estilo,
-       com rodapé e numeração de página), seguindo o relatório modelo fornecido
-       pela barbearia. Só o conteúdo muda: aqui é o desempenho de UM barbeiro. */
+    /* PDF da Gestão do Barbeiro — segue EXATAMENTE o mesmo padrão visual e
+       estrutural do PDF de Relatórios já existente no sistema (mesmo fundo,
+       logo, título com linha dourada, cartão de período/geração, cartões de
+       resumo, tabelas no mesmo estilo e rodapé com numeração de página).
+       Só o conteúdo muda: aqui é o desempenho de UM barbeiro específico. */
     async exportarGestaoPDF(){
         if(!this.ehAdmin()){ return; }
         if(!window.jspdf || !window.jspdf.jsPDF){
@@ -5930,162 +6275,106 @@ const admin = {
         const doc = new jsPDF({unit:'mm', format:'a4'});
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
-        const margem = 16;
+        const margem = 14;
 
         const C = {
-            bg: [255,255,255], texto: [17,17,17], muted: [120,120,120],
-            dourado: [201,164,99], cardBorda: [214,209,199], linhaTabela: [227,224,217],
-            headerTabela: [17,17,17], zebra: [247,246,242]
+            bg: [11,11,12], card: [24,24,27], border: [40,40,44],
+            texto: [242,241,238], muted: [154,154,158],
+            dourado: [201,164,99], douradoEscuro: [166,131,71]
         };
 
         const fundo = () => { doc.setFillColor(...C.bg); doc.rect(0,0,pageW,pageH,'F'); };
-        const moldura = () => { doc.setDrawColor(...C.texto); doc.setLineWidth(0.6); doc.roundedRect(6,6,pageW-12,pageH-12,3,3,'S'); };
-        const preparaPagina = () => { fundo(); moldura(); };
 
-        const rodape = (numero, totalPaginas) => {
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
-            doc.line(margem, pageH-16, pageW-margem, pageH-16);
-            doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.texto);
-            doc.text('PRIETO BARBEARIA', pageW/2, pageH-10.5, {align:'center'});
-            if(totalPaginas > 1){
-                doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
-                doc.text(`Página ${numero}`, pageW-margem, pageH-10.5, {align:'right'});
-            }
+        const rodape = (numero) => {
+            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.35);
+            doc.line(margem, pageH-14, pageW-margem, pageH-14);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...C.muted);
+            doc.text('PRIETO BARBEARIA', margem, pageH-9);
+            doc.text(`Página ${numero}`, pageW-margem, pageH-9, {align:'right'});
         };
 
-        const tituloComFriso = (texto, y) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...C.texto);
-            doc.text(texto, pageW/2, y, {align:'center'}); y += 6;
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.55);
-            doc.line(pageW/2-42, y, pageW/2-5, y);
-            doc.line(pageW/2+5, y, pageW/2+42, y);
-            doc.setFillColor(...C.dourado);
-            doc.rect(pageW/2-1.1, y-1.1, 2.2, 2.2, 'F');
-            return y + 10;
-        };
-
-        const tituloSecao = (texto, y, largura, centroX) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(largura < pageW-margem*2 ? 9.5 : 12); doc.setTextColor(...C.texto);
-            doc.text(texto, centroX, y, {align:'center'});
-            const largTexto = doc.getTextWidth(texto);
-            doc.setDrawColor(...C.dourado); doc.setLineWidth(0.4);
-            const meioLinha = y - 1.4;
-            doc.line(centroX-largura/2, meioLinha, centroX-largTexto/2-5, meioLinha);
-            doc.line(centroX+largTexto/2+5, meioLinha, centroX+largura/2, meioLinha);
-        };
-
-        const iconeDinheiro = (cx,cy) => {
-            doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.texto);
-            doc.text('$', cx, cy+1.5, {align:'center'});
-        };
-        const iconeCheck = (cx,cy) => {
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.6);
-            doc.line(cx-2.3, cy+0.3, cx-0.5, cy+2.1);
-            doc.line(cx-0.5, cy+2.1, cx+2.6, cy-2.3);
-        };
-        const iconePessoas = (cx,cy) => {
-            doc.setFillColor(...C.texto);
-            doc.circle(cx-1.7, cy-1.1, 1.05, 'F');
-            doc.circle(cx+1.7, cy-1.1, 1.05, 'F');
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.4); doc.setFillColor(255,255,255);
-            doc.ellipse(cx-1.7, cy+2.1, 1.9, 1.7, 'FD');
-            doc.ellipse(cx+1.7, cy+2.1, 1.9, 1.7, 'FD');
-        };
-        const desenhaIcone = (tipo, cx, cy) => {
-            if(tipo === 'dinheiro') iconeDinheiro(cx,cy);
-            else if(tipo === 'check') iconeCheck(cx,cy);
-            else iconePessoas(cx,cy);
-        };
-
-        // página 1: papel branco com moldura preta + logo original da barbearia
-        preparaPagina();
+        // página 1: fundo escuro + cabeçalho com a logo original (sem alterar cores/recorte)
+        fundo();
         let y = 20;
 
         const logoData = await this.carregarLogoBase64();
         if(logoData){
             try{
                 const props = doc.getImageProperties(logoData);
-                const larguraLogo = 58;
+                const larguraLogo = 64;
                 const alturaLogo = (props.height/props.width)*larguraLogo;
                 doc.addImage(logoData, props.fileType || 'PNG', (pageW-larguraLogo)/2, y, larguraLogo, alturaLogo);
-                y += alturaLogo + 8;
+                y += alturaLogo + 9;
             }catch(e){ /* segue sem logo se a imagem não puder ser lida */ }
         }
 
-        y = tituloComFriso('RELATÓRIO DO BARBEIRO', y);
-
+        doc.setFont('helvetica','bold'); doc.setFontSize(19); doc.setTextColor(...C.texto);
+        doc.text('RELATÓRIO DO BARBEIRO', pageW/2, y, {align:'center'}); y += 7;
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.dourado);
-        doc.text(this.barbeiroGestao.nome.toUpperCase(), pageW/2, y, {align:'center'}); y += 12;
+        doc.text(this.barbeiroGestao.nome, pageW/2, y, {align:'center'}); y += 5;
+        doc.setDrawColor(...C.dourado); doc.setLineWidth(0.9);
+        doc.line(pageW/2-16, y, pageW/2+16, y); y += 10;
 
-        tituloSecao('RESUMO DO PERÍODO', y, pageW-margem*2, pageW/2); y += 8;
-
-        // cartão "Período analisado / Gerado em", com ícone de calendário
-        const altInfo = 20;
-        doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
+        // cartão: período analisado / gerado em
+        const altInfo = 18;
+        doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
         doc.roundedRect(margem, y, pageW-margem*2, altInfo, 2, 2, 'FD');
-        doc.setDrawColor(...C.cardBorda);
-        doc.line(margem+46, y+4, margem+46, y+altInfo-4);
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.muted);
-        doc.text('PERÍODO ANALISADO', margem+6, y+8);
-        doc.text('GERADO EM', margem+6, y+altInfo-6);
-        doc.setDrawColor(...C.texto); doc.setLineWidth(0.35);
-        doc.roundedRect(margem+54, y+5.5, 4.6, 4, 0.6, 0.6, 'S');
-        doc.line(margem+54, y+7, margem+58.6, y+7);
-        doc.line(margem+55.4, y+4.6, margem+55.4, y+6.2);
-        doc.line(margem+57.2, y+4.6, margem+57.2, y+6.2);
-        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C.texto);
-        doc.text(r.periodoLabel, margem+62, y+9);
-        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C.muted);
-        doc.text(this.formatarDataHoraBR(new Date().toISOString()), margem+54, y+altInfo-6);
-        y += altInfo + 12;
+        doc.setDrawColor(...C.border);
+        doc.line(pageW/2, y+3, pageW/2, y+altInfo-3);
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C.muted);
+        doc.text('PERÍODO ANALISADO', margem+6, y+7);
+        doc.text('GERADO EM', pageW/2+6, y+7);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...C.texto);
+        doc.text(r.periodoLabel, margem+6, y+13.5);
+        doc.text(this.formatarDataHoraBR(new Date().toISOString()), pageW/2+6, y+13.5);
+        y += altInfo + 11;
 
-        // cartões de resumo: faturamento / atendimentos finalizados / clientes atendidos
+        // resumo do período
+        doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(...C.texto);
+        doc.text('RESUMO DO PERÍODO', margem, y); y += 6;
+
         const cartoes = [
-            {tipo:'dinheiro', valor: this.formatarMoeda(r.faturamento), label:'FATURAMENTO'},
-            {tipo:'check', valor: String(r.finalizados.length), label:'ATENDIMENTOS FINALIZADOS'},
-            {tipo:'pessoas', valor: String(r.clientes.size), label:'CLIENTES ATENDIDOS'}
+            {valor: this.formatarMoeda(r.faturamento), label: 'FATURAMENTO'},
+            {valor: String(r.finalizados.length), label: 'ATENDIMENTOS FINALIZADOS'},
+            {valor: String(r.clientes.size), label: 'CLIENTES ATENDIDOS'}
         ];
-        const gap = 6, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 34;
+        const gap = 4, largCartao = (pageW - margem*2 - gap*2)/3, altCartao = 23;
         cartoes.forEach((c,i) => {
             const x = margem + i*(largCartao+gap);
-            const cx = x + largCartao/2;
-            doc.setFillColor(255,255,255); doc.setDrawColor(...C.cardBorda); doc.setLineWidth(0.3);
+            doc.setFillColor(...C.card); doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
             doc.roundedRect(x, y, largCartao, altCartao, 2, 2, 'FD');
-            const iconY = y+9;
-            doc.setDrawColor(...C.texto); doc.setLineWidth(0.45);
-            doc.circle(cx, iconY, 5.2, 'S');
-            desenhaIcone(c.tipo, cx, iconY);
-            doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...C.texto);
-            doc.text(c.valor, cx, y+22, {align:'center'});
-            doc.setFont('helvetica','bold'); doc.setFontSize(6.6); doc.setTextColor(...C.muted);
-            doc.text(c.label, cx, y+28, {align:'center', maxWidth: largCartao-4});
+            doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(...C.dourado);
+            doc.text(c.valor, x+largCartao/2, y+11, {align:'center'});
+            doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(...C.muted);
+            doc.text(c.label, x+largCartao/2, y+17.5, {align:'center', maxWidth: largCartao-3});
         });
         y += altCartao + 12;
 
         // paginação manual (entre seções, quando o título+tabela não cabem mais na página)
         const garantirEspaco = (alturaMinima) => {
-            if(y + alturaMinima > pageH - 24){
-                doc.addPage(); preparaPagina(); y = 20;
+            if(y + alturaMinima > pageH - 22){
+                doc.addPage(); fundo(); y = 20;
             }
         };
 
         const secao = (titulo, corpo, colunas) => {
-            garantirEspaco(34);
-            tituloSecao(titulo, y, pageW-margem*2, pageW/2); y += 5;
+            garantirEspaco(30);
+            doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...C.texto);
+            doc.text(titulo, margem, y); y += 5;
             doc.autoTable({
                 startY: y,
-                margin: {left: margem, right: margem, bottom: 22},
+                margin: {left: margem, right: margem, bottom: 20},
                 head: [colunas],
                 body: corpo.length ? corpo : [['Sem dados no período', '', '', '', '', '', '']],
                 theme: 'grid',
-                styles: { fontSize: 8.5, textColor: C.texto, fillColor: [255,255,255], lineColor: C.linhaTabela, lineWidth: 0.15, cellPadding: 3 },
-                headStyles: { fillColor: C.headerTabela, textColor: [255,255,255], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: C.zebra },
-                // só repinta o fundo/moldura em páginas NOVAS criadas pela própria tabela
-                // (pageNumber > 1 dentro desta chamada) — a página atual já está pronta.
-                willDrawPage: (data) => { if(data.pageNumber > 1) preparaPagina(); }
+                styles: { fontSize: 8.5, textColor: C.texto, fillColor: C.card, lineColor: C.border, lineWidth: 0.15, cellPadding: 3 },
+                headStyles: { fillColor: C.dourado, textColor: [22,22,22], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [20,20,23] },
+                // só repinta o fundo em páginas NOVAS criadas pela própria tabela
+                // (pageNumber > 1 dentro desta chamada) — a página atual já está pintada.
+                willDrawPage: (data) => { if(data.pageNumber > 1) fundo(); }
             });
-            y = doc.lastAutoTable.finalY + 12;
+            y = doc.lastAutoTable.finalY + 10;
         };
 
         secao(
@@ -6102,11 +6391,11 @@ const admin = {
             ['CLIENTE','SERVIÇO','VALOR','DATA','HORÁRIO','STATUS','ORIGEM']
         );
 
-        // rodapé com linha dourada, marca da barbearia e numeração de página
+        // rodapé com linha dourada e numeração em todas as páginas do documento
         const totalPaginas = doc.internal.getNumberOfPages();
         for(let p = 1; p <= totalPaginas; p++){
             doc.setPage(p);
-            rodape(p, totalPaginas);
+            rodape(p);
         }
 
         const nomeArquivo = `relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
@@ -6118,7 +6407,7 @@ const admin = {
         });
     },
 
-formatarDataHoraBR(iso){
+    formatarDataHoraBR(iso){
         const d = new Date(iso);
         return d.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
     },
@@ -6488,6 +6777,20 @@ formatarDataHoraBR(iso){
             </div>
 
             <div class="dash-panel">
+                <h4>Telegram</h4>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
+                    <div style="max-width:520px;">
+                        <div style="font-weight:600;margin-bottom:4px;">${this.barbeiro.telegram_chat_id ? '✅ Telegram vinculado' : '⚪ Telegram não vinculado'}</div>
+                        <div style="color:var(--text-muted);font-size:12.5px;">
+                            Vincule seu Telegram para receber automaticamente o link de redefinição de senha (quando aprovado pelo administrador) direto no seu celular, sem precisar de e-mail.
+                        </div>
+                    </div>
+                    <button class="ag-btn" id="btn-vincular-telegram" onclick="admin.gerarVinculoTelegram()"><i class="fa-brands fa-telegram"></i> ${this.barbeiro.telegram_chat_id ? 'Vincular novamente' : 'Vincular Telegram'}</button>
+                </div>
+                <div id="vincular-telegram-msg" style="display:none;margin-top:14px;"></div>
+            </div>
+
+            <div class="dash-panel">
                 <h4>Disponibilidade no Agendamento Online</h4>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
                     <div style="max-width:520px;">
@@ -6546,6 +6849,37 @@ formatarDataHoraBR(iso){
         if(error){ alert('Não foi possível atualizar a conta: ' + error.message); return; }
         alert('Conta atualizada! Se o e-mail mudou, confirme pelo link enviado à nova caixa de entrada.');
         document.getElementById('cfg-senha').value = '';
+    },
+
+    // Gera um link de vínculo temporário com o bot do Telegram (10 min de validade).
+    // Ao clicar, o Telegram abre e manda automaticamente /start <token> pro bot,
+    // que captura o chat_id e vincula ao barbeiro (ver Edge Function telegram-webhook).
+    async gerarVinculoTelegram(){
+        const btn = document.getElementById('btn-vincular-telegram');
+        const msgEl = document.getElementById('vincular-telegram-msg');
+        if(btn){ btn.disabled = true; btn.dataset.textoOriginal = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando link...'; }
+        if(msgEl) msgEl.style.display = 'none';
+
+        const { data, error } = await sb.functions.invoke('gerar-vinculo-telegram', { body: {} });
+
+        if(btn){ btn.disabled = false; btn.innerHTML = btn.dataset.textoOriginal; }
+
+        if(error || !data || data.ok !== true || !data.link){
+            if(msgEl){
+                msgEl.style.display = 'block';
+                msgEl.innerHTML = '<span style="color:#e0665a;font-size:13px;">Não foi possível gerar o link agora. Tente novamente.</span>';
+            }
+            return;
+        }
+
+        if(msgEl){
+            msgEl.style.display = 'block';
+            msgEl.innerHTML = `
+                <a href="${data.link}" target="_blank" rel="noopener" class="ag-btn confirmar" style="display:inline-flex;">
+                    <i class="fa-brands fa-telegram"></i> Abrir Telegram e concluir vínculo
+                </a>
+                <div style="color:var(--text-muted);font-size:12px;margin-top:8px;">Este link vale por 10 minutos. Ao abrir, é só mandar a mensagem que já vem pronta.</div>`;
+        }
     },
 
     async salvarConfiguracoes(){
@@ -6641,7 +6975,219 @@ async function handleAdminLogin(event){
 
     await admin.carregarBarbeiro();
 }
+
+/* =========================================================
+   ÁREA RESTRITA — Recuperação de senha
+   Reaproveita o mesmo card do login (.admin-login-card, 380x587.13px)
+   só trocando qual dos dois fica visível dentro de #admin-login.
+   Usa a autenticação do Supabase já configurada no projeto (sb.auth) —
+   não depende de nenhum backend novo. O e-mail de redefinição, quando
+   configurado no painel do Supabase, leva o barbeiro de volta ao site
+   para definir a nova senha; essa tela final de "nova senha" ainda não
+   existe e pode ser implementada depois, sem impacto no que já existe. ========================================================= */
+function abrirRecuperarSenha(){
+    document.getElementById('admin-login-card-entrar').style.display = 'none';
+    document.getElementById('admin-login-card-recuperar').style.display = 'flex';
+    limparMsgRecuperarSenha();
+    document.getElementById('recuperar-email').value = document.getElementById('admin-email').value.trim();
+}
+
+function fecharRecuperarSenha(){
+    document.getElementById('admin-login-card-recuperar').style.display = 'none';
+    document.getElementById('admin-login-card-entrar').style.display = 'flex';
+    limparMsgRecuperarSenha();
+}
+
+function mostrarMsgRecuperarSenha(msg, tipo){
+    const el = document.getElementById('recuperar-senha-msg');
+    el.textContent = msg;
+    el.classList.remove('success');
+    if(tipo === 'success') el.classList.add('success');
+    el.classList.add('show');
+}
+
+function limparMsgRecuperarSenha(){
+    const el = document.getElementById('recuperar-senha-msg');
+    el.classList.remove('show', 'success');
+    el.textContent = '';
+}
+
+async function handleRecuperarSenha(event){
+    event.preventDefault();
+    limparMsgRecuperarSenha();
+
+    const email = document.getElementById('recuperar-email').value.trim();
+    const btn = document.getElementById('recuperar-senha-btn');
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    // Não chama mais sb.auth.resetPasswordForEmail diretamente: agora a solicitação
+    // primeiro precisa ser aprovada pelo Barbeiro Tradicional (administrador) na
+    // Área Restrita. Quem envia o e-mail de redefinição de verdade é a Edge Function
+    // "aprovar-redefinicao-senha", só depois da aprovação.
+    //
+    // A Edge Function "solicitar-redefinicao-senha" SEMPRE responde a mesma coisa,
+    // exista ou não o e-mail cadastrado — por isso a mensagem abaixo é sempre a
+    // mesma independente do resultado, mantendo a mesma garantia de privacidade
+    // que já existia aqui antes.
+    let deuErro = false;
+    try{
+        const { error } = await sb.functions.invoke('solicitar-redefinicao-senha', {
+            body: { email }
+        });
+        if(error) deuErro = true;
+    } catch(e){
+        deuErro = true;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Enviar solicitação';
+
+    if(deuErro){
+        mostrarMsgRecuperarSenha('Não foi possível enviar sua solicitação agora. Tente novamente.', 'error');
+        return;
+    }
+
+    mostrarMsgRecuperarSenha('Se o e-mail informado estiver cadastrado, sua solicitação foi enviada para aprovação do administrador. Você receberá o link para criar a nova senha pelo Telegram assim que ela for aprovada.', 'success');
+}
+
+/* =========================================================
+   ÁREA RESTRITA — Criar nova senha (após aprovação do administrador)
+   =========================================================
+   Fluxo completo:
+   1) Barbeiro pede recuperação (handleRecuperarSenha acima) → cai como
+      solicitação pendente, sem nenhum link gerado ainda.
+   2) Barbeiro Tradicional aprova pela notificação (admin.aprovarRedefinicaoSenha,
+      na seção de Notificações) → a Edge Function "aprovar-redefinicao-senha" gera
+      um TOKEN PRÓPRIO (aleatório, só o hash fica salvo no banco, validade de
+      15 minutos, uso único) e manda o link pronto pro Telegram do barbeiro que
+      solicitou — não é mais o Supabase Auth por e-mail.
+   3) Barbeiro clica no link do Telegram → abre o site com ?redefinir-senha=<token>
+      na URL (detectado no DOMContentLoaded, mais acima neste arquivo), que chama
+      mostrarTelaNovaSenhaComToken(token) abaixo.
+   4) Antes de mostrar o formulário, o token é conferido na Edge Function pública
+      "validar-token-redefinicao" (só confirma se ainda vale, não troca nada) —
+      assim o barbeiro já sabe de cara se o link expirou, em vez de preencher
+      tudo pra descobrir depois.
+   5) Barbeiro define a nova senha aqui (handleCriarNovaSenha) → a Edge Function
+      pública "redefinir-senha-com-token" confere o token de novo (hash, validade,
+      uso único) e troca a senha de verdade via service role — não existe sessão
+      de login nesse momento, o barbeiro chegou direto pelo link. Assim que usado,
+      o token nunca mais funciona (token_utilizado = true no banco).
+   ========================================================= */
+
+function mostrarTelaNovaSenha(){
+    // garante que estamos na Área Restrita (o link do Telegram já abre aqui via
+    // ?area-restrita=app, mas cobrimos o caso de o usuário já estar no site também)
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('booking-view').classList.remove('active');
+    document.getElementById('admin-view').classList.add('active');
+
+    document.getElementById('admin-panel').classList.remove('active');
+    document.getElementById('admin-login').classList.remove('hidden');
+    document.getElementById('admin-login-card-entrar').style.display = 'none';
+    document.getElementById('admin-login-card-recuperar').style.display = 'none';
+    document.getElementById('admin-login-card-nova-senha').style.display = 'flex';
+    window.scrollTo(0,0);
+}
+
+function limparMsgNovaSenha(){
+    const el = document.getElementById('nova-senha-msg');
+    el.classList.remove('show', 'success');
+    el.textContent = '';
+}
+
+function mostrarMsgNovaSenha(msg, tipo){
+    const el = document.getElementById('nova-senha-msg');
+    el.textContent = msg;
+    el.classList.remove('success');
+    if(tipo === 'success') el.classList.add('success');
+    el.classList.add('show');
+}
+
+// token do link do Telegram, guardado aqui depois de validado — é ele que
+// vai junto na chamada de redefinir-senha-com-token quando o barbeiro salvar.
+window.TOKEN_REDEFINICAO_SENHA = null;
+
+async function mostrarTelaNovaSenhaComToken(token){
+    mostrarTelaNovaSenha();
+    limparMsgNovaSenha();
+
+    const form = document.querySelector('#admin-login-card-nova-senha form');
+    const btn = document.getElementById('nova-senha-btn');
+    if(form) form.style.display = 'none';
+    mostrarMsgNovaSenha('Verificando o link...', null);
+
+    let valido = false;
+    try{
+        const { data, error } = await sb.functions.invoke('validar-token-redefinicao', { body: { token } });
+        valido = !error && data && data.valido === true;
+    }catch(e){ valido = false; }
+
+    if(!valido){
+        mostrarMsgNovaSenha('Este link é inválido ou já expirou. Solicite a recuperação de senha novamente na tela de login.', 'error');
+        return;
+    }
+
+    window.TOKEN_REDEFINICAO_SENHA = token;
+    limparMsgNovaSenha();
+    if(form) form.style.display = 'flex';
+}
+
+async function handleCriarNovaSenha(event){
+    event.preventDefault();
+    limparMsgNovaSenha();
+
+    const senha1 = document.getElementById('nova-senha-1').value;
+    const senha2 = document.getElementById('nova-senha-2').value;
+    const btn = document.getElementById('nova-senha-btn');
+    const token = window.TOKEN_REDEFINICAO_SENHA;
+
+    if(!token){
+        mostrarMsgNovaSenha('Link inválido. Volte pelo link enviado no Telegram.', 'error');
+        return;
+    }
+    if(senha1.length < 6){
+        mostrarMsgNovaSenha('A senha precisa ter pelo menos 6 caracteres.', 'error');
+        return;
+    }
+    if(senha1 !== senha2){
+        mostrarMsgNovaSenha('As senhas não conferem.', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const { data, error } = await sb.functions.invoke('redefinir-senha-com-token', {
+        body: { token, nova_senha: senha1 }
+    });
+
+    if(error || !data || data.ok !== true){
+        btn.disabled = false;
+        btn.textContent = 'Salvar nova senha';
+        const motivo = data?.error || 'Não foi possível salvar a nova senha. O link pode ter expirado — solicite a recuperação novamente.';
+        mostrarMsgNovaSenha(motivo, 'error');
+        return;
+    }
+
+    window.TOKEN_REDEFINICAO_SENHA = null;
+
+    btn.disabled = false;
+    btn.textContent = 'Salvar nova senha';
+    document.getElementById('nova-senha-1').value = '';
+    document.getElementById('nova-senha-2').value = '';
+    mostrarMsgNovaSenha('Senha alterada com sucesso! Faça login novamente com a nova senha.', 'success');
+
+    setTimeout(function(){
+        document.getElementById('admin-login-card-nova-senha').style.display = 'none';
+        document.getElementById('admin-login-card-entrar').style.display = 'flex';
+        limparMsgNovaSenha();
+    }, 2200);
+}
 </script>
+
 
 <!-- ================= ANIMAÇÕES AO ROLAR A PÁGINA =================
      Script isolado (não mexe em nenhuma outra função do site). Observa
@@ -6750,6 +7296,104 @@ async function handleAdminLogin(event){
     ctaObserver.observe(el);
     pulseObserver.observe(el);
   });
+})();
+</script>
+
+<!-- ================= CARROSSEL MOBILE — SERVIÇOS E AMBIENTE =================
+     Script isolado (não mexe em nenhuma outra função do site). Controla a
+     galeria/carrossel horizontal usado no celular pelas seções SERVIÇOS e
+     AMBIENTE: troca de slide (setas, bolinhas ou swipe), sem loop infinito
+     e sem duplicar imagens. No desktop/tablet os wrappers .services-track e
+     .ambiente-track ficam com display:contents (ver CSS), então mover o
+     "track" via transform aqui não tem nenhum efeito visual acima de
+     600px — a função existe, mas é inofensiva fora do celular. ================= -->
+<script>
+(function(){
+  var carrosseis = {};
+
+  function montar(nome, viewportSel, trackSel, dotsSel){
+    var viewport = document.querySelector(viewportSel);
+    var track = document.querySelector(trackSel);
+    var dotsEl = document.querySelector(dotsSel);
+    if(!viewport || !track || !dotsEl) return;
+
+    var total = track.children.length;
+    carrosseis[nome] = { viewport: viewport, track: track, dotsEl: dotsEl, index: 0, total: total };
+
+    // monta uma bolinha por imagem/slide, sem duplicar nada
+    dotsEl.innerHTML = '';
+    for(var i = 0; i < total; i++){
+      var dot = document.createElement('button');
+      dot.type = 'button';
+      dot.setAttribute('aria-label', 'Ir para o item ' + (i + 1));
+      dot.addEventListener('click', (function(idx){
+        return function(){ irPara(nome, idx); };
+      })(i));
+      dotsEl.appendChild(dot);
+    }
+
+    // swipe (arrastar o dedo) — só troca de slide em gesto horizontal
+    var startX = 0, startY = 0, arrastando = false;
+    viewport.addEventListener('touchstart', function(e){
+      if(!e.touches || !e.touches.length) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      arrastando = true;
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', function(e){
+      if(!arrastando) return;
+      arrastando = false;
+      var toque = e.changedTouches && e.changedTouches[0];
+      if(!toque) return;
+      var dx = toque.clientX - startX;
+      var dy = toque.clientY - startY;
+      if(Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // gesto vertical ou curto demais: ignora
+      navegar(nome, dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    renderizar(nome);
+  }
+
+  function renderizar(nome){
+    var c = carrosseis[nome];
+    if(!c) return;
+
+    c.track.style.transform = 'translateX(-' + (c.index * 100) + '%)';
+
+    var dots = c.dotsEl.children;
+    for(var i = 0; i < dots.length; i++){
+      dots[i].classList.toggle('active', i === c.index);
+    }
+
+    var setaPrev = c.viewport.querySelector('.carousel-prev');
+    var setaNext = c.viewport.querySelector('.carousel-next');
+    if(setaPrev) setaPrev.disabled = (c.index <= 0);
+    if(setaNext) setaNext.disabled = (c.index >= c.total - 1);
+  }
+
+  // navega +1/-1 slide; nunca ultrapassa os limites (sem loop infinito)
+  function navegar(nome, direcao){
+    var c = carrosseis[nome];
+    if(!c) return;
+    var novoIndex = c.index + direcao;
+    if(novoIndex < 0 || novoIndex > c.total - 1) return;
+    c.index = novoIndex;
+    renderizar(nome);
+  }
+
+  function irPara(nome, indice){
+    var c = carrosseis[nome];
+    if(!c) return;
+    if(indice < 0 || indice > c.total - 1) return;
+    c.index = indice;
+    renderizar(nome);
+  }
+
+  window.mobileCarouselNav = navegar;
+
+  montar('servicos', '#servicos .services-grid', '#servicos .services-track', '#servicos-dots');
+  montar('ambiente', '#ambiente .ambiente-gallery', '#ambiente .ambiente-track', '#ambiente-dots');
 })();
 </script>
 </body>
