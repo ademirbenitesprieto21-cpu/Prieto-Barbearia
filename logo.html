@@ -4074,6 +4074,12 @@ const admin = {
             clearInterval(this._relogioPontaPoraInterval);
             this._relogioPontaPoraInterval = null;
         }
+        // saindo de "Configurações", encerra a verificação automática do vínculo do
+        // Telegram (ver gerarVinculoTelegram/pararVerificacaoTelegram) — evita ficar
+        // consultando o banco em segundo plano depois que o barbeiro trocou de tela
+        if(pagina !== 'configuracoes' && this._telegramPollInterval){
+            this.pararVerificacaoTelegram();
+        }
 
         this.paginaAtual = pagina;
         document.querySelectorAll('.admin-menu button').forEach(b => {
@@ -6809,7 +6815,7 @@ const admin = {
                 <h4>Telegram</h4>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
                     <div style="max-width:520px;">
-                        <div style="font-weight:600;margin-bottom:4px;">${this.barbeiro.telegram_chat_id ? '✅ Telegram vinculado' : '⚪ Telegram não vinculado'}</div>
+                        <div id="telegram-status-texto" style="font-weight:600;margin-bottom:4px;">${this.barbeiro.telegram_chat_id ? '✅ Telegram vinculado' : '⚪ Telegram não vinculado'}</div>
                         <div style="color:var(--text-muted);font-size:12.5px;">
                             Vincule seu Telegram para receber automaticamente o link de redefinição de senha (quando aprovado pelo administrador) direto no seu celular, sem precisar de e-mail.
                         </div>
@@ -6908,7 +6914,54 @@ const admin = {
                 <a href="${data.link}" target="_blank" rel="noopener" class="ag-btn confirmar" style="display:inline-flex;">
                     <i class="fa-brands fa-telegram"></i> Abrir Telegram e concluir vínculo
                 </a>
-                <div style="color:var(--text-muted);font-size:12px;margin-top:8px;">Este link vale por 10 minutos. Ao abrir, é só mandar a mensagem que já vem pronta.</div>`;
+                <div style="color:var(--text-muted);font-size:12px;margin-top:8px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Este link vale por 10 minutos. Assim que você concluir no Telegram, esta tela atualiza sozinha.
+                </div>`;
+        }
+
+        // liga a verificação automática: enquanto o link estiver válido, consulta o
+        // banco periodicamente e, assim que detectar o telegram_chat_id preenchido
+        // (gravado pela Edge Function telegram-webhook ao receber o /start do bot),
+        // atualiza o status na tela sem precisar de F5 nem de recarregar a página
+        this.iniciarVerificacaoTelegram();
+    },
+
+    // consulta o banco a cada 3s (até 10 min, mesma validade do link) para detectar
+    // quando o telegram_chat_id do barbeiro logado foi preenchido pelo webhook do bot
+    iniciarVerificacaoTelegram(){
+        this.pararVerificacaoTelegram(); // evita duplicar o intervalo se o barbeiro clicar em "Vincular novamente"
+        const barbeiroId = this.barbeiro.id;
+        let tentativas = 0;
+        const MAX_TENTATIVAS = 200; // 200 x 3s = 10 minutos, mesma validade do link
+
+        this._telegramPollInterval = setInterval(async () => {
+            tentativas++;
+            if(tentativas > MAX_TENTATIVAS){ this.pararVerificacaoTelegram(); return; }
+
+            const { data, error } = await sb.from('barbeiros').select('telegram_chat_id').eq('id', barbeiroId).maybeSingle();
+            if(error || !data || !data.telegram_chat_id) return; // ainda não vinculou; tenta de novo no próximo ciclo
+
+            this.barbeiro.telegram_chat_id = data.telegram_chat_id;
+            this.pararVerificacaoTelegram();
+
+            // só atualiza a tela se o barbeiro ainda estiver em "Configurações"
+            // (se ele já trocou de página, o interval já teria sido encerrado pelo irPara)
+            const statusEl = document.getElementById('telegram-status-texto');
+            const btn = document.getElementById('btn-vincular-telegram');
+            const msgEl = document.getElementById('vincular-telegram-msg');
+            if(statusEl) statusEl.textContent = '✅ Telegram vinculado';
+            if(btn) btn.innerHTML = '<i class="fa-brands fa-telegram"></i> Vincular novamente';
+            if(msgEl){
+                msgEl.innerHTML = '<span style="color:#3fb96a;font-size:13px;font-weight:600;"><i class="fa-solid fa-circle-check"></i> Telegram vinculado com sucesso! Você já vai receber por lá o link de redefinição de senha quando for aprovado.</span>';
+                setTimeout(() => { if(msgEl) msgEl.style.display = 'none'; }, 6000);
+            }
+        }, 3000);
+    },
+
+    pararVerificacaoTelegram(){
+        if(this._telegramPollInterval){
+            clearInterval(this._telegramPollInterval);
+            this._telegramPollInterval = null;
         }
     },
 
