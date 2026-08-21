@@ -2,6 +2,38 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<script>
+/* ============================================================
+   ANTI-FLASH DO PWA DA ÁREA RESTRITA — deve ser o 1º script do
+   documento, executado de forma síncrona (sem defer/async) antes
+   de qualquer outra coisa no <head> ou <body>.
+
+   Problema que isto resolve: o app instalado (start_url definido
+   em manifest-barbeiros.json) abre em "/?area-restrita=app", mas
+   a Home pública (#home-view) é visível por padrão no CSS e só é
+   escondida por JavaScript dentro de showAdmin(), chamada apenas
+   no evento DOMContentLoaded — ou seja, DEPOIS que o navegador já
+   pintou a Home na tela. Isso causava a Home aparecer por uma
+   fração de segundo antes do redirecionamento para a Área Restrita.
+
+   Solução: aqui, ainda no topo do <head> e antes de qualquer parte
+   visível do documento ser processada, já detectamos o parâmetro
+   e marcamos a classe "pwa-somente-area-restrita" no <html>. As
+   regras CSS correspondentes (mais abaixo, no <style> principal)
+   escondem #home-view e revelam #admin-view desde o primeiro
+   quadro renderizado — a Home nunca chega a ser pintada.
+
+   Não interfere em nada do site público: sem o parâmetro
+   ?area-restrita=app na URL, esta classe nunca é adicionada e o
+   comportamento continua idêntico ao de sempre. */
+(function(){
+  try{
+    if(new URLSearchParams(window.location.search).get('area-restrita') === 'app'){
+      document.documentElement.classList.add('pwa-somente-area-restrita');
+    }
+  }catch(e){}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Barbearia Prieto | Sanga Puitã - Ponta Porã</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +56,33 @@
 <meta name="apple-mobile-web-app-title" content="Prieto">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
+  /* =========================================================
+     ANTI-FLASH DO PWA DA ÁREA RESTRITA (ver o script de detecção
+     no topo do <head>, que adiciona esta classe no <html> de
+     forma síncrona quando a URL tem ?area-restrita=app).
+
+     #home-view não tem, por padrão, nenhuma regra de display —
+     fica visível/pintada normalmente. #admin-view, por padrão,
+     é "display:none" (ver mais abaixo) e só passa a aparecer via
+     JS (showAdmin()), que só roda no DOMContentLoaded.
+
+     Estas duas regras resolvem isso só com CSS, antes de qualquer
+     JavaScript: escondem a Home e revelam o contêiner da Área
+     Restrita já no primeiro quadro renderizado. Dentro dele, o
+     card de login (#admin-login) já é "display:flex" por padrão
+     e o painel (#admin-panel) já é "display:none" por padrão —
+     ou seja, a tela de login aparece direto; se houver sessão
+     válida, o JS (admin.checarSessao(), chamado normalmente por
+     showAdmin()) troca para o painel pouco depois, sem nunca
+     passar pela Home. Especificidade (html.classe + #id) já é
+     maior que a do "#admin-view{display:none}" abaixo, mas os
+     !important garantem a prioridade mesmo se algo mudar. Sem o
+     parâmetro ?area-restrita=app, esta classe nunca existe e nada
+     aqui se aplica — o site público continua 100% inalterado. */
+  html.pwa-somente-area-restrita #home-view{display:none !important;}
+  html.pwa-somente-area-restrita #booking-view{display:none !important;}
+  html.pwa-somente-area-restrita #admin-view{display:block !important;}
+
   /* =========================================================
      SITE PRINCIPAL (Home) — estilos originais do index.html
      ========================================================= */
