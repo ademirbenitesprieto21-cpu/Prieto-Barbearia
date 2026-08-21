@@ -6810,21 +6810,11 @@ const admin = {
                 <button class="ag-btn" onclick="admin.salvarConta()"><i class="fa-solid fa-key"></i> Atualizar conta</button>
             </div>
 
-            ${this.ehAdmin() ? '' : `
-            <div class="dash-panel">
-                <h4>Telegram</h4>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
-                    <div style="max-width:520px;">
-                        <div id="telegram-status-texto" style="font-weight:600;margin-bottom:4px;">${this.barbeiro.telegram_chat_id ? '✅ Telegram vinculado' : '⚪ Telegram não vinculado'}</div>
-                        <div style="color:var(--text-muted);font-size:12.5px;">
-                            Vincule seu Telegram para receber automaticamente o link de redefinição de senha (quando aprovado pelo administrador) direto no seu celular, sem precisar de e-mail.
-                        </div>
-                    </div>
-                    <button class="ag-btn" id="btn-vincular-telegram" onclick="admin.gerarVinculoTelegram()"><i class="fa-brands fa-telegram"></i> ${this.barbeiro.telegram_chat_id ? 'Vincular novamente' : 'Vincular Telegram'}</button>
-                </div>
-                <div id="vincular-telegram-msg" style="display:none;margin-top:14px;"></div>
-            </div>
-            `}
+            ${(() => { /* painel "Telegram" removido da Área Restrita para todos os barbeiros
+                          (Tradicional e Experiente) — ver histórico de alterações. As funções
+                          gerarVinculoTelegram/iniciarVerificacaoTelegram/pararVerificacaoTelegram
+                          e o restante da integração com o bot permanecem intactas no código,
+                          só a exibição deste painel em Configurações foi removida. */ return ''; })()}
 
             <div class="dash-panel">
                 <h4>Disponibilidade no Agendamento Online</h4>
