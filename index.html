@@ -6804,6 +6804,7 @@ const admin = {
                 <button class="ag-btn" onclick="admin.salvarConta()"><i class="fa-solid fa-key"></i> Atualizar conta</button>
             </div>
 
+            ${this.ehAdmin() ? '' : `
             <div class="dash-panel">
                 <h4>Telegram</h4>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
@@ -6817,6 +6818,7 @@ const admin = {
                 </div>
                 <div id="vincular-telegram-msg" style="display:none;margin-top:14px;"></div>
             </div>
+            `}
 
             <div class="dash-panel">
                 <h4>Disponibilidade no Agendamento Online</h4>

@@ -1147,13 +1147,38 @@
   }
   .admin-login-btn:hover{background:#e8e8e8;}
   .admin-login-btn:disabled{opacity:.55;cursor:not-allowed;}
-  .admin-login-error{
-    display:none;background:rgba(220,80,80,.1);border:1px solid rgba(220,80,80,.35);
-    color:#e6a3a3;font-size:12.5px;border-radius:8px;padding:10px 12px;margin-bottom:16px;text-align:left;
+  /* ---------- Área Restrita: notificações flutuantes (toast) ----------
+     Substituem as antigas mensagens "in-flow" do login/recuperação/nova senha.
+     Ficam em camada própria (position:fixed), fora do fluxo do formulário,
+     então nunca alteram tamanho, posição ou espaçamento dos campos/botões. */
+  .admin-toast-container{
+    position:fixed;top:26px;left:50%;transform:translateX(-50%);
+    z-index:9999;display:flex;flex-direction:column;gap:10px;
+    width:min(360px, calc(100vw - 32px));pointer-events:none;
   }
-  .admin-login-error.show{display:block;}
-  .admin-login-error.success{
-    background:rgba(120,190,140,.1);border:1px solid rgba(120,190,140,.35);color:#a8dab6;
+  .admin-toast{
+    pointer-events:auto;position:relative;overflow:hidden;
+    display:flex;align-items:flex-start;gap:10px;
+    background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);
+    border-radius:12px;padding:12px 14px 14px;box-shadow:0 14px 34px rgba(0,0,0,.5);
+    color:var(--text);font-family:'Inter',sans-serif;font-size:12.5px;line-height:1.5;text-align:left;
+    opacity:0;transform:translateY(-14px) scale(.96);
+    transition:opacity .28s ease, transform .28s ease;
+  }
+  .admin-toast.show{opacity:1;transform:translateY(0) scale(1);}
+  .admin-toast.hide{opacity:0;transform:translateY(-10px) scale(.96);}
+  .admin-toast-icon{flex:0 0 auto;font-size:15px;margin-top:1px;color:var(--gold);}
+  .admin-toast-text{flex:1;}
+  .admin-toast-bar{position:absolute;left:0;bottom:0;height:2px;background:var(--gold);animation:adminToastTime 4.2s linear forwards;}
+  .admin-toast--success{border-left-color:#7cc98f;}
+  .admin-toast--success .admin-toast-icon{color:#7cc98f;}
+  .admin-toast--success .admin-toast-bar{background:#7cc98f;}
+  .admin-toast--error{border-left-color:#e07a7a;}
+  .admin-toast--error .admin-toast-icon{color:#e07a7a;}
+  .admin-toast--error .admin-toast-bar{background:#e07a7a;}
+  @keyframes adminToastTime{from{width:100%;}to{width:0%;}}
+  @media (max-width:480px){
+    .admin-toast-container{top:auto;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100vw - 24px);}
   }
 
   /* ---------- Área Restrita: tela de Recuperação de senha ----------
@@ -2605,6 +2630,11 @@
      ========================================================= -->
 <div id="admin-view">
 
+  <!-- Container das notificações flutuantes (toast) da Área Restrita: fixo na
+       tela, fora do fluxo dos cards de login/recuperação/nova senha, para que
+       nenhuma mensagem altere o layout do formulário. Ver mostrarToastAdmin(). -->
+  <div class="admin-toast-container" id="admin-toast-container"></div>
+
   <!-- ============= LOGIN ============= -->
   <div id="admin-login">
     <div class="admin-login-card" id="admin-login-card-entrar">
@@ -2613,8 +2643,6 @@
         <img src="logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-login-bottom">
-        <div class="admin-login-error" id="admin-login-error"></div>
-
         <form onsubmit="handleAdminLogin(event)">
           <div class="admin-field">
             <label for="admin-email">E-mail</label>
@@ -2638,8 +2666,6 @@
       <div class="admin-recover-bottom">
         <div class="admin-recover-title">Recuperação de senha</div>
         <div class="admin-recover-sub">Informe o e-mail cadastrado. Sua solicitação será enviada para aprovação do administrador.</div>
-
-        <div class="admin-login-error" id="recuperar-senha-msg"></div>
 
         <form onsubmit="handleRecuperarSenha(event)">
           <div class="admin-field">
@@ -2670,8 +2696,6 @@
       <div class="admin-recover-bottom">
         <div class="admin-recover-title">Criar nova senha</div>
         <div class="admin-recover-sub">Sua solicitação foi aprovada. Defina abaixo a nova senha de acesso.</div>
-
-        <div class="admin-login-error" id="nova-senha-msg"></div>
 
         <form onsubmit="handleCriarNovaSenha(event)">
           <div class="admin-field">
@@ -3583,6 +3607,14 @@ window.addEventListener('DOMContentLoaded', function(){
 /* =========================================================
    ÁREA RESTRITA — painel administrativo (Supabase)
    ========================================================= */
+
+/* declarado logo no início do script (antes de qualquer outra coisa, inclusive
+   antes do Supabase ser inicializado) para que o toast de mensagens do login/
+   recuperação/nova senha nunca dependa da ordem de carregamento do resto do
+   arquivo — mesmo que algo mais abaixo falhe, mostrarToastAdmin/limparToastAdmin
+   continuam funcionando. */
+let adminToastTimer = null;
+
 const SUPABASE_URL = 'https://suxzplbcesapowoppwhf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1eHpwbGJjZXNhcG93b3Bwd2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTk2NzEsImV4cCI6MjEwMTE3NTY3MX0.61503msT-pGNLnbJCNbzTJ2vyN2Y20U8ZYWBBFD3jE0';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -4021,15 +4053,11 @@ const admin = {
     },
 
     mostrarErroLogin(msg){
-        const el = document.getElementById('admin-login-error');
-        el.textContent = msg;
-        el.classList.add('show');
+        mostrarToastAdmin(msg, 'error');
     },
 
     limparErroLogin(){
-        const el = document.getElementById('admin-login-error');
-        el.classList.remove('show');
-        el.textContent = '';
+        limparToastAdmin();
     },
 
     irPara(pagina){
@@ -6776,6 +6804,7 @@ const admin = {
                 <button class="ag-btn" onclick="admin.salvarConta()"><i class="fa-solid fa-key"></i> Atualizar conta</button>
             </div>
 
+            ${this.ehAdmin() ? '' : `
             <div class="dash-panel">
                 <h4>Telegram</h4>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
@@ -6789,6 +6818,7 @@ const admin = {
                 </div>
                 <div id="vincular-telegram-msg" style="display:none;margin-top:14px;"></div>
             </div>
+            `}
 
             <div class="dash-panel">
                 <h4>Disponibilidade no Agendamento Online</h4>
@@ -6999,17 +7029,11 @@ function fecharRecuperarSenha(){
 }
 
 function mostrarMsgRecuperarSenha(msg, tipo){
-    const el = document.getElementById('recuperar-senha-msg');
-    el.textContent = msg;
-    el.classList.remove('success');
-    if(tipo === 'success') el.classList.add('success');
-    el.classList.add('show');
+    mostrarToastAdmin(msg, tipo);
 }
 
 function limparMsgRecuperarSenha(){
-    const el = document.getElementById('recuperar-senha-msg');
-    el.classList.remove('show', 'success');
-    el.textContent = '';
+    limparToastAdmin();
 }
 
 async function handleRecuperarSenha(event){
@@ -7093,17 +7117,58 @@ function mostrarTelaNovaSenha(){
 }
 
 function limparMsgNovaSenha(){
-    const el = document.getElementById('nova-senha-msg');
-    el.classList.remove('show', 'success');
-    el.textContent = '';
+    limparToastAdmin();
 }
 
 function mostrarMsgNovaSenha(msg, tipo){
-    const el = document.getElementById('nova-senha-msg');
-    el.textContent = msg;
-    el.classList.remove('success');
-    if(tipo === 'success') el.classList.add('success');
-    el.classList.add('show');
+    mostrarToastAdmin(msg, tipo);
+}
+
+/* ---------- Área Restrita: notificação flutuante (toast) ----------
+   Usada por mostrarErroLogin/limparErroLogin (login), mostrarMsgRecuperarSenha/
+   limparMsgRecuperarSenha (recuperação de senha) e mostrarMsgNovaSenha/limparMsgNovaSenha
+   (criar nova senha). Renderiza numa camada fixa (#admin-toast-container), totalmente
+   independente do formulário — nunca altera tamanho, posição ou espaçamento dos campos,
+   botões ou do card de login. Some sozinha após alguns segundos, com animação de
+   entrada/saída. tipo: 'success' | 'error' | qualquer outro valor (neutro/informativo). */
+function mostrarToastAdmin(msg, tipo){
+    const container = document.getElementById('admin-toast-container');
+    if(!container || !msg) return;
+
+    // mantém só uma mensagem visível por vez (fluxo de login é sequencial)
+    limparToastAdmin();
+
+    const classeTipo = tipo === 'success' ? 'admin-toast--success'
+        : tipo === 'error' ? 'admin-toast--error'
+        : 'admin-toast--info';
+    const icone = tipo === 'success' ? 'fa-circle-check'
+        : tipo === 'error' ? 'fa-triangle-exclamation'
+        : 'fa-lock';
+
+    const toast = document.createElement('div');
+    toast.className = `admin-toast ${classeTipo}`;
+    toast.innerHTML = `
+        <div class="admin-toast-icon"><i class="fa-solid ${icone}"></i></div>
+        <div class="admin-toast-text"></div>
+        <div class="admin-toast-bar"></div>
+    `;
+    toast.querySelector('.admin-toast-text').textContent = msg;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    adminToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
+    }, 4200);
+}
+
+function limparToastAdmin(){
+    const container = document.getElementById('admin-toast-container');
+    if(!container) return;
+    clearTimeout(adminToastTimer);
+    container.querySelectorAll('.admin-toast').forEach(t => t.remove());
 }
 
 // token do link do Telegram, guardado aqui depois de validado — é ele que
