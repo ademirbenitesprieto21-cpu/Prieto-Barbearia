@@ -2,7 +2,39 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* ============================================================
+   ANTI-FLASH DO PWA DA ÁREA RESTRITA — deve ser o 1º script do
+   documento, executado de forma síncrona (sem defer/async) antes
+   de qualquer outra coisa no <head> ou <body>.
+
+   Problema que isto resolve: o app instalado (start_url definido
+   em manifest-barbeiros.json) abre em "/?area-restrita=app", mas
+   a Home pública (#home-view) é visível por padrão no CSS e só é
+   escondida por JavaScript dentro de showAdmin(), chamada apenas
+   no evento DOMContentLoaded — ou seja, DEPOIS que o navegador já
+   pintou a Home na tela. Isso causava a Home aparecer por uma
+   fração de segundo antes do redirecionamento para a Área Restrita.
+
+   Solução: aqui, ainda no topo do <head> e antes de qualquer parte
+   visível do documento ser processada, já detectamos o parâmetro
+   e marcamos a classe "pwa-somente-area-restrita" no <html>. As
+   regras CSS correspondentes (mais abaixo, no <style> principal)
+   escondem #home-view e revelam #admin-view desde o primeiro
+   quadro renderizado — a Home nunca chega a ser pintada.
+
+   Não interfere em nada do site público: sem o parâmetro
+   ?area-restrita=app na URL, esta classe nunca é adicionada e o
+   comportamento continua idêntico ao de sempre. */
+(function(){
+  try{
+    if(new URLSearchParams(window.location.search).get('area-restrita') === 'app'){
+      document.documentElement.classList.add('pwa-somente-area-restrita');
+    }
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Barbearia Prieto | Sanga Puitã - Ponta Porã</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +56,33 @@
 <meta name="apple-mobile-web-app-title" content="Prieto">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
+  /* =========================================================
+     ANTI-FLASH DO PWA DA ÁREA RESTRITA (ver o script de detecção
+     no topo do <head>, que adiciona esta classe no <html> de
+     forma síncrona quando a URL tem ?area-restrita=app).
+
+     #home-view não tem, por padrão, nenhuma regra de display —
+     fica visível/pintada normalmente. #admin-view, por padrão,
+     é "display:none" (ver mais abaixo) e só passa a aparecer via
+     JS (showAdmin()), que só roda no DOMContentLoaded.
+
+     Estas duas regras resolvem isso só com CSS, antes de qualquer
+     JavaScript: escondem a Home e revelam o contêiner da Área
+     Restrita já no primeiro quadro renderizado. Dentro dele, o
+     card de login (#admin-login) já é "display:flex" por padrão
+     e o painel (#admin-panel) já é "display:none" por padrão —
+     ou seja, a tela de login aparece direto; se houver sessão
+     válida, o JS (admin.checarSessao(), chamado normalmente por
+     showAdmin()) troca para o painel pouco depois, sem nunca
+     passar pela Home. Especificidade (html.classe + #id) já é
+     maior que a do "#admin-view{display:none}" abaixo, mas os
+     !important garantem a prioridade mesmo se algo mudar. Sem o
+     parâmetro ?area-restrita=app, esta classe nunca existe e nada
+     aqui se aplica — o site público continua 100% inalterado. */
+  html.pwa-somente-area-restrita #home-view{display:none !important;}
+  html.pwa-somente-area-restrita #booking-view{display:none !important;}
+  html.pwa-somente-area-restrita #admin-view{display:block !important;}
+
   /* =========================================================
      SITE PRINCIPAL (Home) — estilos originais do index.html
      ========================================================= */
@@ -203,6 +262,97 @@
     animation:none; /* o hover sempre tem prioridade sobre a animação de pulso */
   }
   .btn-agendamento-whatsapp:active{transform:translateY(0);box-shadow:0 8px 18px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05);}
+
+  /* =========================================================
+     BOTÃO FLUTUANTE — GRUPO DO WHATSAPP
+     Fica fixo no canto inferior direito da Home, visível durante toda
+     a rolagem da página (position:fixed + z-index alto, acima de todo
+     o resto do site). Usa o mesmo verde de identidade do WhatsApp já
+     usado no projeto (#25D366 — ver .action-btn.whatsapp no Agendamento
+     Online), mantendo consistência visual com o resto do site.
+     Vive dentro de #home-view, então some automaticamente fora da Home
+     (Agendamento Online e Área Restrita/PWA) sem precisar de regra extra.
+
+     Comportamento: por padrão só o ícone circular fica visível. Um clique
+     nele (toggleWhatsappFloat(), função global no <script> principal —
+     mesmo padrão de toggleMobileMenu()/openWhatsappModal() já usados no
+     projeto) adiciona a classe "open" no wrapper, revelando ao lado o
+     rótulo "Grupo do WhatsApp" com uma transição curta de opacidade +
+     deslocamento. Clicar no ícone de novo remove a classe e esconde o
+     rótulo; clicar no próprio rótulo abre o link do grupo.
+     ========================================================= */
+  .whatsapp-float-wrap{
+    position:fixed;
+    right:calc(env(safe-area-inset-right, 0px) + 22px);
+    bottom:calc(env(safe-area-inset-bottom, 0px) + 22px);
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .whatsapp-float-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:50%;flex-shrink:0;
+    background:#25D366;color:#08320f;border:none;cursor:pointer;
+    font-size:26px;
+    box-shadow:0 10px 26px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.2);
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  /* Computador: leve elevação + clareamento sutil ao passar o mouse */
+  .whatsapp-float-btn:hover{
+    background:#2be579;
+    transform:translateY(-3px);
+    box-shadow:0 14px 32px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.25);
+  }
+  /* Celular/computador: leve "afundada" discreta ao clicar/tocar */
+  .whatsapp-float-btn:active{
+    transform:translateY(0) scale(.94);
+    box-shadow:0 6px 16px rgba(0,0,0,.3);
+  }
+
+  /* Rótulo "Grupo do WhatsApp": existe sempre no DOM, mas fica
+     invisível/inacessível até o wrapper ganhar a classe "open". */
+  .whatsapp-float-label{
+    display:flex;align-items:center;
+    padding:14px 20px;
+    background:#25D366;
+    color:#08320f;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.2px;
+    border-radius:50px;
+    box-shadow:0 10px 26px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.2);
+    text-decoration:none;
+    white-space:nowrap;
+    opacity:0;
+    transform:translateX(10px) scale(.94);
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease, background .25s ease;
+  }
+  .whatsapp-float-wrap.open .whatsapp-float-label{
+    opacity:1;
+    transform:translateX(0) scale(1);
+    pointer-events:auto;
+  }
+  .whatsapp-float-label:hover{background:#2be579;}
+  .whatsapp-float-label:active{transform:scale(.97);}
+
+  @media(max-width:960px){
+    /* Celular/tablet: botão e rótulo menores para não ocupar espaço
+       nem cobrir outros elementos (ex.: setas de carrossel, rodapé). */
+    .whatsapp-float-wrap{
+      right:calc(env(safe-area-inset-right, 0px) + 14px);
+      bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
+      gap:8px;
+    }
+    .whatsapp-float-btn{width:48px;height:48px;font-size:22px;}
+    .whatsapp-float-label{padding:11px 16px;font-size:13px;}
+  }
+  @media(hover:none){
+    /* Em telas de toque não há hover real: usa só o efeito de toque. */
+    .whatsapp-float-btn:active{transform:scale(.9);}
+  }
 
   /* SECTION HEADINGS */
   .section{padding:100px 0;}
@@ -1063,32 +1213,43 @@
   #admin-login.hidden{display:none;}
   .admin-login-card{
     width:100%;max-width:380px;
+    height:587.13px;
     background:var(--card);
-    border:1px solid var(--border);
+    border:1px solid rgba(255,255,255,.09);
     border-radius:20px;
     text-align:center;
     box-shadow:0 30px 70px rgba(0,0,0,.5);
     overflow:hidden;
-  }
-  .admin-login-top{
-    background:#000;
-    padding:45px 30px 40px;
+    display:flex;flex-direction:column;
     position:relative;
   }
-  .admin-login-top::before{
-      content:"";
-      width:180px;height:180px;
-      background:rgba(255,255,255,.04);
-      border-radius:50%;
-      position:absolute;left:50%;top:-90px;
-      transform:translateX(-50%);
-      filter:blur(40px);
+  /* botão "voltar" em seta, canto superior esquerdo do card — substitui o
+     antigo link de texto "Voltar para o site"; mesma ação (adminVoltarSite()) */
+  .admin-login-back{
+    position:absolute;top:16px;left:16px;z-index:2;
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:none;
+    color:var(--text);font-size:16px;cursor:pointer;
+    transition:opacity .2s ease;
+  }
+  .admin-login-back:hover{opacity:.7;}
+  .admin-login-top{
+    flex:0 0 auto;
+    height:230.63px;
+    padding:0 30px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    margin-top: 30px;
   }
   .admin-login-top img{
       position:relative;
-      width:100%;max-width:220px;
-      height:auto;margin:0 auto;display:block;
+      max-width:248px;max-height:100%;
+      width:auto;height:auto;
+      object-fit:contain;
+      margin:0 auto;display:block;
       filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+
   }
   /* [LOGO] + "ÁREA RESTRITA" formando um único bloco de identidade visual,
      bem colado logo abaixo da logo, sem o divisor que separava os dois blocos */
@@ -1103,7 +1264,7 @@
       text-transform:uppercase;
       margin-top:16px;
   }
-  .admin-login-bottom{padding:22px 36px 40px;}
+  .admin-login-bottom{flex:1 1 auto;padding:16px 32px 40px;display:flex;flex-direction:column;min-height:0;}
   .admin-login-card .admin-logo{
     width:72px;height:72px;border-radius:50%;
     margin:0 auto 18px;
@@ -1113,32 +1274,119 @@
   }
   .admin-login-card h1{display:none;} /* substituído pelo kicker abaixo da logo, mantido no DOM por compatibilidade */
   .admin-login-card .sub{color:var(--text-muted);font-size:13.5px;margin-top:6px;margin-bottom:26px;text-align:center;}
-  .admin-field{text-align:left;margin-bottom:16px;}
+  .admin-field{text-align:left;margin-bottom:20px;}
   .admin-field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:7px;letter-spacing:.3px;}
   .admin-field input{
-    width:100%;background:var(--input-bg);border:1px solid var(--border);
-    border-radius:10px;padding:12px 14px;color:var(--text);
+    width:100%;background:var(--input-bg);border:1px solid rgba(255,255,255,.10);
+    border-radius:11px;padding:12px 14px;color:var(--text);
     font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:.2s;
   }
+  .admin-field input::placeholder{color:var(--text-muted);}
   .admin-field input:focus{border-color:var(--accent);}
+  .admin-forgot-wrap{text-align:right;margin:0 0 26px;}
+  .admin-forgot-text{
+    color:var(--text-muted);font-size:12.5px;cursor:pointer;
+    background:none;border:none;font-family:'Inter',sans-serif;padding:0;
+    transition:color .2s ease;
+  }
+  .admin-forgot-text:hover{color:var(--accent);}
   .admin-login-btn{
-    width:100%;padding:13px;border:none;border-radius:10px;
+    width:100%;padding:13px;border:none;border-radius:11px;
     background:#ffffff;color:#111111;font-weight:700;font-size:14px;
-    font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;margin-top:6px;
+    font-family:'Inter',sans-serif;cursor:pointer;transition:.2s;margin-top:7px;
   }
   .admin-login-btn:hover{background:#e8e8e8;}
   .admin-login-btn:disabled{opacity:.55;cursor:not-allowed;}
-  .admin-login-error{
-    display:none;background:rgba(220,80,80,.1);border:1px solid rgba(220,80,80,.35);
-    color:#e6a3a3;font-size:12.5px;border-radius:8px;padding:10px 12px;margin-bottom:16px;text-align:left;
+  /* ---------- Área Restrita: notificações flutuantes (toast) ----------
+     Substituem as antigas mensagens "in-flow" do login/recuperação/nova senha.
+     Ficam em camada própria (position:fixed), fora do fluxo do formulário,
+     então nunca alteram tamanho, posição ou espaçamento dos campos/botões. */
+  .admin-toast-container{
+    position:fixed;top:26px;left:50%;transform:translateX(-50%);
+    z-index:9999;display:flex;flex-direction:column;gap:10px;
+    width:min(360px, calc(100vw - 32px));pointer-events:none;
   }
-  .admin-login-error.show{display:block;}
-  .admin-voltar-home{
-    display:inline-flex;align-items:center;gap:6px;
-    color:var(--text-muted);font-size:12.5px;margin-top:22px;cursor:pointer;
-    text-decoration:none;
+  .admin-toast{
+    pointer-events:auto;position:relative;overflow:hidden;
+    display:flex;align-items:flex-start;gap:10px;
+    background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);
+    border-radius:12px;padding:12px 14px 14px;box-shadow:0 14px 34px rgba(0,0,0,.5);
+    color:var(--text);font-family:'Inter',sans-serif;font-size:12.5px;line-height:1.5;text-align:left;
+    opacity:0;transform:translateY(-14px) scale(.96);
+    transition:opacity .28s ease, transform .28s ease;
   }
-  .admin-voltar-home:hover{color:var(--accent);}
+  .admin-toast.show{opacity:1;transform:translateY(0) scale(1);}
+  .admin-toast.hide{opacity:0;transform:translateY(-10px) scale(.96);}
+  .admin-toast-icon{flex:0 0 auto;font-size:15px;margin-top:1px;color:var(--gold);}
+  .admin-toast-text{flex:1;}
+  .admin-toast-bar{position:absolute;left:0;bottom:0;height:2px;background:var(--gold);animation:adminToastTime 4.2s linear forwards;}
+  .admin-toast--success{border-left-color:#7cc98f;}
+  .admin-toast--success .admin-toast-icon{color:#7cc98f;}
+  .admin-toast--success .admin-toast-bar{background:#7cc98f;}
+  .admin-toast--error{border-left-color:#e07a7a;}
+  .admin-toast--error .admin-toast-icon{color:#e07a7a;}
+  .admin-toast--error .admin-toast-bar{background:#e07a7a;}
+  @keyframes adminToastTime{from{width:100%;}to{width:0%;}}
+  @media (max-width:480px){
+    /* Regra principal do celular: a mensagem sempre no TOPO, nunca embaixo.
+       "top" soma um respiro fixo (14px) com a área segura do notch/status bar
+       (env(safe-area-inset-top) — 0 em quem não tem notch, e o valor real do
+       recorte em quem tem), então nunca fica cortada nem colada na borda.
+       Continua position:fixed / fora do fluxo: não empurra formulário, campos,
+       botões nem altera o tamanho do card em nenhum dispositivo. */
+    .admin-toast-container{
+      top:calc(env(safe-area-inset-top, 0px) + 14px);
+      bottom:auto;
+      left:50%;transform:translateX(-50%);width:calc(100vw - 24px);
+    }
+  }
+
+  /* ---------- Área Restrita: tela de Recuperação de senha ----------
+     Reaproveita .admin-login-card (mesmo card, mesmo tamanho fixo
+     380x587.13px) para garantir dimensões idênticas à tela de login. */
+  .admin-recover-top{
+    flex:0 0 auto;
+    height:200px;
+    padding:26px 30px 0;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .admin-recover-top img{
+      max-width:230px;max-height:100%;
+      width:auto;height:auto;
+      object-fit:contain;
+      margin:0 auto;display:block;
+      filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+  }
+  .admin-recover-bottom{
+    flex:1 1 auto;padding:8px 30px 28px;
+    display:flex;flex-direction:column;min-height:0;
+    text-align:center;
+  }
+  .admin-recover-title{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:18px;
+    color:var(--text);margin-bottom:10px;letter-spacing:.2px;margin-top: 38px;
+  }
+  .admin-recover-sub{
+    color:var(--text-muted);font-size:12.5px;line-height:1.55;
+    margin-bottom:22px;padding:0 4px;
+  }
+  .admin-recover-bottom .admin-field{margin-bottom:0;margin-top: 10px;}
+  .admin-recover-bottom form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .admin-field-icon-wrap{position:relative;}
+  .admin-field-icon-wrap i{
+    position:absolute;left:15px;top:50%;transform:translateY(-50%);
+    color:var(--text-muted);font-size:13px;pointer-events:none;
+  }
+  .admin-field-icon-wrap input{padding-left:38px;}
+  .admin-recover-spacer{flex:1 1 auto;min-height:10px;}
+  .admin-cancel-link{
+    display:block;width:100%;margin-top:14px;padding:6px;
+    background:none;border:none;color:var(--text-muted);
+    font-family:'Inter',sans-serif;font-size:13.5px;cursor:pointer;
+    transition:color .2s ease;
+  }
+  .admin-cancel-link:hover{color:var(--text);}
 
   /* ---------- LAYOUT DO PAINEL ---------- */
   #admin-panel{display:none;min-height:100vh;}
@@ -1712,9 +1960,10 @@
 
   @media(max-width:480px){
     .admin-topbar h2{font-size:17px;}
-    .admin-login-bottom{padding:22px 22px 32px;}
-    .admin-login-top{padding:36px 20px 36px;}
-    .admin-login-top img{max-width:180px;}
+    .admin-login-bottom{padding:8px 22px 26px;}
+    .admin-login-top{padding:0 20px;}
+    .admin-login-top img{max-width:240px;}
+    .admin-login-back{top:14px;left:14px;}
   }
 
   /* =========================================================
@@ -2072,7 +2321,11 @@
     padding:22px 24px !important;
   }
   .stat-grid{gap:20px;}
-  .admin-modal, .admin-login-card{
+  .admin-modal{
+    border-radius:26px !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 50px 110px rgba(0,0,0,.65) !important;
+  }
+  .admin-login-card{
     border-radius:26px !important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 50px 110px rgba(0,0,0,.65) !important;
   }
@@ -2366,6 +2619,35 @@
     </div>
   </footer>
 
+  <!-- =========================================================
+       BOTÃO FLUTUANTE — GRUPO DO WHATSAPP
+       Fixo no canto inferior direito, visível durante toda a rolagem da
+       Home. Por padrão só o ícone aparece; um clique nele (toggleWhatsappFloat(),
+       definida junto das demais funções globais do site) revela o rótulo
+       "Grupo do WhatsApp", que abre o link do grupo em uma nova aba. Clicar
+       no ícone de novo esconde o rótulo outra vez.
+
+       O link do grupo já está preenchido em LINK_GRUPO_WHATSAPP, logo
+       abaixo, na tag <a class="whatsapp-float-label">.
+       ========================================================= -->
+  <div class="whatsapp-float-wrap" id="whatsapp-float-wrap">
+    <a
+      class="whatsapp-float-label"
+      id="whatsapp-float-label"
+      href="https://chat.whatsapp.com/L0LMDLEphCIDjiSq1UVLUf"
+      target="_blank"
+      rel="noopener noreferrer"
+    >Grupo do WhatsApp</a>
+    <button
+      type="button"
+      class="whatsapp-float-btn"
+      id="whatsapp-float-btn"
+      onclick="toggleWhatsappFloat()"
+      aria-label="Mostrar link do grupo do WhatsApp"
+      aria-expanded="false"
+    ><i class="fa-brands fa-whatsapp"></i></button>
+  </div>
+
 </div>
 <!-- fim de #home-view -->
 
@@ -2537,16 +2819,19 @@
      ========================================================= -->
 <div id="admin-view">
 
+  <!-- Container das notificações flutuantes (toast) da Área Restrita: fixo na
+       tela, fora do fluxo dos cards de login/recuperação/nova senha, para que
+       nenhuma mensagem altere o layout do formulário. Ver mostrarToastAdmin(). -->
+  <div class="admin-toast-container" id="admin-toast-container"></div>
+
   <!-- ============= LOGIN ============= -->
   <div id="admin-login">
-    <div class="admin-login-card">
+    <div class="admin-login-card" id="admin-login-card-entrar">
+      <button type="button" class="admin-login-back" id="link-voltar-site-login" onclick="adminVoltarSite()" aria-label="Voltar para o site"><i class="fa-solid fa-arrow-left"></i></button>
       <div class="admin-login-top">
         <img src="logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-login-bottom">
-         <p class="sub">Acesso exclusivo para barbeiros da Prieto Barbearia</p>
-        <div class="admin-login-error" id="admin-login-error"></div>
-
         <form onsubmit="handleAdminLogin(event)">
           <div class="admin-field">
             <label for="admin-email">E-mail</label>
@@ -2556,10 +2841,65 @@
             <label for="admin-senha">Senha</label>
             <input type="password" id="admin-senha" placeholder="••••••••" required autocomplete="current-password">
           </div>
+          <div class="admin-forgot-wrap"><button type="button" class="admin-forgot-text" onclick="abrirRecuperarSenha()">Esqueceu a senha?</button></div>
           <button type="submit" class="admin-login-btn" id="admin-login-btn">Entrar</button>
         </form>
+      </div>
+    </div>
 
-        <a class="admin-voltar-home" id="link-voltar-site-login" href="#" onclick="adminVoltarSite(); return false;"><i class="fa-solid fa-arrow-left"></i> Voltar para o site</a>
+    <!-- ============= RECUPERAÇÃO DE SENHA ============= -->
+    <div class="admin-login-card" id="admin-login-card-recuperar" style="display:none;">
+      <div class="admin-recover-top">
+        <img src="logo.png" alt="Prieto Barbearia">
+      </div>
+      <div class="admin-recover-bottom">
+        <div class="admin-recover-title">Recuperação de senha</div>
+        <div class="admin-recover-sub">Informe o e-mail cadastrado. Sua solicitação será enviada para aprovação do administrador.</div>
+
+        <form onsubmit="handleRecuperarSenha(event)">
+          <div class="admin-field">
+            <label for="recuperar-email">E-mail</label>
+            <div class="admin-field-icon-wrap">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="recuperar-email" placeholder="seuemail@exemplo.com" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="admin-recover-spacer"></div>
+
+          <button type="submit" class="admin-login-btn" id="recuperar-senha-btn">Enviar solicitação</button>
+          <button type="button" class="admin-cancel-link" onclick="fecharRecuperarSenha()">Cancelar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============= CRIAR NOVA SENHA (após aprovação do administrador) =============
+         Só aparece quando o Supabase detecta uma sessão de recuperação de senha válida
+         (link de e-mail enviado pela Edge Function aprovar-redefinicao-senha, disparado
+         só depois que o Barbeiro Tradicional aprova a solicitação). Ver mostrarTelaNovaSenha()
+         e o listener sb.auth.onAuthStateChange('PASSWORD_RECOVERY', ...) mais abaixo. -->
+    <div class="admin-login-card" id="admin-login-card-nova-senha" style="display:none;">
+      <div class="admin-recover-top">
+        <img src="logo.png" alt="Prieto Barbearia">
+      </div>
+      <div class="admin-recover-bottom">
+        <div class="admin-recover-title">Criar nova senha</div>
+        <div class="admin-recover-sub">Sua solicitação foi aprovada. Defina abaixo a nova senha de acesso.</div>
+
+        <form onsubmit="handleCriarNovaSenha(event)">
+          <div class="admin-field">
+            <label for="nova-senha-1">Nova senha</label>
+            <input type="password" id="nova-senha-1" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="admin-field">
+            <label for="nova-senha-2">Confirmar nova senha</label>
+            <input type="password" id="nova-senha-2" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+          </div>
+
+          <div class="admin-recover-spacer"></div>
+
+          <button type="submit" class="admin-login-btn" id="nova-senha-btn">Salvar nova senha</button>
+        </form>
       </div>
     </div>
   </div>
@@ -2644,6 +2984,19 @@ function toggleMobileMenu(){
 function closeMobileMenu(){
     document.getElementById('mobile-menu').classList.remove('open');
     document.getElementById('mobile-menu-btn').setAttribute('aria-expanded', 'false');
+}
+
+/* =========================================================
+   BOTÃO FLUTUANTE — GRUPO DO WHATSAPP
+   Clique no ícone: mostra/esconde o rótulo "Grupo do WhatsApp"
+   ao lado dele (classe "open" no wrapper). Clique de novo no
+   ícone esconde o rótulo novamente.
+   ========================================================= */
+function toggleWhatsappFloat(){
+    const wrap = document.getElementById('whatsapp-float-wrap');
+    const btn = document.getElementById('whatsapp-float-btn');
+    const aberto = wrap.classList.toggle('open');
+    btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
 }
 
 function showBooking(){
@@ -3439,6 +3792,14 @@ window.addEventListener('DOMContentLoaded', function(){
             const btnSidebar = document.getElementById('btn-ver-site-sidebar');
             if(btnSidebar) btnSidebar.style.display = 'none';
         }
+
+        // link enviado pelo Telegram (ver aprovar-redefinicao-senha): abre
+        // direto a tela de criar nova senha, usando o token próprio (não é
+        // mais o mecanismo de recuperação por e-mail do Supabase Auth).
+        const tokenRedefinicao = params.get('redefinir-senha');
+        if(tokenRedefinicao){
+            mostrarTelaNovaSenhaComToken(tokenRedefinicao);
+        }
     }catch(e){}
 });
 </script>
@@ -3448,6 +3809,14 @@ window.addEventListener('DOMContentLoaded', function(){
 /* =========================================================
    ÁREA RESTRITA — painel administrativo (Supabase)
    ========================================================= */
+
+/* declarado logo no início do script (antes de qualquer outra coisa, inclusive
+   antes do Supabase ser inicializado) para que o toast de mensagens do login/
+   recuperação/nova senha nunca dependa da ordem de carregamento do resto do
+   arquivo — mesmo que algo mais abaixo falhe, mostrarToastAdmin/limparToastAdmin
+   continuam funcionando. */
+let adminToastTimer = null;
+
 const SUPABASE_URL = 'https://suxzplbcesapowoppwhf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1eHpwbGJjZXNhcG93b3Bwd2hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTk2NzEsImV4cCI6MjEwMTE3NTY3MX0.61503msT-pGNLnbJCNbzTJ2vyN2Y20U8ZYWBBFD3jE0';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -3658,6 +4027,21 @@ function escapeHtml(str){
         .replace(/>/g, '&gt;');
 }
 
+// Quando uma Edge Function responde com status != 2xx, o supabase-js devolve
+// data=null e um "error" genérico ("Edge Function returned a non-2xx status
+// code") — a mensagem real que a função mandou (ex: "ainda não vinculou o
+// Telegram") fica escondida em error.context (a Response crua). Esta função
+// lê esse corpo pra mostrar o motivo de verdade pro usuário.
+async function motivoErroEdgeFunction(error){
+    try{
+        if(error?.context?.json){
+            const corpo = await error.context.clone().json();
+            if(corpo?.error) return corpo.error;
+        }
+    }catch(e){ /* corpo não era JSON ou já foi consumido — usa o fallback abaixo */ }
+    return error?.message || '';
+}
+
 function montarPreviaMensagemNotificacao(template){
     let texto = String(template || '');
     VARIAVEIS_MENSAGEM_NOTIFICACAO.forEach(v => {
@@ -3683,6 +4067,14 @@ const admin = {
     },
 
     async checarSessao(){
+        // sessão de recuperação de senha (link de "Criar nova senha"): não é um
+        // login normal, então NÃO entra no painel — quem cuida da tela nesse
+        // caso é mostrarTelaNovaSenha(), disparada pelo evento PASSWORD_RECOVERY
+        // (ver mais abaixo, perto de handleCriarNovaSenha).
+        if(window.EM_RECUPERACAO_SENHA){
+            return;
+        }
+
         const { data: { session } } = await sb.auth.getSession();
         if(session){
             await this.carregarBarbeiro();
@@ -3863,15 +4255,11 @@ const admin = {
     },
 
     mostrarErroLogin(msg){
-        const el = document.getElementById('admin-login-error');
-        el.textContent = msg;
-        el.classList.add('show');
+        mostrarToastAdmin(msg, 'error');
     },
 
     limparErroLogin(){
-        const el = document.getElementById('admin-login-error');
-        el.classList.remove('show');
-        el.textContent = '';
+        limparToastAdmin();
     },
 
     irPara(pagina){
@@ -3887,6 +4275,12 @@ const admin = {
         if(pagina !== 'horarios' && this._relogioPontaPoraInterval){
             clearInterval(this._relogioPontaPoraInterval);
             this._relogioPontaPoraInterval = null;
+        }
+        // saindo de "Configurações", encerra a verificação automática do vínculo do
+        // Telegram (ver gerarVinculoTelegram/pararVerificacaoTelegram) — evita ficar
+        // consultando o banco em segundo plano depois que o barbeiro trocou de tela
+        if(pagina !== 'configuracoes' && this._telegramPollInterval){
+            this.pararVerificacaoTelegram();
         }
 
         this.paginaAtual = pagina;
@@ -5040,17 +5434,17 @@ const admin = {
         // horário — o texto em "mensagem" serve apenas de fallback para
         // notificações antigas que não tinham agendamento_id preenchido.
         const { data } = await sb.from('notificacoes')
-            .select('*, agendamento:agendamento_id(cliente_nome, cliente_telefone, data, horario, barbeiro_id, barbeiros(nome))')
+            .select('*, agendamento:agendamento_id(cliente_nome, cliente_telefone, data, horario, barbeiro_id, barbeiros(nome)), solicitacao:solicitacao_redefinicao_id(id, barbeiro_nome, email, status, criado_em, expira_em)')
             .eq('barbeiro_id', this.barbeiro.id)
             .order('created_at', {ascending:false});
         this.notificacoesCache = data || [];
         this.atualizarBadgeNotificacoes(this.notificacoesCache.filter(n=>!n.lida).length);
 
-        const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day'};
+        const icone = {novo_agendamento:'fa-calendar-plus', cancelamento:'fa-calendar-xmark', reagendamento:'fa-calendar-day', redefinicao_senha:'fa-key'};
         // título fixo por tipo (não vem mais da própria mensagem) — é isso que
         // eliminava a duplicação: antes o título repetia a 1ª linha do texto
         // e o corpo mostrava a mensagem inteira (incluindo essa mesma linha).
-        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado'};
+        const tituloTipo = {novo_agendamento:'Novo agendamento', cancelamento:'Agendamento cancelado', reagendamento:'Agendamento remarcado', redefinicao_senha:'Solicitação de redefinição de senha'};
         document.getElementById('admin-content').innerHTML = `
             <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
                 <button class="ag-btn" onclick="admin.limparNotificacoes()"><i class="fa-solid fa-trash-can"></i> Limpar todas</button>
@@ -5061,6 +5455,52 @@ const admin = {
                         ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
                         <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
                     </div>`;
+
+                // "Solicitação de redefinição de senha" também ganha card próprio:
+                // não mostra n.mensagem cru (que tem tags HTML voltadas pro Telegram)
+                // e sim os dados reais da solicitação vinculada (join acima), com o
+                // status sempre atualizado e o botão de aprovar só quando pendente.
+                if(n.tipo === 'redefinicao_senha'){
+                    const sol = n.solicitacao;
+                    if(!sol){
+                        return `
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid fa-key"></i>Solicitação de redefinição de senha</div>
+                    <div class="notif-corpo">Solicitação não encontrada (pode ter sido removida).</div>
+                    ${acoesHtml}
+                </div>`;
+                    }
+
+                    const expirado = sol.status === 'pendente' && new Date(sol.expira_em).getTime() < Date.now();
+                    const statusLabel = {
+                        pendente: expirado ? '🔴 Expirada' : '🟡 Aguardando envio',
+                        aprovado: '🟢 Link enviado — aguardando o barbeiro criar a nova senha',
+                        concluido: '🟢 Concluída',
+                        expirado: '🔴 Expirada',
+                        recusado: '⚫ Recusada'
+                    }[expirado ? 'expirado' : sol.status] || sol.status;
+
+                    const botoesDecisao = (sol.status === 'pendente' && !expirado)
+                        ? `<button class="ag-btn confirmar" onclick="admin.aprovarRedefinicaoSenha('${sol.id}')"><i class="fa-solid fa-paper-plane"></i>Enviar link de redefinição</button>
+                           <button class="ag-btn cancelar" onclick="admin.recusarRedefinicaoSenha('${sol.id}')"><i class="fa-solid fa-xmark"></i>Recusar</button>`
+                        : '';
+
+                    return `
+                <div class="notif-card${n.lida ? ' lida' : ''}">
+                    <div class="notif-head"><i class="fa-solid fa-key"></i>Solicitação de redefinição de senha</div>
+                    <div class="notif-corpo">
+                        <div><strong>Barbeiro:</strong> ${escapeHtml(sol.barbeiro_nome)}</div>
+                        <div><strong>E-mail:</strong> ${escapeHtml(sol.email)}</div>
+                        <div><strong>Data:</strong> ${this.formatarDataBR(sol.criado_em)} ${new Date(sol.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+                        <div><strong>Status:</strong> ${statusLabel}</div>
+                    </div>
+                    <div class="notif-acoes">
+                        ${botoesDecisao}
+                        ${!n.lida ? `<button class="ag-btn confirmar" onclick="admin.marcarNotificacaoLida('${n.id}')"><i class="fa-solid fa-check"></i>Lida</button>` : ''}
+                        <button class="ag-btn cancelar" onclick="admin.apagarNotificacao('${n.id}')"><i class="fa-solid fa-trash"></i>Apagar</button>
+                    </div>
+                </div>`;
+                }
 
                 // "Novo agendamento" ganha o card premium (cabeçalho com etiqueta
                 // dourada + data/hora, grade de infos em 2 colunas e rodapé de
@@ -5132,6 +5572,47 @@ const admin = {
     async limparNotificacoes(){
         if(!confirm('Apagar todas as notificações?')) return;
         await sb.from('notificacoes').delete().eq('barbeiro_id', this.barbeiro.id);
+        await this.renderNotificacoes();
+    },
+
+    // Aprova uma solicitação de redefinição de senha (só o Barbeiro Tradicional/
+    // administrador consegue: a Edge Function confere isso de novo no servidor,
+    // então mesmo alguém adulterando o front-end não conseguiria aprovar nada).
+    // É só a partir daqui que o link de redefinição é gerado e enviado — pelo
+    // Telegram do barbeiro que solicitou, não mais por e-mail.
+    async aprovarRedefinicaoSenha(solicitacaoId){
+        if(!confirm('Enviar o link de redefinição de senha pelo Telegram deste barbeiro?')) return;
+
+        const { data, error } = await sb.functions.invoke('aprovar-redefinicao-senha', {
+            body: { solicitacao_id: solicitacaoId }
+        });
+
+        if(error || !data || data.ok !== true){
+            const motivo = data?.error || await motivoErroEdgeFunction(error);
+            alert(motivo
+                ? `Não foi possível enviar o link agora: ${motivo}`
+                : 'Não foi possível enviar o link agora. Tente novamente.');
+            return;
+        }
+
+        alert('Link enviado! O barbeiro vai recebê-lo pelo Telegram e pode criar a nova senha agora (válido por 15 minutos, uso único).');
+        await this.renderNotificacoes();
+    },
+
+
+    // Recusa a solicitação — nenhum token é gerado, nenhuma mensagem é enviada.
+    async recusarRedefinicaoSenha(solicitacaoId){
+        if(!confirm('Recusar esta solicitação de redefinição de senha?')) return;
+
+        const { data, error } = await sb.functions.invoke('recusar-redefinicao-senha', {
+            body: { solicitacao_id: solicitacaoId }
+        });
+
+        if(error || !data || data.ok !== true){
+            alert('Não foi possível recusar esta solicitação agora. Tente novamente.');
+            return;
+        }
+
         await this.renderNotificacoes();
     },
 
@@ -6531,6 +7012,12 @@ const admin = {
                 <button class="ag-btn" onclick="admin.salvarConta()"><i class="fa-solid fa-key"></i> Atualizar conta</button>
             </div>
 
+            ${(() => { /* painel "Telegram" removido da Área Restrita para todos os barbeiros
+                          (Tradicional e Experiente) — ver histórico de alterações. As funções
+                          gerarVinculoTelegram/iniciarVerificacaoTelegram/pararVerificacaoTelegram
+                          e o restante da integração com o bot permanecem intactas no código,
+                          só a exibição deste painel em Configurações foi removida. */ return ''; })()}
+
             <div class="dash-panel">
                 <h4>Disponibilidade no Agendamento Online</h4>
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 0;">
@@ -6590,6 +7077,84 @@ const admin = {
         if(error){ alert('Não foi possível atualizar a conta: ' + error.message); return; }
         alert('Conta atualizada! Se o e-mail mudou, confirme pelo link enviado à nova caixa de entrada.');
         document.getElementById('cfg-senha').value = '';
+    },
+
+    // Gera um link de vínculo temporário com o bot do Telegram (10 min de validade).
+    // Ao clicar, o Telegram abre e manda automaticamente /start <token> pro bot,
+    // que captura o chat_id e vincula ao barbeiro (ver Edge Function telegram-webhook).
+    async gerarVinculoTelegram(){
+        const btn = document.getElementById('btn-vincular-telegram');
+        const msgEl = document.getElementById('vincular-telegram-msg');
+        if(btn){ btn.disabled = true; btn.dataset.textoOriginal = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando link...'; }
+        if(msgEl) msgEl.style.display = 'none';
+
+        const { data, error } = await sb.functions.invoke('gerar-vinculo-telegram', { body: {} });
+
+        if(btn){ btn.disabled = false; btn.innerHTML = btn.dataset.textoOriginal; }
+
+        if(error || !data || data.ok !== true || !data.link){
+            if(msgEl){
+                msgEl.style.display = 'block';
+                msgEl.innerHTML = '<span style="color:#e0665a;font-size:13px;">Não foi possível gerar o link agora. Tente novamente.</span>';
+            }
+            return;
+        }
+
+        if(msgEl){
+            msgEl.style.display = 'block';
+            msgEl.innerHTML = `
+                <a href="${data.link}" target="_blank" rel="noopener" class="ag-btn confirmar" style="display:inline-flex;">
+                    <i class="fa-brands fa-telegram"></i> Abrir Telegram e concluir vínculo
+                </a>
+                <div style="color:var(--text-muted);font-size:12px;margin-top:8px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Este link vale por 10 minutos. Assim que você concluir no Telegram, esta tela atualiza sozinha.
+                </div>`;
+        }
+
+        // liga a verificação automática: enquanto o link estiver válido, consulta o
+        // banco periodicamente e, assim que detectar o telegram_chat_id preenchido
+        // (gravado pela Edge Function telegram-webhook ao receber o /start do bot),
+        // atualiza o status na tela sem precisar de F5 nem de recarregar a página
+        this.iniciarVerificacaoTelegram();
+    },
+
+    // consulta o banco a cada 3s (até 10 min, mesma validade do link) para detectar
+    // quando o telegram_chat_id do barbeiro logado foi preenchido pelo webhook do bot
+    iniciarVerificacaoTelegram(){
+        this.pararVerificacaoTelegram(); // evita duplicar o intervalo se o barbeiro clicar em "Vincular novamente"
+        const barbeiroId = this.barbeiro.id;
+        let tentativas = 0;
+        const MAX_TENTATIVAS = 200; // 200 x 3s = 10 minutos, mesma validade do link
+
+        this._telegramPollInterval = setInterval(async () => {
+            tentativas++;
+            if(tentativas > MAX_TENTATIVAS){ this.pararVerificacaoTelegram(); return; }
+
+            const { data, error } = await sb.from('barbeiros').select('telegram_chat_id').eq('id', barbeiroId).maybeSingle();
+            if(error || !data || !data.telegram_chat_id) return; // ainda não vinculou; tenta de novo no próximo ciclo
+
+            this.barbeiro.telegram_chat_id = data.telegram_chat_id;
+            this.pararVerificacaoTelegram();
+
+            // só atualiza a tela se o barbeiro ainda estiver em "Configurações"
+            // (se ele já trocou de página, o interval já teria sido encerrado pelo irPara)
+            const statusEl = document.getElementById('telegram-status-texto');
+            const btn = document.getElementById('btn-vincular-telegram');
+            const msgEl = document.getElementById('vincular-telegram-msg');
+            if(statusEl) statusEl.textContent = '✅ Telegram vinculado';
+            if(btn) btn.innerHTML = '<i class="fa-brands fa-telegram"></i> Vincular novamente';
+            if(msgEl){
+                msgEl.innerHTML = '<span style="color:#3fb96a;font-size:13px;font-weight:600;"><i class="fa-solid fa-circle-check"></i> Telegram vinculado com sucesso! Você já vai receber por lá o link de redefinição de senha quando for aprovado.</span>';
+                setTimeout(() => { if(msgEl) msgEl.style.display = 'none'; }, 6000);
+            }
+        }, 3000);
+    },
+
+    pararVerificacaoTelegram(){
+        if(this._telegramPollInterval){
+            clearInterval(this._telegramPollInterval);
+            this._telegramPollInterval = null;
+        }
     },
 
     async salvarConfiguracoes(){
@@ -6685,7 +7250,254 @@ async function handleAdminLogin(event){
 
     await admin.carregarBarbeiro();
 }
+
+/* =========================================================
+   ÁREA RESTRITA — Recuperação de senha
+   Reaproveita o mesmo card do login (.admin-login-card, 380x587.13px)
+   só trocando qual dos dois fica visível dentro de #admin-login.
+   Usa a autenticação do Supabase já configurada no projeto (sb.auth) —
+   não depende de nenhum backend novo. O e-mail de redefinição, quando
+   configurado no painel do Supabase, leva o barbeiro de volta ao site
+   para definir a nova senha; essa tela final de "nova senha" ainda não
+   existe e pode ser implementada depois, sem impacto no que já existe. ========================================================= */
+function abrirRecuperarSenha(){
+    document.getElementById('admin-login-card-entrar').style.display = 'none';
+    document.getElementById('admin-login-card-recuperar').style.display = 'flex';
+    limparMsgRecuperarSenha();
+    document.getElementById('recuperar-email').value = document.getElementById('admin-email').value.trim();
+}
+
+function fecharRecuperarSenha(){
+    document.getElementById('admin-login-card-recuperar').style.display = 'none';
+    document.getElementById('admin-login-card-entrar').style.display = 'flex';
+    limparMsgRecuperarSenha();
+}
+
+function mostrarMsgRecuperarSenha(msg, tipo){
+    mostrarToastAdmin(msg, tipo);
+}
+
+function limparMsgRecuperarSenha(){
+    limparToastAdmin();
+}
+
+async function handleRecuperarSenha(event){
+    event.preventDefault();
+    limparMsgRecuperarSenha();
+
+    const email = document.getElementById('recuperar-email').value.trim();
+    const btn = document.getElementById('recuperar-senha-btn');
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    // Não chama mais sb.auth.resetPasswordForEmail diretamente: agora a solicitação
+    // primeiro precisa ser aprovada pelo Barbeiro Tradicional (administrador) na
+    // Área Restrita. Quem envia o e-mail de redefinição de verdade é a Edge Function
+    // "aprovar-redefinicao-senha", só depois da aprovação.
+    //
+    // A Edge Function "solicitar-redefinicao-senha" SEMPRE responde a mesma coisa,
+    // exista ou não o e-mail cadastrado — por isso a mensagem abaixo é sempre a
+    // mesma independente do resultado, mantendo a mesma garantia de privacidade
+    // que já existia aqui antes.
+    let deuErro = false;
+    try{
+        const { error } = await sb.functions.invoke('solicitar-redefinicao-senha', {
+            body: { email }
+        });
+        if(error) deuErro = true;
+    } catch(e){
+        deuErro = true;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Enviar solicitação';
+
+    if(deuErro){
+        mostrarMsgRecuperarSenha('Não foi possível enviar sua solicitação agora. Tente novamente.', 'error');
+        return;
+    }
+
+    mostrarMsgRecuperarSenha('Se o e-mail informado estiver cadastrado, sua solicitação foi enviada para aprovação do administrador. Você receberá o link para criar a nova senha pelo Telegram assim que ela for aprovada.', 'success');
+}
+
+/* =========================================================
+   ÁREA RESTRITA — Criar nova senha (após aprovação do administrador)
+   =========================================================
+   Fluxo completo:
+   1) Barbeiro pede recuperação (handleRecuperarSenha acima) → cai como
+      solicitação pendente, sem nenhum link gerado ainda.
+   2) Barbeiro Tradicional aprova pela notificação (admin.aprovarRedefinicaoSenha,
+      na seção de Notificações) → a Edge Function "aprovar-redefinicao-senha" gera
+      um TOKEN PRÓPRIO (aleatório, só o hash fica salvo no banco, validade de
+      15 minutos, uso único) e manda o link pronto pro Telegram do barbeiro que
+      solicitou — não é mais o Supabase Auth por e-mail.
+   3) Barbeiro clica no link do Telegram → abre o site com ?redefinir-senha=<token>
+      na URL (detectado no DOMContentLoaded, mais acima neste arquivo), que chama
+      mostrarTelaNovaSenhaComToken(token) abaixo.
+   4) Antes de mostrar o formulário, o token é conferido na Edge Function pública
+      "validar-token-redefinicao" (só confirma se ainda vale, não troca nada) —
+      assim o barbeiro já sabe de cara se o link expirou, em vez de preencher
+      tudo pra descobrir depois.
+   5) Barbeiro define a nova senha aqui (handleCriarNovaSenha) → a Edge Function
+      pública "redefinir-senha-com-token" confere o token de novo (hash, validade,
+      uso único) e troca a senha de verdade via service role — não existe sessão
+      de login nesse momento, o barbeiro chegou direto pelo link. Assim que usado,
+      o token nunca mais funciona (token_utilizado = true no banco).
+   ========================================================= */
+
+function mostrarTelaNovaSenha(){
+    // garante que estamos na Área Restrita (o link do Telegram já abre aqui via
+    // ?area-restrita=app, mas cobrimos o caso de o usuário já estar no site também)
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('booking-view').classList.remove('active');
+    document.getElementById('admin-view').classList.add('active');
+
+    document.getElementById('admin-panel').classList.remove('active');
+    document.getElementById('admin-login').classList.remove('hidden');
+    document.getElementById('admin-login-card-entrar').style.display = 'none';
+    document.getElementById('admin-login-card-recuperar').style.display = 'none';
+    document.getElementById('admin-login-card-nova-senha').style.display = 'flex';
+    window.scrollTo(0,0);
+}
+
+function limparMsgNovaSenha(){
+    limparToastAdmin();
+}
+
+function mostrarMsgNovaSenha(msg, tipo){
+    mostrarToastAdmin(msg, tipo);
+}
+
+/* ---------- Área Restrita: notificação flutuante (toast) ----------
+   Usada por mostrarErroLogin/limparErroLogin (login), mostrarMsgRecuperarSenha/
+   limparMsgRecuperarSenha (recuperação de senha) e mostrarMsgNovaSenha/limparMsgNovaSenha
+   (criar nova senha). Renderiza numa camada fixa (#admin-toast-container), totalmente
+   independente do formulário — nunca altera tamanho, posição ou espaçamento dos campos,
+   botões ou do card de login. Some sozinha após alguns segundos, com animação de
+   entrada/saída. tipo: 'success' | 'error' | qualquer outro valor (neutro/informativo). */
+function mostrarToastAdmin(msg, tipo){
+    const container = document.getElementById('admin-toast-container');
+    if(!container || !msg) return;
+
+    // mantém só uma mensagem visível por vez (fluxo de login é sequencial)
+    limparToastAdmin();
+
+    const classeTipo = tipo === 'success' ? 'admin-toast--success'
+        : tipo === 'error' ? 'admin-toast--error'
+        : 'admin-toast--info';
+    const icone = tipo === 'success' ? 'fa-circle-check'
+        : tipo === 'error' ? 'fa-triangle-exclamation'
+        : 'fa-lock';
+
+    const toast = document.createElement('div');
+    toast.className = `admin-toast ${classeTipo}`;
+    toast.innerHTML = `
+        <div class="admin-toast-icon"><i class="fa-solid ${icone}"></i></div>
+        <div class="admin-toast-text"></div>
+        <div class="admin-toast-bar"></div>
+    `;
+    toast.querySelector('.admin-toast-text').textContent = msg;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    adminToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
+    }, 4200);
+}
+
+function limparToastAdmin(){
+    const container = document.getElementById('admin-toast-container');
+    if(!container) return;
+    clearTimeout(adminToastTimer);
+    container.querySelectorAll('.admin-toast').forEach(t => t.remove());
+}
+
+// token do link do Telegram, guardado aqui depois de validado — é ele que
+// vai junto na chamada de redefinir-senha-com-token quando o barbeiro salvar.
+window.TOKEN_REDEFINICAO_SENHA = null;
+
+async function mostrarTelaNovaSenhaComToken(token){
+    mostrarTelaNovaSenha();
+    limparMsgNovaSenha();
+
+    const form = document.querySelector('#admin-login-card-nova-senha form');
+    const btn = document.getElementById('nova-senha-btn');
+    if(form) form.style.display = 'none';
+    mostrarMsgNovaSenha('Verificando o link...', null);
+
+    let valido = false;
+    try{
+        const { data, error } = await sb.functions.invoke('validar-token-redefinicao', { body: { token } });
+        valido = !error && data && data.valido === true;
+    }catch(e){ valido = false; }
+
+    if(!valido){
+        mostrarMsgNovaSenha('Este link é inválido ou já expirou. Solicite a recuperação de senha novamente na tela de login.', 'error');
+        return;
+    }
+
+    window.TOKEN_REDEFINICAO_SENHA = token;
+    limparMsgNovaSenha();
+    if(form) form.style.display = 'flex';
+}
+
+async function handleCriarNovaSenha(event){
+    event.preventDefault();
+    limparMsgNovaSenha();
+
+    const senha1 = document.getElementById('nova-senha-1').value;
+    const senha2 = document.getElementById('nova-senha-2').value;
+    const btn = document.getElementById('nova-senha-btn');
+    const token = window.TOKEN_REDEFINICAO_SENHA;
+
+    if(!token){
+        mostrarMsgNovaSenha('Link inválido. Volte pelo link enviado no Telegram.', 'error');
+        return;
+    }
+    if(senha1.length < 6){
+        mostrarMsgNovaSenha('A senha precisa ter pelo menos 6 caracteres.', 'error');
+        return;
+    }
+    if(senha1 !== senha2){
+        mostrarMsgNovaSenha('As senhas não conferem.', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const { data, error } = await sb.functions.invoke('redefinir-senha-com-token', {
+        body: { token, nova_senha: senha1 }
+    });
+
+    if(error || !data || data.ok !== true){
+        btn.disabled = false;
+        btn.textContent = 'Salvar nova senha';
+        const motivo = data?.error || 'Não foi possível salvar a nova senha. O link pode ter expirado — solicite a recuperação novamente.';
+        mostrarMsgNovaSenha(motivo, 'error');
+        return;
+    }
+
+    window.TOKEN_REDEFINICAO_SENHA = null;
+
+    btn.disabled = false;
+    btn.textContent = 'Salvar nova senha';
+    document.getElementById('nova-senha-1').value = '';
+    document.getElementById('nova-senha-2').value = '';
+    mostrarMsgNovaSenha('Senha alterada com sucesso! Faça login novamente com a nova senha.', 'success');
+
+    setTimeout(function(){
+        document.getElementById('admin-login-card-nova-senha').style.display = 'none';
+        document.getElementById('admin-login-card-entrar').style.display = 'flex';
+        limparMsgNovaSenha();
+    }, 2200);
+}
 </script>
+
 
 <!-- ================= ANIMAÇÕES AO ROLAR A PÁGINA =================
      Script isolado (não mexe em nenhuma outra função do site). Observa
