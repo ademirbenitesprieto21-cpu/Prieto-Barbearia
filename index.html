@@ -44,17 +44,16 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <!-- PWA: ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS.
-     Propositalmente NÃO há <link rel="manifest"> aqui: o site público não
-     deve ser elegível para instalação. O <link rel="manifest"> só é criado
-     dinamicamente (via JS) quando o usuário entra na Área Restrita — ver
-     prepararPWABarbeiros() mais abaixo no arquivo. -->
+     Propositalmente NÃO há <link rel="manifest"> nem as tags "*-web-app-capable"
+     aqui: o site público não deve ser elegível para instalação nem abrir em
+     modo standalone/app — um atalho criado a partir da Home deve continuar
+     sendo um atalho comum de navegador (com barra de endereço), removível
+     como qualquer atalho, nunca uma "instalação". Manifest e as tags
+     "*-web-app-capable" só são criados dinamicamente (via JS) quando o
+     usuário entra na Área Restrita — ver prepararPWABarbeiros() mais abaixo. -->
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0b0b0c">
 <meta name="color-scheme" content="dark">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Prieto">
-<meta name="mobile-web-app-capable" content="yes">
 <style>
   /* =========================================================
      ANTI-FLASH DO PWA DA ÁREA RESTRITA (ver o script de detecção
@@ -3737,6 +3736,17 @@ const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
 
 const MANIFEST_BARBEIROS_HREF = '/manifest-barbeiros.json';
 
+/* tags que fazem o Chrome/Safari tratar um atalho como "app" (sem barra de
+   endereço) em vez de atalho comum — só existem no <head> enquanto o
+   usuário está na Área Restrita. Fora dela, nenhuma delas está presente,
+   então "Adicionar à tela inicial" na Home cria só um atalho normal. */
+const META_TAGS_APP_BARBEIROS = [
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+    { name: 'apple-mobile-web-app-title', content: 'Prieto' },
+    { name: 'mobile-web-app-capable', content: 'yes' }
+];
+
 /* registrado uma única vez, no carregamento da página. Por si só NÃO
    torna nada instalável (falta o <link rel="manifest">) — é só o
    requisito técnico que a Área Restrita vai aproveitar quando o
@@ -3750,10 +3760,11 @@ if('serviceWorker' in navigator){
 }
 
 /* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
-   pro manifest exclusivo da Área Restrita. Chamada ao entrar em
-   showAdmin(); não mexe no service worker (já está ativo desde o load).
-   Antes dessa chamada não existe nenhum <link rel="manifest"> no <head>
-   — é isso que mantém o site público não instalável. */
+   pro manifest exclusivo da Área Restrita, e insere as tags "*-web-app-capable".
+   Chamada ao entrar em showAdmin(); não mexe no service worker (já está
+   ativo desde o load). Antes dessa chamada não existe nenhum <link
+   rel="manifest"> nem essas meta tags no <head> — é isso que mantém o
+   site público como atalho comum, nunca uma instalação. */
 function prepararPWABarbeiros(){
     let linkManifest = document.querySelector('link[rel="manifest"]');
     if(!linkManifest){
@@ -3762,14 +3773,27 @@ function prepararPWABarbeiros(){
         document.head.appendChild(linkManifest);
     }
     linkManifest.setAttribute('href', MANIFEST_BARBEIROS_HREF);
+
+    META_TAGS_APP_BARBEIROS.forEach(function(tag){
+        if(document.querySelector('meta[name="' + tag.name + '"]')) return;
+        const meta = document.createElement('meta');
+        meta.setAttribute('name', tag.name);
+        meta.setAttribute('content', tag.content);
+        document.head.appendChild(meta);
+    });
 }
 
-/* remove o <link rel="manifest"> do <head> ao sair da Área Restrita —
-   sem nenhum manifest linkado, o site público volta a não ser elegível
-   pra instalação (não existe "manifest do site" pra restaurar mais). */
+/* remove o <link rel="manifest"> e as tags "*-web-app-capable" do <head> ao
+   sair da Área Restrita — sem eles, o site público volta a não ser elegível
+   pra instalação e um atalho da Home volta a ser um atalho comum. */
 function restaurarManifestSite(){
     const linkManifest = document.querySelector('link[rel="manifest"]');
     if(linkManifest) linkManifest.remove();
+
+    META_TAGS_APP_BARBEIROS.forEach(function(tag){
+        const meta = document.querySelector('meta[name="' + tag.name + '"]');
+        if(meta) meta.remove();
+    });
 }
 
 function showAdmin(){
