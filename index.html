@@ -3747,6 +3747,29 @@ const META_TAGS_APP_BARBEIROS = [
     { name: 'mobile-web-app-capable', content: 'yes' }
 ];
 
+/* BLOQUEIO DO PROMPT AUTOMÁTICO NO SITE PÚBLICO
+   -------------------------------------------------
+   Problema real observado: depois que alguém clica em "Acesso Restrito"
+   (link no rodapé do site público, que chama showAdmin() e injeta o
+   manifest da Área Restrita), o Chrome passa a "lembrar" que a origem é
+   instalável — e pode voltar a oferecer o card "Instalar aplicativo"
+   sozinho em visitas seguintes ao site público, mesmo com o <link
+   rel="manifest"> já removido pelo restaurarManifestSite().
+
+   Solução: interceptamos o evento nativo "beforeinstallprompt" (que é o
+   Chrome perguntando se pode mostrar esse card) e só deixamos ele
+   aparecer quando o usuário está de fato dentro da Área Restrita
+   (#admin-view visível). No site público ele é sempre cancelado com
+   e.preventDefault(), então nenhum card de instalação aparece sozinho —
+   mesmo que o Chrome ache, por conta própria, que "daria" pra instalar. */
+window.addEventListener('beforeinstallprompt', function(e){
+    const adminView = document.getElementById('admin-view');
+    const dentroDaAreaRestrita = adminView && adminView.style.display !== 'none';
+    if(!dentroDaAreaRestrita){
+        e.preventDefault();
+    }
+});
+
 /* registrado uma única vez, no carregamento da página. Por si só NÃO
    torna nada instalável (falta o <link rel="manifest">) — é só o
    requisito técnico que a Área Restrita vai aproveitar quando o
