@@ -40,7 +40,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <!-- PWA: ícones para "Adicionar à tela inicial" no Chrome/Android e Safari/iOS.
@@ -2366,7 +2366,7 @@
       
       <div class="logo-mini logo-principal">
         <div class="logo-mini">
-        <img src="logo.png" alt="Barbearia Prieto">
+        <img src="/logo.png" alt="Barbearia Prieto">
       </div>
       </div>
       
@@ -2389,7 +2389,7 @@
   <!-- HERO -->
   <section class="hero" id="home">
     <div class="hero-inner container">
-      <img class="hero-logo" src="logo.png" alt="Barbearia Prieto">
+      <img class="hero-logo" src="/logo.png" alt="Barbearia Prieto">
       <p class="hero-sub">Cuidado e estilo em Sanga Puitã</p>
       <div class="hero-actions">
         <a class="btn btn-agendamento-online cta-reveal" href="#" onclick="showBooking(); return false;">
@@ -2510,7 +2510,7 @@
         </div>
 
         <div class="footer-logo reveal">
-          <img src="logo.png" alt="Barbearia Prieto">
+          <img src="/logo.png" alt="Barbearia Prieto">
         </div>
 
         <div class="footer-right reveal">
@@ -2557,7 +2557,7 @@
       <div class="screen active" id="screen-list">
           <header>
               <button class="voltar-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-              <div class="logo"><img src="logo.png" alt="Barbearia Prieto"></div>
+              <div class="logo"><img src="/logo.png" alt="Barbearia Prieto"></div>
               <p>Rua Sindoca Varques • Sanga Puitã<br>Ponta Porã • MS</p>
           </header>
           <div class="divider"></div>
@@ -2709,7 +2709,7 @@
     <div class="admin-login-card" id="admin-login-card-entrar">
       <button type="button" class="admin-login-back" id="link-voltar-site-login" onclick="adminVoltarSite()" aria-label="Voltar para o site"><i class="fa-solid fa-arrow-left"></i></button>
       <div class="admin-login-top">
-        <img src="logo.png" alt="Prieto Barbearia">
+        <img src="/logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-login-bottom">
         <form onsubmit="handleAdminLogin(event)">
@@ -2730,7 +2730,7 @@
     <!-- ============= RECUPERAÇÃO DE SENHA ============= -->
     <div class="admin-login-card" id="admin-login-card-recuperar" style="display:none;">
       <div class="admin-recover-top">
-        <img src="logo.png" alt="Prieto Barbearia">
+        <img src="/logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-recover-bottom">
         <div class="admin-recover-title">Recuperação de senha</div>
@@ -2760,7 +2760,7 @@
          e o listener sb.auth.onAuthStateChange('PASSWORD_RECOVERY', ...) mais abaixo. -->
     <div class="admin-login-card" id="admin-login-card-nova-senha" style="display:none;">
       <div class="admin-recover-top">
-        <img src="logo.png" alt="Prieto Barbearia">
+        <img src="/logo.png" alt="Prieto Barbearia">
       </div>
       <div class="admin-recover-bottom">
         <div class="admin-recover-title">Criar nova senha</div>
@@ -2789,7 +2789,7 @@
     <div class="admin-sidebar-overlay" id="admin-sidebar-overlay" onclick="fecharMenuAdminMobile()"></div>
     <aside class="admin-sidebar" id="admin-sidebar">
       <div class="admin-sidebar-brand">
-        <div class="mark"><img src="logo.png" alt="Prieto Barbearia"></div>
+        <div class="mark"><img src="/logo.png" alt="Prieto Barbearia"></div>
         <span>Prieto Barbearia</span>
         <button class="admin-sidebar-close" onclick="fecharMenuAdminMobile()" aria-label="Fechar menu"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -2828,7 +2828,7 @@
              (substituição no mesmo componente — não é um elemento novo) -->
         <div class="quem">
           <span id="admin-barbeiro-nome">—</span>
-          <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="logo.png" alt="Prieto Barbearia"></div>
+          <div class="admin-avatar-chip" id="admin-avatar-chip"><img src="/logo.png" alt="Prieto Barbearia"></div>
         </div>
       </div>
       <div class="admin-content" id="admin-content">
@@ -3827,7 +3827,7 @@ const TITULOS_PAGINA = {
    a logo original da Prieto Barbearia (não mais a foto do barbeiro) */
 function atualizarAvatarChip(barbeiro){
     const chip = document.getElementById('admin-avatar-chip');
-    chip.innerHTML = `<img src="logo.png" alt="Prieto Barbearia">`;
+    chip.innerHTML = `<img src="/logo.png" alt="Prieto Barbearia">`;
 }
 
 /* Logo oficial da Prieto Barbearia, embutida diretamente em base64.
@@ -5957,7 +5957,7 @@ const admin = {
             return LOGO_PRIETO_BASE64;
         }
         try{
-            const resp = await fetch('logo.png');
+            const resp = await fetch('/logo.png');
             if(!resp.ok) return null;
             const blob = await resp.blob();
             return await new Promise((resolve, reject) => {
