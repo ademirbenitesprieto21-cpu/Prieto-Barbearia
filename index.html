@@ -3658,6 +3658,14 @@ window.addEventListener('DOMContentLoaded', function(){
             if(linkLogin) linkLogin.style.display = 'none';
             const btnSidebar = document.getElementById('btn-ver-site-sidebar');
             if(btnSidebar) btnSidebar.style.display = 'none';
+        }else{
+            /* LIMPEZA para quem já ficou com o Service Worker "preso" de antes
+               desta correção (ver desregistrarServiceWorkerBarbeiros() mais
+               abaixo): quem abre a Home direto (não é o app instalado) nunca
+               deveria ter nenhum Service Worker ativo aqui — se algum load
+               anterior deixou um registrado, ele é cancelado agora, sem afetar
+               nada da Área Restrita (que registra o dela de novo ao entrar). */
+            desregistrarServiceWorkerBarbeiros();
         }
 
         // link enviado pelo Telegram (ver aprovar-redefinicao-senha): abre
@@ -3794,6 +3802,26 @@ function registrarServiceWorkerBarbeiros(){
     });
 }
 
+/* CORREÇÃO (Chrome oferecendo "Instalar app" mesmo sem manifest): um Service
+   Worker registrado em escopo "/" NÃO some com reload nem ao fechar a aba —
+   ele fica ativo pra origem inteira até alguém chamar unregister() nele
+   explicitamente. Isso sozinho já é suficiente pro Chrome/Android continuar
+   oferecendo "Instalar aplicativo" na Home, mesmo com o <link rel="manifest">
+   removido e mesmo depois de um reload. Por isso, ao sair da Área Restrita,
+   além de remover o manifest, cancelamos também o registro do Service
+   Worker — a Home volta a ser uma origem sem nenhum SW ativo, e some
+   qualquer sinal de instalabilidade que o Chrome tivesse guardado. */
+function desregistrarServiceWorkerBarbeiros(){
+    if(!('serviceWorker' in navigator)) return Promise.resolve();
+    return navigator.serviceWorker.getRegistrations()
+        .then(function(registros){
+            return Promise.all(registros.map(function(registro){
+                return registro.unregister();
+            }));
+        })
+        .catch(function(){});
+}
+
 /* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
    pro manifest exclusivo da Área Restrita, insere as tags "*-web-app-capable"
    e registra o Service Worker (ver registrarServiceWorkerBarbeiros() acima).
@@ -3859,7 +3887,9 @@ function showAdmin(){
 function adminVoltarSite(){
     if(window.APP_SOMENTE_AREA_RESTRITA) return;
     restaurarManifestSite();
-    window.location.href = window.location.origin + window.location.pathname;
+    desregistrarServiceWorkerBarbeiros().finally(function(){
+        window.location.href = window.location.origin + window.location.pathname;
+    });
 }
 
 /* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
