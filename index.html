@@ -4749,6 +4749,16 @@ const admin = {
     paraData(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); },
     formatarMoeda(v){ return 'R$ ' + Number(v||0).toFixed(2).replace('.', ','); },
 
+    /* Converte o nome de cargo do barbeiro (ex.: "Barbeiro Tradicional") no
+       nome real da pessoa, usado no rodapé do PDF de Relatório de Desempenho.
+       Barbeiro Tradicional = Ademir · Barbeiro Experiente = Armindo.
+       Qualquer outro nome (barbeiro novo cadastrado futuramente) passa direto. */
+    nomeRealBarbeiro(nome){
+        if(nome === 'Barbeiro Tradicional') return 'Barbeiro Ademir';
+        if(nome === 'Barbeiro Experiente') return 'Barbeiro Armindo';
+        return nome || '';
+    },
+
     /* ============ 1. DASHBOARD ============ */
     /* Monta a grade de horários de HOJE para o barbeiro logado, usando a
        MESMA lógica de geração de slots do Agendamento Online (ver
@@ -6129,8 +6139,9 @@ const admin = {
             : `barbeiro-${this.barbeiro?.id || 'logado'}`;
         const docNum = this.obterNumeroRelatorioPDF(escopoNumero);
         const nomeArquivo = `relatorio-prieto-${r.modoBarbearia?'barbearia':'barbeiro'}-${this.hojeISO()}.pdf`;
-        const titulo = r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : `Relatório de Desempenho — ${this.barbeiro?.nome || 'Barbeiro'}`;
-        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo});
+        const titulo = r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho';
+        const nomeRodape = r.modoBarbearia ? null : this.nomeRealBarbeiro(this.barbeiro?.nome);
+        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo, nomeRodape});
     },
 
     /* Gera o PDF a partir do MESMO HTML/CSS do modelo fornecido pelo usuário.
@@ -6151,7 +6162,12 @@ const admin = {
         const moeda = v => this.formatarMoeda(Number(v||0));
         const agora = new Date();
         const dh = `${String(agora.getDate()).padStart(2,'0')}/${String(agora.getMonth()+1).padStart(2,'0')}/${agora.getFullYear()} às ${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`;
-        const titulo = meta.titulo || (r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : `Relatório de Desempenho — ${esc(this.barbeiroGestao?.nome || this.barbeiro?.nome || 'Barbeiro')}`);
+        const titulo = meta.titulo || (r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho');
+        // Texto do meio do rodapé: nome real do barbeiro (Ademir/Armindo) no lugar
+        // de "Relatório Gerencial", conforme meta.nomeRodape recebido de quem chamou
+        // (exportarPDF / exportarGestaoPDF). No Relatório Consolidado da Barbearia
+        // (sem barbeiro específico) mantém o texto original "Relatório Gerencial".
+        const rodapeTexto = meta.nomeRodape || 'Relatório Gerencial';
 
         const barbeiros = (r.porBarbeiro||[]).slice(0,4);
         const linhasBarbeiros = r.modoBarbearia
@@ -6202,7 +6218,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
 </div></section>
 <section class="secao"><div class="secao-cabecalho"><h2>Análise de movimentação</h2><span>Agendamentos</span></div><div class="movimentacao"><div class="movimentacao-linha"><div><div class="mov-label">Dia mais movimentado</div><div class="mov-valor">${esc(diaValor)}</div></div><div><div class="mov-label">Agendamentos</div><div class="mov-valor">${esc(agValor)}</div></div></div><div class="movimentacao-linha"><div><div class="mov-label">Horários mais movimentados</div><div class="mov-valor">${esc(horValor)}</div></div><div><div class="mov-label">Status dos cancelamentos</div><div class="mov-valor">${esc(cancelValor)}</div></div></div></div></section>
 <div class="observacao"><strong>Observação</strong><p>Os dados apresentados neste relatório correspondem ao período selecionado no sistema e são destinados ao acompanhamento gerencial da Prieto Barbearia.</p></div>
-<footer class="rodape"><div><strong>PRIETO BARBEARIA</strong></div><div>Relatório Gerencial</div><div>Página 01</div></footer>
+<footer class="rodape"><div><strong>PRIETO BARBEARIA</strong></div><div>${esc(rodapeTexto)}</div><div>Página 01</div></footer>
 </div></body></html>`;
 
         const iframe=document.createElement('iframe');
@@ -6476,7 +6492,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         const escopoNumero=`gestao-barbeiro-${this.barbeiroGestao.id}`;
         const docNum=this.obterNumeroRelatorioPDF(escopoNumero);
         const nomeArquivo=`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
-        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:`Relatório de Desempenho — ${this.barbeiroGestao.nome}`});
+        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:'Relatório de Desempenho',nomeRodape:this.nomeRealBarbeiro(this.barbeiroGestao.nome)});
     },
 
     formatarDataHoraBR(iso){
