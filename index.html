@@ -3844,14 +3844,22 @@ function showAdmin(){
 
 /* volta pro site a partir de qualquer tela da área restrita — não faz nada
    se estivermos no app instalado exclusivo da Área Restrita, já que esse
-   app não contém a Home pública. */
+   app não contém a Home pública.
+
+   CORREÇÃO (Chrome oferecendo "Instalar app" em vez de "Criar atalho" na
+   Home): trocar #admin-view por #home-view só por JS (sem recarregar a
+   página) não é suficiente — em vários casos o Chrome guarda, pra aquela
+   aba, que a origem "já foi vista instalável" e continua oferecendo
+   "Instalar app" no menu mesmo depois do restaurarManifestSite() remover
+   o <link rel="manifest">. Por isso agora, ao sair da Área Restrita, a
+   volta pra Home é uma navegação de verdade (reload): isso descarta o
+   documento atual e carrega um totalmente novo, sem nenhum manifest
+   vinculado desde o início — o Chrome não tem mais o que "lembrar" e o
+   menu volta a mostrar só "Criar atalho" normal na Home. */
 function adminVoltarSite(){
     if(window.APP_SOMENTE_AREA_RESTRITA) return;
-    document.getElementById('admin-view').classList.remove('active');
-    document.getElementById('home-view').style.display = 'block';
-    window.scrollTo(0,0);
-    fecharMenuAdminMobile();
     restaurarManifestSite();
+    window.location.href = window.location.origin + window.location.pathname;
 }
 
 /* gaveta de menu no celular (a sidebar completa, com a logo, abre por cima do conteúdo) */
