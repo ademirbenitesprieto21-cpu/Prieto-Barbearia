@@ -6613,7 +6613,18 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
        Histórico (fluxo Visualizar), vem undefined — então baixar esse PDF de
        novo nunca cria um registro duplicado no Histórico. Abrir esta tela,
        por si só, nunca registra nada — isso só acontece em baixarPdfPreview(),
-       quando o usuário realmente pede para baixar o arquivo. */
+       imprimirPdfPreview() ou abrirPdfEmNovaAba(), quando o usuário realmente
+       usa o arquivo (baixar/imprimir/abrir).
+
+       O iframe abre o PDF com "#toolbar=0": isso esconde a barra de
+       ferramentas NATIVA do visualizador de PDF do navegador (Chrome/Edge/
+       Firefox), que teria seu próprio ícone de imprimir/baixar fora do
+       nosso controle — clicar nele não passa pelo nosso JS, então nunca
+       registraria nada no Histórico. Escondendo essa barra, sobra só o
+       botão "Imprimir"/"Baixar PDF" da nossa própria tela, que sempre
+       registra. (Safari/iOS não respeita esse parâmetro — por isso existe
+       o "pdf-preview-mobile-fallback" com o botão "Abrir PDF", que também
+       registra ao ser clicado.) */
     abrirPreviewPDF({ blob, visualizarUrl, baixarUrl, nomeArquivo, titulo, registrarMeta }){
         this.fecharObjectUrlPreviewAnterior();
         let urlVisualizar = visualizarUrl, urlBaixar = baixarUrl, isBlob = false;
@@ -6641,7 +6652,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
             <div class="dash-panel pdf-preview-panel">
                 <h4><i class="fa-solid fa-file-pdf"></i> Pré-visualização do Relatório${titulo ? ' — '+titulo : ''}</h4>
                 <div class="pdf-preview-frame-wrap">
-                    <iframe src="${urlVisualizar}" class="pdf-preview-frame" title="Pré-visualização do relatório em PDF"></iframe>
+                    <iframe src="${urlVisualizar}#toolbar=0" class="pdf-preview-frame" title="Pré-visualização do relatório em PDF"></iframe>
                 </div>
                 <div class="pdf-preview-mobile-fallback">
                     <i class="fa-solid fa-file-pdf"></i>
