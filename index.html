@@ -3724,10 +3724,12 @@ const BUCKET_RELATORIOS_PDF = 'relatorios-pdfs';
         showAdmin() direto, sem passar pela Home — o que também já
         cria o <link rel="manifest"> correto nesse load.
 
-   O SERVICE WORKER é único (sw.js) e continua registrado desde o
-   primeiro carregamento da página (site público incluso) — ele sozinho,
-   sem um <link rel="manifest"> presente, NÃO deixa nada instalável; ele
-   só passa a valer quando o manifest da Área Restrita é linkado acima.
+   O SERVICE WORKER é único (sw.js), mas SÓ é registrado quando o usuário
+   entra na Área Restrita (registrarServiceWorkerBarbeiros(), chamada de
+   dentro de prepararPWABarbeiros()) — nunca no carregamento da Home. Isso
+   evita que a origem tenha um Service Worker ativo em "/" o tempo todo,
+   o que sozinho já foi observado fazendo o Chrome/Android oferecer
+   "Instalar aplicativo" (modo standalone) mesmo sem manifest linkado.
    É puro passthrough de rede (sem cache), então não interfere em login,
    sessão, agendamentos, financeiro ou relatórios.
 
@@ -3771,25 +3773,36 @@ window.addEventListener('beforeinstallprompt', function(e){
     }
 });
 
-/* registrado uma única vez, no carregamento da página. Por si só NÃO
-   torna nada instalável (falta o <link rel="manifest">) — é só o
-   requisito técnico que a Área Restrita vai aproveitar quando o
-   usuário entrar nela. */
-if('serviceWorker' in navigator){
+/* MUDANÇA (correção de instalação indevida na Home): o registro do Service
+   Worker deixou de rodar incondicionalmente no carregamento da página.
+   Registrado ali, ele ficava ativo pra origem inteira (scope "/") desde o
+   primeiro load da Home — e em versões recentes do Chrome/Android isso
+   sozinho já é suficiente, em alguns aparelhos, pra oferecer "Instalar
+   aplicativo" (modo standalone, sem barra de endereço) mesmo sem nenhum
+   <link rel="manifest"> presente. Por isso o registro agora só acontece
+   dentro de registrarServiceWorkerBarbeiros(), chamada de dentro de
+   prepararPWABarbeiros() — ou seja, só quando o usuário de fato entra na
+   Área Restrita (ou abre o app instalado direto via ?area-restrita=app).
+   Quem nunca usa a Área Restrita nunca tem nenhum Service Worker rodando
+   nesta origem. */
+function registrarServiceWorkerBarbeiros(){
+    if(!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
-        // instalação do PWA não é crítica pro funcionamento do site —
+        // instalação do PWA não é crítica pro funcionamento da Área Restrita —
         // se o SW falhar (ex.: offline no primeiro load), tudo continua
         // funcionando normalmente, só sem o prompt de instalação.
     });
 }
 
 /* cria (ou reaproveita, se já existir) o <link rel="manifest"> apontando
-   pro manifest exclusivo da Área Restrita, e insere as tags "*-web-app-capable".
-   Chamada ao entrar em showAdmin(); não mexe no service worker (já está
-   ativo desde o load). Antes dessa chamada não existe nenhum <link
-   rel="manifest"> nem essas meta tags no <head> — é isso que mantém o
-   site público como atalho comum, nunca uma instalação. */
+   pro manifest exclusivo da Área Restrita, insere as tags "*-web-app-capable"
+   e registra o Service Worker (ver registrarServiceWorkerBarbeiros() acima).
+   Chamada ao entrar em showAdmin(). Antes dessa chamada não existe nenhum
+   <link rel="manifest">, meta tag ou Service Worker registrado — é isso
+   que mantém o site público como atalho comum, nunca uma instalação. */
 function prepararPWABarbeiros(){
+    registrarServiceWorkerBarbeiros();
+
     let linkManifest = document.querySelector('link[rel="manifest"]');
     if(!linkManifest){
         linkManifest = document.createElement('link');
