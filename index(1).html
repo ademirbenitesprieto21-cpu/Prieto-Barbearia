@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Relatório Gerencial | Prieto Barbearia</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #e7e7e7;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111;
+        }
+
+        /* =========================
+           PÁGINA A4
+        ========================= */
+
+        .pagina {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    background: #fff;
+    padding: 18mm 18mm 15mm;
+    box-shadow: 0 5px 25px rgba(0,0,0,.12);
+    overflow: hidden;
+}
+
+
+        /* =========================
+           CABEÇALHO
+        ========================= */
+
+        .cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            padding-bottom: 20px;
+
+            border-bottom: 2px solid #111;
+        }
+
+        .logo {
+            width: 120px;
+            height: auto;
+        }
+
+        .documento {
+            text-align: right;
+        }
+
+        .documento-titulo {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        .documento-numero {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #666;
+        }
+
+
+        /* =========================
+           TÍTULO
+        ========================= */
+
+        .titulo-principal {
+            margin-top: 28px;
+        }
+
+        .titulo-principal h1 {
+            font-size: 25px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+        }
+
+        .titulo-principal p {
+            margin-top: 7px;
+            color: #666;
+            font-size: 12px;
+        }
+
+
+        /* =========================
+           INFORMAÇÕES
+        ========================= */
+
+        .informacoes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            margin-top: 25px;
+
+            border: 1px solid #d4d4d4;
+        }
+
+        .informacao {
+            padding: 15px 18px;
+        }
+
+        .informacao + .informacao {
+            border-left: 1px solid #d4d4d4;
+        }
+
+        .informacao-label {
+            font-size: 9px;
+            color: #777;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .informacao-valor {
+            margin-top: 7px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+
+        /* =========================
+           SEÇÃO
+        ========================= */
+
+        .secao {
+            margin-top: 30px;
+        }
+
+        .secao-cabecalho {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding-bottom: 9px;
+            border-bottom: 1px solid #222;
+        }
+
+        .secao-cabecalho h2 {
+            font-size: 12px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .secao-cabecalho span {
+            font-size: 10px;
+            color: #777;
+        }
+
+
+        /* =========================
+           INDICADORES
+        ========================= */
+
+        .indicadores {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border: 1px solid #d5d5d5;
+            margin-top: 15px;
+        }
+
+        .indicador {
+            min-height: 105px;
+            padding: 20px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .indicador + .indicador {
+            border-left: 1px solid #d5d5d5;
+        }
+
+        .indicador-label {
+            font-size: 9px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .indicador-valor {
+            margin-top: 10px;
+            font-size: 27px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+        }
+
+
+        /* =========================
+           DUAS COLUNAS
+        ========================= */
+
+        .colunas {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 30px;
+        }
+
+
+        /* =========================
+           TABELAS
+        ========================= */
+
+        .tabela-container {
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #111;
+            color: #fff;
+        }
+
+        th {
+            padding: 11px 9px;
+            text-align: left;
+
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        td {
+            padding: 12px 9px;
+
+            border-bottom: 1px solid #ddd;
+
+            font-size: 11px;
+        }
+
+        td:not(:first-child),
+        th:not(:first-child) {
+            text-align: right;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 1px solid #111;
+        }
+
+
+        /* =========================
+           RESUMO FINANCEIRO
+        ========================= */
+
+        .financeiro {
+            margin-top: 25px;
+
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .financeiro-card {
+            border: 1px solid #d5d5d5;
+            padding: 18px;
+        }
+
+        .financeiro-label {
+            font-size: 9px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .financeiro-valor {
+            margin-top: 9px;
+            font-size: 21px;
+            font-weight: 700;
+        }
+
+
+        /* =========================
+           MOVIMENTAÇÃO
+        ========================= */
+
+        .movimentacao {
+            margin-top: 15px;
+
+            border: 1px solid #d5d5d5;
+        }
+
+        .movimentacao-linha {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+
+            padding: 16px 18px;
+        }
+
+        .movimentacao-linha + .movimentacao-linha {
+            border-top: 1px solid #ddd;
+        }
+
+        .mov-label {
+            font-size: 9px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+        }
+
+        .mov-valor {
+            margin-top: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+
+        /* =========================
+           SEM DADOS
+        ========================= */
+
+        .sem-dados {
+            margin-top: 15px;
+
+            min-height: 105px;
+
+            border: 1px solid #d5d5d5;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #777;
+
+            font-size: 11px;
+        }
+
+
+        /* =========================
+           OBSERVAÇÃO
+        ========================= */
+
+        .observacao {
+            margin-top: 30px;
+
+            padding: 15px 18px;
+
+            border-left: 3px solid #111;
+
+            background: #f5f5f5;
+        }
+
+        .observacao strong {
+            display: block;
+
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .observacao p {
+            margin-top: 7px;
+
+            font-size: 10px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+
+        /* =========================
+           RODAPÉ
+        ========================= */
+
+        .rodape {
+            margin-top: 45px;
+
+            padding-top: 13px;
+
+            border-top: 1px solid #222;
+
+            display: flex;
+            justify-content: space-between;
+
+            font-size: 9px;
+            color: #666;
+        }
+
+        .rodape strong {
+            color: #111;
+        }
+
+
+        /* =========================
+           IMPRESSÃO
+        ========================= */
+
+        @media print {
+
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+
+    .pagina {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 18mm 18mm 15mm;
+        box-shadow: none;
+        overflow: hidden;
+        page-break-after: avoid;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="pagina">
+
+
+    <!-- CABEÇALHO -->
+
+    <header class="cabecalho">
+
+        <img
+            src="logo2.png"
+            alt="Prieto Barbearia"
+            class="logo"
+        >
+
+        <div class="documento">
+
+            <div class="documento-titulo">
+                RELATÓRIO GERENCIAL
+            </div>
+
+            <div class="documento-numero">
+                Documento nº 00001
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- TÍTULO -->
+
+    <section class="titulo-principal">
+
+        <h1>
+            Relatório Consolidado da Barbearia
+        </h1>
+
+        <p>
+            Indicadores operacionais e financeiros do período analisado.
+        </p>
+
+    </section>
+
+
+    <!-- INFORMAÇÕES -->
+
+    <section class="informacoes">
+
+        <div class="informacao">
+
+            <div class="informacao-label">
+                Período analisado
+            </div>
+
+            <div class="informacao-valor">
+                Este mês
+            </div>
+
+        </div>
+
+
+        <div class="informacao">
+
+            <div class="informacao-label">
+                Relatório gerado em
+            </div>
+
+            <div class="informacao-valor">
+                12/08/2026 às 16:41
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- INDICADORES -->
+
+    <section class="secao">
+
+        <div class="secao-cabecalho">
+
+            <h2>
+                Indicadores do período
+            </h2>
+
+            <span>
+                Visão geral
+            </span>
+
+        </div>
+
+
+        <div class="indicadores">
+
+
+            <div class="indicador">
+
+                <div class="indicador-label">
+                    Clientes recorrentes
+                </div>
+
+                <div class="indicador-valor">
+                    5
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-label">
+                    Faturamento
+                </div>
+
+                <div class="indicador-valor">
+                    R$ 135,00
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-label">
+                    Cancelamentos
+                </div>
+
+                <div class="indicador-valor">
+                    0
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ANÁLISES -->
+
+    <section class="secao">
+
+        <div class="colunas">
+
+
+            <!-- BARBEIROS -->
+
+            <div>
+
+                <div class="secao-cabecalho">
+
+                    <h2>
+                        Desempenho por barbeiro
+                    </h2>
+
+                </div>
+
+
+                <div class="tabela-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Barbeiro</th>
+                                <th>Atend.</th>
+                                <th>Clientes</th>
+                                <th>Faturamento</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr>
+
+                                <td>
+                                    Barbeiro Experiente
+                                </td>
+
+                                <td>
+                                    4
+                                </td>
+
+                                <td>
+                                    4
+                                </td>
+
+                                <td>
+                                    R$ 110,00
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td>
+                                    Barbeiro Tradicional
+                                </td>
+
+                                <td>
+                                    1
+                                </td>
+
+                                <td>
+                                    1
+                                </td>
+
+                                <td>
+                                    R$ 25,00
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- SERVIÇOS -->
+
+            <div>
+
+                <div class="secao-cabecalho">
+
+                    <h2>
+                        Serviços realizados
+                    </h2>
+
+                </div>
+
+
+                <div class="tabela-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Serviço</th>
+                                <th>Quantidade</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            <tr>
+
+                                <td>
+                                    Social
+                                </td>
+
+                                <td>
+                                    3
+                                </td>
+
+                            </tr>
+
+
+                            <tr>
+
+                                <td>
+                                    Degradê
+                                </td>
+
+                                <td>
+                                    2
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- MOVIMENTAÇÃO -->
+
+    <section class="secao">
+
+        <div class="secao-cabecalho">
+
+            <h2>
+                Análise de movimentação
+            </h2>
+
+            <span>
+                Agendamentos
+            </span>
+
+        </div>
+
+
+        <div class="movimentacao">
+
+
+            <div class="movimentacao-linha">
+
+                <div>
+
+                    <div class="mov-label">
+                        Dia mais movimentado
+                    </div>
+
+                    <div class="mov-valor">
+                        08/08/2026
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <div class="mov-label">
+                        Agendamentos
+                    </div>
+
+                    <div class="mov-valor">
+                        5 agendamento(s)
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="movimentacao-linha">
+
+                <div>
+
+                    <div class="mov-label">
+                        Horários mais movimentados
+                    </div>
+
+                    <div class="mov-valor">
+                        Sem dados no período
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <div class="mov-label">
+                        Status dos cancelamentos
+                    </div>
+
+                    <div class="mov-valor">
+                        Nenhum cancelamento registrado
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- OBSERVAÇÃO -->
+
+    <div class="observacao">
+
+        <strong>
+            Observação
+        </strong>
+
+        <p>
+            Os dados apresentados neste relatório correspondem
+            ao período selecionado no sistema e são destinados
+            ao acompanhamento gerencial da Prieto Barbearia.
+        </p>
+
+    </div>
+
+
+    <!-- RODAPÉ -->
+
+    <footer class="rodape">
+
+        <div>
+            <strong>PRIETO BARBEARIA</strong>
+        </div>
+
+        <div>
+            Relatório Gerencial
+        </div>
+
+        <div>
+            Página 01
+        </div>
+
+    </footer>
+
+
+</div>
+
+
+</body>
+
+</html>
