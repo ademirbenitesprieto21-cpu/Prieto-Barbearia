@@ -6635,6 +6635,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         document.getElementById('admin-content').innerHTML = `
             <div class="admin-search-bar">
                 <button class="ag-btn" onclick="admin.fecharPreviewPDF()"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                <button class="ag-btn" onclick="admin.imprimirPdfPreview()"><i class="fa-solid fa-print"></i> Imprimir</button>
                 <button class="admin-btn-primario" onclick="admin.baixarPdfPreview()"><i class="fa-solid fa-file-arrow-down"></i> Baixar PDF</button>
             </div>
             <div class="dash-panel pdf-preview-panel">
@@ -6644,7 +6645,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
                 </div>
                 <div class="pdf-preview-mobile-fallback">
                     <i class="fa-solid fa-file-pdf"></i>
-                    <p>A pré-visualização dentro da página nem sempre funciona no celular. Abra o PDF em uma nova aba para visualizá-lo.</p>
+                    <p>A pré-visualização dentro da página nem sempre funciona no celular. Abra o PDF em uma nova aba para visualizá-lo (ou imprimi-lo pelo menu do próprio navegador).</p>
                     <button class="admin-btn-primario" onclick="admin.abrirPdfEmNovaAba()"><i class="fa-solid fa-up-right-from-square"></i> Abrir PDF</button>
                 </div>
             </div>
@@ -6652,10 +6653,51 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         fecharMenuAdminMobile();
     },
 
+    /* Registra no Histórico de Relatórios (mesma regra de "só uma vez por
+       arquivo" usada no download) sempre que o barbeiro efetivamente USA o
+       PDF que estava pré-visualizando — seja baixando, abrindo em nova aba
+       (fluxo mobile) ou imprimindo. Antes, só o clique em "Baixar PDF"
+       contava como exportação; por isso um relatório impresso direto pelo
+       visualizador (computador) ou aberto/impresso pelo navegador (celular),
+       sem nunca clicar em "Baixar PDF", não entrava no Histórico. */
+    _registrarPdfPreviewSePreciso(){
+        if(this.pdfPreview && this.pdfPreview.registrarMeta && this.pdfPreview.blob && !this.pdfPreview.jaRegistrado){
+            this.pdfPreview.jaRegistrado = true;
+            this.registrarRelatorioNoHistorico({ ...this.pdfPreview.registrarMeta, blob: this.pdfPreview.blob, formato: 'pdf' });
+            this.avancarNumeroRelatorioPDF(this.pdfPreview.registrarMeta.escopoNumero || 'geral');
+        }
+    },
+
+    /* botão "Imprimir" da pré-visualização: registra no Histórico (mesma regra
+       do download, ver _registrarPdfPreviewSePreciso) e então aciona a
+       impressão do PDF mostrado no iframe. Em navegadores/dispositivos onde o
+       iframe não consegue abrir o próprio diálogo de impressão do PDF (ex.:
+       celular, ver "pdf-preview-mobile-fallback" acima), abre o arquivo em
+       nova aba para o usuário imprimir por lá, já registrado no Histórico. */
+    imprimirPdfPreview(){
+        if(!this.pdfPreview) return;
+        this._registrarPdfPreviewSePreciso();
+        const frame = document.querySelector('.pdf-preview-frame');
+        try{
+            if(frame && frame.contentWindow){
+                frame.contentWindow.focus();
+                frame.contentWindow.print();
+                return;
+            }
+        }catch(e){}
+        window.open(this.pdfPreview.visualizarUrl, '_blank');
+    },
+
     /* usado pelo botão "Abrir PDF" do bloco alternativo mobile: abre o mesmíssimo
-       arquivo já mostrado no iframe/baixado, em uma nova aba/janela do navegador */
+       arquivo já mostrado no iframe/baixado, em uma nova aba/janela do navegador.
+       Como no celular é essa aba nova (com o visualizador de PDF nativo do
+       navegador) que o barbeiro usa tanto para ler quanto para imprimir o
+       relatório, este clique já conta como exportação e registra no Histórico —
+       do contrário, um relatório impresso pelo celular sem nunca clicar em
+       "Baixar PDF" nunca apareceria lá. */
     abrirPdfEmNovaAba(){
         if(!this.pdfPreview) return;
+        this._registrarPdfPreviewSePreciso();
         window.open(this.pdfPreview.visualizarUrl, '_blank');
     },
 
@@ -6688,12 +6730,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         a.target = '_blank';
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
 
-        if(this.pdfPreview.registrarMeta && this.pdfPreview.blob && !this.pdfPreview.jaRegistrado){
-            this.pdfPreview.jaRegistrado = true;
-            this.registrarRelatorioNoHistorico({ ...this.pdfPreview.registrarMeta, blob: this.pdfPreview.blob, formato: 'pdf' });
-            /* Só depois do clique real em "Baixar PDF" o identificador atual é consumido. */
-            this.avancarNumeroRelatorioPDF(this.pdfPreview.registrarMeta.escopoNumero || 'geral');
-        }
+        this._registrarPdfPreviewSePreciso();
     },
 
     /* envia o arquivo (PDF ou CSV) já gerado — mesmo blob mostrado na
