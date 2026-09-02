@@ -1478,6 +1478,7 @@
   .pdf-historico-item{align-items:center;gap:12px;}
   .pdf-historico-item .n{line-height:1.5;}
   .pdf-historico-meta{color:var(--text-muted);font-weight:400;}
+  .pdf-historico-numero{color:var(--gold);font-weight:700;}
   .pdf-historico-acoes{display:flex;gap:8px;flex-shrink:0;}
   @media(max-width:600px){
     .pdf-historico-item{flex-direction:column;align-items:stretch;}
@@ -6141,7 +6142,7 @@ const admin = {
         const nomeArquivo = `relatorio-prieto-${r.modoBarbearia?'barbearia':'barbeiro'}-${this.hojeISO()}.pdf`;
         const titulo = r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho';
         const nomeRodape = r.modoBarbearia ? null : this.nomeRealBarbeiro(this.barbeiro?.nome);
-        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo, nomeRodape});
+        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo, nomeRodape, tipo:'relatorios', periodoLabel:r.periodoLabel});
     },
 
     /* Gera o PDF a partir do MESMO HTML/CSS do modelo fornecido pelo usuário.
@@ -6243,7 +6244,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
             const {jsPDF}=window.jspdf;
             const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
             doc.addImage(canvas.toDataURL('image/jpeg',0.98),'JPEG',0,0,210,297,undefined,'FAST');
-            this.finalizarGeracaoPDF(doc,{nomeArquivo:meta.nomeArquivo,titulo:meta.titulo,numeroRelatorio:meta.docNum,escopoNumero:meta.escopoNumero});
+            this.finalizarGeracaoPDF(doc,{nomeArquivo:meta.nomeArquivo,titulo:meta.titulo,numeroRelatorio:meta.docNum,escopoNumero:meta.escopoNumero,tipo:meta.tipo,periodoLabel:meta.periodoLabel});
         }catch(e){
             console.error('Erro ao renderizar o modelo original do relatório:',e);
             alert('Não foi possível gerar o PDF no modelo original. Tente novamente.');
@@ -6492,7 +6493,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         const escopoNumero=`gestao-barbeiro-${this.barbeiroGestao.id}`;
         const docNum=this.obterNumeroRelatorioPDF(escopoNumero);
         const nomeArquivo=`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
-        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:'Relatório de Desempenho',nomeRodape:this.nomeRealBarbeiro(this.barbeiroGestao.nome)});
+        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:'Relatório de Desempenho',nomeRodape:this.nomeRealBarbeiro(this.barbeiroGestao.nome),tipo:'relatorios',periodoLabel:r.periodoLabel});
     },
 
     formatarDataHoraBR(iso){
@@ -6513,10 +6514,15 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
          tanto os PDFs quanto os CSVs gerados, cada um com seu content-type
        - tabela "relatorios_gerados" (colunas: id, barbeiro_id, barbeiro_nome,
          tipo, titulo, periodo_label, arquivo_path, nome_arquivo, created_at,
-         formato). A coluna "formato" ('pdf' ou 'csv') é a única novidade de
-         estrutura em relação ao histórico que já existia só para PDFs — se a
-         coluna não existir ainda no projeto, basta criá-la (text, default
-         'pdf') para não perder nenhum registro já salvo anteriormente.
+         formato, numero_relatorio). As colunas "formato" ('pdf' ou 'csv') e
+         "numero_relatorio" (text, nullable) são as novidades de estrutura em
+         relação ao histórico que já existia só para PDFs sem numeração salva
+         — se alguma delas ainda não existir no projeto, basta criá-la para
+         não perder nenhum registro já salvo anteriormente. "numero_relatorio"
+         guarda o número de 5 dígitos que já era gerado e impresso no próprio
+         PDF ("Documento nº"), permitindo agora buscar um relatório pelo
+         número dele na tela de Histórico (ver filtrarHistoricoRelatorios).
+         Relatórios em CSV não têm numeração, então o campo fica vazio neles.
 
        O histórico é organizado em duas seções dinâmicas — "RELATÓRIOS DE CSV"
        e "RELATÓRIOS PDF" — que só aparecem quando existe pelo menos um
@@ -6528,9 +6534,31 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
        logado no momento em que o relatório foi emitido — tanto o relatório
        emitido pelo próprio barbeiro em "Relatórios" quanto o relatório emitido
        pelo dono/administrador em "Gestão do Barbeiro" (tela que já é restrita
-       ao administrador). Isso mantém, sem criar nenhuma permissão nova, a
-       mesma separação de acesso que o sistema já tinha: cada barbeiro só
-       enxerga em seu próprio Histórico os relatórios que ele mesmo emitiu. */
+       ao administrador).
+
+       Visibilidade x exclusão: um barbeiro comum só enxerga e só apaga, em
+       seu próprio Histórico, os relatórios que ele mesmo emitiu (sem
+       alteração aqui). Já o dono/administrador (ver ehAdmin()) enxerga o
+       histórico de TODA a equipe nesta mesma tela — cada relatório mostra
+       "por ${barbeiro_nome}", então mesmo com vários barbeiros misturados
+       fica claro quem emitiu cada um — mas continua só podendo APAGAR os
+       PRÓPRIOS relatórios: o botão "Apagar" nem aparece nos itens de outro
+       barbeiro (ver secao() em filtrarHistoricoRelatorios), e
+       apagarRelatorioDoHistorico/apagarTodoHistoricoRelatorios reforçam essa
+       trava também no banco. Não faria sentido o administrador apagar, do
+       próprio histórico, um relatório que pertence a outro barbeiro.
+
+       IMPORTANTE (configuração no Supabase): esse filtro por barbeiro_id feito
+       aqui no JS é só uma camada de conveniência/UX — a segurança de verdade
+       tem que vir da Row Level Security (RLS) da tabela "relatorios_gerados"
+       e do bucket "relatorios-pdfs". A policy de SELECT precisa permitir que
+       o dono/administrador LEIA linhas/arquivos de QUALQUER barbeiro_id (não
+       só o próprio), senão a consulta sem filtro feita aqui para o admin
+       simplesmente volta vazia (a policy barra antes de chegar no JS). Já a
+       policy de DELETE pode (e deve) continuar restrita a barbeiro_id = o
+       próprio para todo mundo, inclusive o admin — este código nunca tenta
+       apagar o relatório de outro barbeiro, então não precisa de uma policy
+       de DELETE mais permissiva para isso. */
     /* Identificador aleatório dos relatórios PDF.
        Cada tipo de relatório possui seu próprio espaço de numeração.
        O identificador é criado quando a pré-visualização é aberta e fica reservado
@@ -6639,6 +6667,16 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
             numeroRelatorio: registrarMeta && registrarMeta.numeroRelatorio ? String(registrarMeta.numeroRelatorio) : null,
             jaRegistrado: false
         };
+
+        /* No celular (ver "pdf-preview-mobile-fallback" logo abaixo), o iframe
+           quase sempre falha em exibir o PDF — a própria tela de fallback (com
+           o botão "Abrir PDF") já É a pré-visualização do usuário nesse
+           dispositivo. Por isso, só no celular, abrir esta tela já conta como
+           "usar" o relatório e registra no Histórico imediatamente — sem
+           depender do barbeiro lembrar de clicar em "Abrir PDF". No
+           computador nada muda: continua só registrando ao Baixar/Imprimir/
+           Abrir em nova aba, como já era (ver _registrarPdfPreviewSePreciso). */
+        if(this.ehMobile()) this._registrarPdfPreviewSePreciso();
 
         const tituloEl = document.getElementById('admin-page-title');
         if(tituloEl) tituloEl.textContent = 'Pré-visualização do Relatório';
@@ -6751,7 +6789,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
        upload ou o registro falharem, o relatório NÃO aparece no histórico
        (não fica um registro "quebrado" apontando para um arquivo inexistente),
        mas a pré-visualização já aberta continua funcionando normalmente. */
-    async registrarRelatorioNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo, formato }){
+    async registrarRelatorioNoHistorico({ tipo, titulo, periodoLabel, blob, nomeArquivo, formato, numeroRelatorio }){
         if(!this.barbeiro || !blob) return;
         try{
             const caminho = `${this.barbeiro.id}/${Date.now()}-${nomeArquivo}`;
@@ -6767,7 +6805,8 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
                 barbeiro_nome: this.barbeiro.nome,
                 tipo, titulo, periodo_label: periodoLabel,
                 arquivo_path: caminho, nome_arquivo: nomeArquivo,
-                formato: formato || 'pdf'
+                formato: formato || 'pdf',
+                numero_relatorio: numeroRelatorio ? String(numeroRelatorio) : null
             });
             if(erroInsert){
                 console.warn('Não foi possível registrar o relatório no Histórico:', erroInsert.message);
@@ -6780,8 +6819,15 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         }
     },
 
-    /* lista, para o barbeiro logado, somente os relatórios (CSV e PDF) que ele
-       mesmo emitiu — nunca mistura com o histórico de outro barbeiro.
+    /* lista os relatórios (CSV e PDF) do Histórico. Um barbeiro comum vê
+       somente os relatórios que ele mesmo emitiu — nunca mistura com o
+       histórico de outro barbeiro. Já o dono/administrador (ver ehAdmin())
+       enxerga o histórico de TODA a equipe nesta mesma tela: cada relatório
+       mostra "por ${barbeiro_nome}" (ver secao() abaixo), então mesmo com
+       vários barbeiros misturados fica claro quem emitiu cada um. Isso dá ao
+       administrador visão completa (inclusive dos relatórios que cada
+       barbeiro emitiu sozinho em "Relatórios", que antes só apareciam para o
+       próprio barbeiro) sem precisar entrar em "Gestão do Barbeiro" um por um.
 
        Organiza o resultado em duas seções DINÂMICAS: "RELATÓRIOS DE CSV" e
        "RELATÓRIOS PDF". Cada uma só aparece na tela quando existe pelo menos
@@ -6792,10 +6838,12 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
     async renderHistoricoRelatorios(){
         document.getElementById('admin-content').innerHTML = '<div class="admin-empty">Carregando histórico de relatórios...</div>';
         if(!this.barbeiro) return;
-        const { data, error } = await sb.from('relatorios_gerados')
-            .select('*')
-            .eq('barbeiro_id', this.barbeiro.id)
-            .order('created_at', { ascending: false });
+        // administrador/dono vê o histórico de todos os barbeiros (sem o filtro
+        // por barbeiro_id); qualquer outro nível continua vendo só o próprio,
+        // exatamente como antes.
+        let consulta = sb.from('relatorios_gerados').select('*').order('created_at', { ascending: false });
+        if(!this.ehAdmin()) consulta = consulta.eq('barbeiro_id', this.barbeiro.id);
+        const { data, error } = await consulta;
 
         if(error){
             document.getElementById('admin-content').innerHTML =
@@ -6804,18 +6852,58 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         }
 
         this._historicoRelatoriosCache = data || [];
-        // registros salvos antes desta atualização não têm a coluna "formato"
-        // preenchida — como até então só existiam PDFs no histórico, tratamos a
-        // ausência de "formato" como 'pdf', para não perder nada do que já existia
-        const itensCsv = this._historicoRelatoriosCache.filter(i => i.formato === 'csv');
-        const itensPdf = this._historicoRelatoriosCache.filter(i => (i.formato || 'pdf') === 'pdf');
 
-        if(!itensCsv.length && !itensPdf.length){
+        if(!this._historicoRelatoriosCache.length){
             document.getElementById('admin-content').innerHTML = `
                 <div class="dash-panel">
                     <h4>Relatórios</h4>
                     <div class="admin-empty">Nenhum relatório gerado ainda.<br>Os relatórios emitidos em CSV ou PDF (em "Relatórios"${this.ehAdmin()?' ou "Gestão do Barbeiro"':''}) aparecerão aqui automaticamente.</div>
                 </div>`;
+            return;
+        }
+
+        // barra de busca (pelo número do relatório) + botão "Apagar tudo" ficam
+        // fixos na tela; só a lista abaixo (#admin-lista-relatorios) é
+        // re-renderizada a cada tecla digitada, sem recarregar o Supabase de
+        // novo — usa sempre o mesmo cache já buscado acima.
+        document.getElementById('admin-content').innerHTML = `
+            <div class="admin-search-bar">
+                <input type="text" id="admin-busca-relatorio" placeholder="Buscar pelo número do relatório..." inputmode="numeric" oninput="admin.filtrarHistoricoRelatorios()">
+                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoRelatorios()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
+            </div>
+            ${this.ehAdmin() ? '<div class="admin-empty" style="padding:6px 2px;text-align:left;">Mostrando os relatórios de toda a equipe.</div>' : ''}
+            <div id="admin-lista-relatorios"></div>
+        `;
+        this.filtrarHistoricoRelatorios();
+    },
+
+    /* Filtra o histórico só pelo NÚMERO do relatório (o mesmo "Documento nº"
+       de 5 dígitos impresso no próprio PDF, ver obterNumeroRelatorioPDF) —
+       digitar qualquer trecho do número já encontra o relatório certo, sem
+       precisar rolar a lista inteira procurando manualmente. Relatórios em
+       CSV não têm número (não aparecem numa busca por número, mas continuam
+       normalmente na lista quando a busca está vazia). Roda 100% no cache já
+       carregado por renderHistoricoRelatorios — não faz nenhuma consulta nova
+       ao Supabase a cada tecla digitada. */
+    filtrarHistoricoRelatorios(){
+        const el = document.getElementById('admin-busca-relatorio');
+        const texto = el ? el.value.trim() : '';
+        const cache = this._historicoRelatoriosCache || [];
+        const filtrados = texto
+            ? cache.filter(i => String(i.numero_relatorio || '').includes(texto))
+            : cache;
+
+        // registros salvos antes desta atualização não têm a coluna "formato"
+        // preenchida — como até então só existiam PDFs no histórico, tratamos a
+        // ausência de "formato" como 'pdf', para não perder nada do que já existia
+        const itensCsv = filtrados.filter(i => i.formato === 'csv');
+        const itensPdf = filtrados.filter(i => (i.formato || 'pdf') === 'pdf');
+
+        const wrap = document.getElementById('admin-lista-relatorios');
+        if(!wrap) return;
+
+        if(!itensCsv.length && !itensPdf.length){
+            wrap.innerHTML = `<div class="admin-empty">${texto ? 'Nenhum relatório encontrado com esse número.' : 'Nenhum relatório gerado ainda.'}</div>`;
             return;
         }
 
@@ -6826,7 +6914,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
                     ${itens.map(item => `
                         <div class="mini-list-item pdf-historico-item">
                             <span class="n">
-                                ${item.titulo || 'Relatório'}
+                                ${item.numero_relatorio ? `<span class="pdf-historico-numero">Nº ${escapeHtml(item.numero_relatorio)}</span> — ` : ''}${item.titulo || 'Relatório'}
                                 <br><small class="pdf-historico-meta">
                                     ${item.periodo_label ? 'Período: '+item.periodo_label+' • ' : ''}Gerado em ${this.formatarDataHoraBR(item.created_at)} por ${item.barbeiro_nome || '—'}
                                 </small>
@@ -6837,7 +6925,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
                                     : `<button class="ag-btn" onclick="admin.visualizarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-eye"></i> Visualizar</button>
                                        <button class="ag-btn" onclick="admin.baixarRelatorioHistorico('${item.id}')"><i class="fa-solid fa-download"></i> Baixar</button>`
                                 }
-                                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarRelatorioDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>
+                                ${item.barbeiro_id === this.barbeiro.id ? `<button class="ag-btn" style="color:#e05252;" onclick="admin.apagarRelatorioDoHistorico('${item.id}')"><i class="fa-solid fa-trash-can"></i> Apagar</button>` : ''}
                             </span>
                         </div>
                     `).join('')}
@@ -6845,19 +6933,8 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
             </div>
         `;
 
-        // um único botão "Apagar tudo" acima das seções: remove TODOS os relatórios
-        // (CSV + PDF) do barbeiro logado de uma vez só — não é mais separado por formato
-        const cabecalho = `
-            <div class="admin-search-bar" style="justify-content:flex-end;">
-                <button class="ag-btn" style="color:#e05252;" onclick="admin.apagarTodoHistoricoRelatorios()"><i class="fa-solid fa-trash-can"></i> Apagar tudo</button>
-            </div>
-        `;
-
         // ordem: CSV primeiro, PDF depois — cada seção só é impressa quando tem conteúdo
-        document.getElementById('admin-content').innerHTML =
-            cabecalho +
-            secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv, 'csv') +
-            secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf, 'pdf');
+        wrap.innerHTML = secao('RELATÓRIOS DE CSV', 'fa-file-csv', itensCsv, 'csv') + secao('RELATÓRIOS PDF', 'fa-file-pdf', itensPdf, 'pdf');
     },
 
     /* reabre a pré-visualização de um relatório PDF já existente — reaproveita
@@ -6886,14 +6963,21 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
     },
 
     /* apaga somente UM relatório (CSV ou PDF) do histórico: remove o arquivo do
-       Storage e, em seguida, o registro correspondente. Nunca mexe em
-       agendamentos, clientes, barbeiros, configurações, serviços ou no
-       histórico de outro barbeiro — o próprio filtro por barbeiro_id (aqui e
-       na policy do banco) garante isso. Se essa era a última linha daquele
-       formato, a seção correspondente desaparece sozinha no próximo render. */
+       Storage e, em seguida, o registro correspondente. Um barbeiro comum só
+       pode apagar o PRÓPRIO relatório — o filtro por barbeiro_id (aqui e na
+       policy do banco) garante isso. Já o dono/administrador, que agora
+       enxerga o histórico de toda a equipe (ver renderHistoricoRelatorios),
+       mas SÓ pode apagar os próprios — apagar o relatório de outro barbeiro
+       não faz sentido nesta tela, então o botão "Apagar" nem aparece nos
+       itens que não são do barbeiro logado (ver secao() em
+       filtrarHistoricoRelatorios) e o filtro por barbeiro_id abaixo garante
+       isso também no banco, mesmo que alguém tente forçar pelo console. Se
+       essa era a última linha daquele formato, a seção correspondente
+       desaparece sozinha no próximo render. */
     async apagarRelatorioDoHistorico(id){
         const item = (this._historicoRelatoriosCache||[]).find(i => String(i.id) === String(id));
         if(!item || !this.barbeiro) return;
+        if(item.barbeiro_id !== this.barbeiro.id) return; // trava extra: só o próprio relatório pode ser apagado, mesmo pelo admin
         if(!confirm('Deseja apagar este relatório do histórico?')) return;
 
         if(item.arquivo_path){
@@ -6904,7 +6988,8 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
             }
         }
         // "barbeiro_id" no filtro é uma segunda trava (além da policy do banco): mesmo que
-        // alguém altere o id na URL/console, só o próprio histórico do barbeiro pode ser apagado
+        // alguém altere o id na URL/console, só o próprio histórico do barbeiro pode ser
+        // apagado — vale para todo mundo, inclusive o admin.
         const { error: erroDelete } = await sb.from('relatorios_gerados').delete()
             .eq('id', item.id).eq('barbeiro_id', this.barbeiro.id);
         if(erroDelete){
@@ -6914,17 +6999,19 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         this.renderHistoricoRelatorios();
     },
 
-    /* apaga TODOS os relatórios do histórico do barbeiro logado, independente do
-       formato (CSV e PDF juntos) — nunca apaga relatórios de outro barbeiro.
-       "barbeiro.id" é usado como filtro de segurança tanto para selecionar quais
-       itens entram na exclusão quanto na cláusula .eq() enviada ao Supabase (além
-       da policy do banco), então mesmo que o barbeiro tenha só CSVs, só PDFs, ou
-       os dois, tudo que for dele é removido do Storage e da tabela de uma vez. */
+    /* apaga TODOS os relatórios do PRÓPRIO histórico, independente do formato
+       (CSV e PDF juntos) — mesmo o admin, que agora enxerga também o
+       histórico de toda a equipe (ver renderHistoricoRelatorios), só apaga
+       os relatórios que ele mesmo emitiu por aqui; nunca os de outro
+       barbeiro, mesmo que estejam visíveis na mesma tela. "barbeiro.id" é
+       usado como filtro de segurança tanto para selecionar quais itens
+       entram na exclusão quanto na cláusula .eq() enviada ao Supabase (além
+       da policy do banco). */
     async apagarTodoHistoricoRelatorios(){
         if(!this.barbeiro) return;
         const itens = (this._historicoRelatoriosCache || []).filter(i => i.barbeiro_id === this.barbeiro.id);
         if(!itens.length) return;
-        if(!confirm('Tem certeza que deseja apagar todo o histórico de relatórios? Todos os arquivos PDF e CSV serão excluídos permanentemente. Essa ação não poderá ser desfeita.')) return;
+        if(!confirm('Tem certeza que deseja apagar todo o SEU histórico de relatórios? Todos os seus arquivos PDF e CSV serão excluídos permanentemente. Essa ação não poderá ser desfeita.')) return;
 
         // Parte 1 — Storage: apaga os arquivos (PDF e CSV) do bucket relatorios-pdfs
         const caminhos = itens.map(i => i.arquivo_path).filter(Boolean);
