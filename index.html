@@ -4136,7 +4136,7 @@ const admin = {
             inicio:periodo.inicio,
             fim:periodo.fim,
             filtro,
-            nonce:(window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now())+'-'+Math.random().toString(36).slice(2)
+            nonce:(()=>{ const raw=[String(meta.docNum||''),String(barbeiroId||''),String(modo),String(periodo.inicio),String(periodo.fim),String(filtro)].join('|'); let h=2166136261; for(let i=0;i<raw.length;i++){ h^=raw.charCodeAt(i); h=Math.imul(h,16777619); } return ('00000000'+(h>>>0).toString(16)).slice(-8)+'-'+String(meta.docNum||''); })()
         };
     },
 
@@ -6551,11 +6551,26 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         try{
             iframe.srcdoc=html;
             await new Promise((resolve,reject)=>{
-                const timer=setTimeout(()=>reject(new Error('timeout')),10000);
+                const timer=setTimeout(()=>reject(new Error('timeout')),15000);
                 iframe.onload=()=>{clearTimeout(timer);resolve();};
             });
             const win=iframe.contentWindow;
-            const page=iframe.contentDocument.querySelector('.pagina');
+            const frameDoc=iframe.contentDocument;
+            const page=frameDoc.querySelector('.pagina');
+            /* Aguarda especificamente o QR externo terminar de carregar antes
+               da captura. Sem isso o html2canvas pode fotografar o espaço vazio
+               do QR, deixando o código ausente ou ilegível no PDF. */
+            const qrImgs=[...frameDoc.querySelectorAll('img.relatorio-qrcode')];
+            await Promise.all(qrImgs.map(img=>new Promise(resolve=>{
+                if(img.complete && img.naturalWidth>0){resolve();return;}
+                const done=()=>{img.removeEventListener('load',done);img.removeEventListener('error',done);resolve();};
+                img.addEventListener('load',done,{once:true});
+                img.addEventListener('error',done,{once:true});
+                setTimeout(done,10000);
+            })));
+            if(qrImgs.length && qrImgs.some(img=>!img.naturalWidth)){
+                throw new Error('O QR Code não conseguiu ser carregado. Gere o PDF novamente com o site publicado e com conexão à internet.');
+            }
             if(!page) throw new Error('Modelo do relatório não carregou.');
             if(document.fonts?.ready) await document.fonts.ready;
             await new Promise(r=>setTimeout(r,250));
