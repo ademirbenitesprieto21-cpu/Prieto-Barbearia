@@ -4165,7 +4165,7 @@ const admin = {
         let checksum=104;
         for(let i=1;i<codes.length;i++) checksum += codes[i]*i;
         codes.push(checksum%103,106);
-        const module=2.4, quiet=12, height=36;
+        const module=1.6, quiet=12, height=36;
         const units=codes.reduce((sum,code)=>sum+patterns[code].split('').reduce((a,n)=>a+Number(n),0),0);
         const width=quiet*2+units*module;
         let x=quiet, rects='';
@@ -6504,7 +6504,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
 .pagina{width:210mm;height:297mm;margin:0;background:#fff;padding:18mm 18mm 15mm;box-shadow:0 5px 25px rgba(0,0,0,.12);overflow:hidden}
 .cabecalho{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:2px solid #111}
 .logo{width:120px;height:auto;display:block}.documento{text-align:right}.documento-titulo{font-size:13px;font-weight:700;letter-spacing:1.5px}.documento-numero{margin-top:6px;font-size:11px;color:#666}
-.relatorio-barcode-wrap{flex:1;display:flex;justify-content:center;align-items:center;margin:0 18px;height:46px}.relatorio-barcode{width:420px;height:44px;display:block;fill:#111}.relatorio-qrcode{width:66px;height:66px;display:block;object-fit:contain}
+.relatorio-barcode-wrap{flex:1;display:flex;justify-content:center;align-items:center;margin:0 18px;height:46px}.relatorio-barcode{width:250px;height:44px;display:block;fill:#111}.relatorio-qrcode{width:66px;height:66px;display:block;object-fit:contain}
 .titulo-principal{margin-top:28px;position:relative;padding-right:68px}.titulo-principal .relatorio-qrcode{position:absolute;right:0;top:-5px}.titulo-principal h1{font-size:25px;font-weight:700;letter-spacing:-.5px}.titulo-principal p{margin-top:7px;color:#666;font-size:12px}
 .informacoes{display:grid;grid-template-columns:1fr 1fr;margin-top:25px;border:1px solid #d4d4d4}.informacao{padding:15px 18px}.informacao+.informacao{border-left:1px solid #d4d4d4}.informacao-label{font-size:9px;color:#777;font-weight:700;letter-spacing:1px;text-transform:uppercase}.informacao-valor{margin-top:7px;font-size:14px;font-weight:600}
 .secao{margin-top:30px}.secao-cabecalho{display:flex;align-items:center;justify-content:space-between;padding-bottom:9px;border-bottom:1px solid #222}.secao-cabecalho h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase}.secao-cabecalho span{font-size:10px;color:#777}
