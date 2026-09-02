@@ -3726,11 +3726,19 @@ window.addEventListener('DOMContentLoaded', carregarBarbeirosPublicos);
    também escondemos aqui os links "Voltar para o site" / "Ver site": nesse
    contexto não existe "o site" pra voltar — a Home nem faz parte desse app. */
 window.APP_SOMENTE_AREA_RESTRITA = false;
-window.addEventListener('DOMContentLoaded', function(){
+window.addEventListener('DOMContentLoaded', async function(){
     try{
         const params = new URLSearchParams(window.location.search);
         if(params.get('qr-relatorio') === 'login'){
             window.QR_RELATORIO_FLUXO = true;
+
+            /* O acesso vindo do QR Code NÃO é a Área Restrita/PWA.
+               O Service Worker da Área Restrita usa escopo '/' e pode
+               interceptar esta URL especial do relatório. Por isso,
+               removemos qualquer registro antigo antes de continuar e
+               não deixamos o showAdmin() registrar um novo SW neste fluxo. */
+            await desregistrarServiceWorkerBarbeiros();
+
             showAdmin();
             const linkLogin = document.getElementById('link-voltar-site-login');
             if(linkLogin) linkLogin.style.display = 'none';
@@ -3877,6 +3885,9 @@ window.addEventListener('beforeinstallprompt', function(e){
    Quem nunca usa a Área Restrita nunca tem nenhum Service Worker rodando
    nesta origem. */
 function registrarServiceWorkerBarbeiros(){
+    /* O fluxo aberto pelo QR Code é uma página de análise independente
+       e NÃO deve ser controlado pelo Service Worker do PWA. */
+    if(window.QR_RELATORIO_FLUXO) return;
     if(!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(()=>{
         // instalação do PWA não é crítica pro funcionamento da Área Restrita —
@@ -3949,7 +3960,8 @@ function showAdmin(){
     document.getElementById('booking-view').classList.remove('active');
     document.getElementById('admin-view').classList.add('active');
     window.scrollTo(0,0);
-    prepararPWABarbeiros();
+    /* O QR Code não entra no PWA/Área Restrita normal. */
+    if(!window.QR_RELATORIO_FLUXO) prepararPWABarbeiros();
     admin.checarSessao();
 }
 
