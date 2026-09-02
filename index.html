@@ -3739,6 +3739,11 @@ window.addEventListener('DOMContentLoaded', async function(){
                não deixamos o showAdmin() registrar um novo SW neste fluxo. */
             await desregistrarServiceWorkerBarbeiros();
 
+            /* O QR Code exige autenticação própria, mesmo que o navegador
+               já tenha uma sessão do Supabase aberta. Assim o relatório
+               nunca abre automaticamente com uma sessão antiga. */
+            try{ await sb.auth.signOut(); }catch(e){}
+
             showAdmin();
             const linkLogin = document.getElementById('link-voltar-site-login');
             if(linkLogin) linkLogin.style.display = 'none';
