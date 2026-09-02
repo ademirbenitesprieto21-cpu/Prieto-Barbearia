@@ -4141,8 +4141,12 @@ const admin = {
     },
 
     codificarContextoQR(ctx){
+        /* Formato compacto: reduz bastante a quantidade de módulos do QR,
+           deixando o código muito mais fácil de ler depois de impresso no PDF.
+           O login continua sendo obrigatório para abrir os dados. */
         try{
-            const json=JSON.stringify(ctx);
+            const arr=[String(ctx.doc||''),String(ctx.barbeiro||''),String(ctx.escopo||'barbeiro'),String(ctx.inicio||''),String(ctx.fim||''),String(ctx.filtro||'mes'),String(ctx.nonce||'')];
+            const json=JSON.stringify(arr);
             const bytes=new TextEncoder().encode(json);
             let bin=''; bytes.forEach(b=>bin+=String.fromCharCode(b));
             return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -4155,7 +4159,9 @@ const admin = {
             while(s.length%4) s+='=';
             const bin=atob(s);
             const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-            return JSON.parse(new TextDecoder().decode(bytes));
+            const arr=JSON.parse(new TextDecoder().decode(bytes));
+            if(!Array.isArray(arr) || arr.length<7) return null;
+            return {doc:arr[0],barbeiro:arr[1],escopo:arr[2],inicio:arr[3],fim:arr[4],filtro:arr[5],nonce:arr[6]};
         }catch(e){ return null; }
     },
 
@@ -6515,7 +6521,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
 .pagina{width:210mm;height:297mm;margin:0;background:#fff;padding:18mm 18mm 15mm;box-shadow:0 5px 25px rgba(0,0,0,.12);overflow:hidden}
 .cabecalho{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:2px solid #111}
 .logo{width:120px;height:auto;display:block}.documento{text-align:right}.documento-titulo{font-size:13px;font-weight:700;letter-spacing:1.5px}.documento-numero{margin-top:6px;font-size:11px;color:#666}
-.relatorio-barcode-wrap{flex:1;display:flex;justify-content:center;align-items:center;margin:0 18px;height:46px}.relatorio-barcode{width:250px;height:44px;display:block;fill:#111}.relatorio-qrcode{width:42px;height:42px;display:block;object-fit:contain}
+.relatorio-barcode-wrap{flex:1;display:flex;justify-content:center;align-items:center;margin:0 18px;height:46px}.relatorio-barcode{width:250px;height:44px;display:block;fill:#111}.relatorio-qrcode{width:68px;height:68px;display:block;object-fit:contain;background:#fff;padding:2px}
 .titulo-principal{margin-top:28px}.titulo-principal h1{font-size:25px;font-weight:700;letter-spacing:-.5px}.titulo-principal p{margin-top:7px;color:#666;font-size:12px}
 .informacoes{display:grid;grid-template-columns:1fr 1fr;margin-top:25px;border:1px solid #d4d4d4}.informacao{padding:15px 18px}.informacao+.informacao{border-left:1px solid #d4d4d4}.informacao-label{font-size:9px;color:#777;font-weight:700;letter-spacing:1px;text-transform:uppercase}.informacao-valor{margin-top:7px;font-size:14px;font-weight:600}
 .secao{margin-top:30px}.secao-cabecalho{display:flex;align-items:center;justify-content:space-between;padding-bottom:9px;border-bottom:1px solid #222}.secao-cabecalho h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase}.secao-cabecalho span{font-size:10px;color:#777}
@@ -6529,7 +6535,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
 </style></head><body><div class="pagina">
 <header class="cabecalho"><img src="${LOGO_PRIETO_BASE64}" alt="Prieto Barbearia" class="logo"><div class="relatorio-barcode-wrap"><svg class="relatorio-barcode" viewBox="0 0 272 44" preserveAspectRatio="none" role="img" aria-label="Barcode sem dados"><rect x="4" y="2" width="2" height="40"/><rect x="8" y="2" width="1" height="40"/><rect x="10" y="2" width="3" height="40"/><rect x="14" y="2" width="1" height="40"/><rect x="17" y="2" width="1" height="40"/><rect x="19" y="2" width="2" height="40"/><rect x="22" y="2" width="4" height="40"/><rect x="28" y="2" width="1" height="40"/><rect x="30" y="2" width="2" height="40"/><rect x="33" y="2" width="1" height="40"/><rect x="36" y="2" width="3" height="40"/><rect x="40" y="2" width="2" height="40"/><rect x="43" y="2" width="1" height="40"/><rect x="46" y="2" width="4" height="40"/><rect x="51" y="2" width="1" height="40"/><rect x="53" y="2" width="1" height="40"/><rect x="56" y="2" width="2" height="40"/><rect x="59" y="2" width="3" height="40"/><rect x="63" y="2" width="1" height="40"/><rect x="66" y="2" width="2" height="40"/><rect x="69" y="2" width="1" height="40"/><rect x="71" y="2" width="4" height="40"/><rect x="77" y="2" width="2" height="40"/><rect x="80" y="2" width="1" height="40"/><rect x="82" y="2" width="3" height="40"/><rect x="87" y="2" width="1" height="40"/><rect x="89" y="2" width="1" height="40"/><rect x="91" y="2" width="2" height="40"/><rect x="95" y="2" width="3" height="40"/><rect x="99" y="2" width="1" height="40"/><rect x="101" y="2" width="4" height="40"/><rect x="107" y="2" width="1" height="40"/><rect x="109" y="2" width="2" height="40"/><rect x="112" y="2" width="1" height="40"/><rect x="115" y="2" width="3" height="40"/><rect x="119" y="2" width="2" height="40"/><rect x="122" y="2" width="1" height="40"/><rect x="125" y="2" width="2" height="40"/><rect x="128" y="2" width="4" height="40"/><rect x="133" y="2" width="1" height="40"/><rect x="136" y="2" width="1" height="40"/><rect x="138" y="2" width="3" height="40"/><rect x="142" y="2" width="2" height="40"/><rect x="146" y="2" width="1" height="40"/><rect x="148" y="2" width="4" height="40"/><rect x="153" y="2" width="1" height="40"/><rect x="156" y="2" width="2" height="40"/><rect x="159" y="2" width="3" height="40"/><rect x="163" y="2" width="1" height="40"/><rect x="166" y="2" width="1" height="40"/><rect x="168" y="2" width="2" height="40"/><rect x="171" y="2" width="4" height="40"/><rect x="177" y="2" width="1" height="40"/><rect x="179" y="2" width="3" height="40"/><rect x="183" y="2" width="1" height="40"/><rect x="186" y="2" width="2" height="40"/><rect x="189" y="2" width="1" height="40"/><rect x="191" y="2" width="4" height="40"/><rect x="197" y="2" width="2" height="40"/><rect x="200" y="2" width="1" height="40"/><rect x="202" y="2" width="3" height="40"/><rect x="207" y="2" width="1" height="40"/><rect x="209" y="2" width="2" height="40"/><rect x="212" y="2" width="4" height="40"/><rect x="218" y="2" width="1" height="40"/><rect x="220" y="2" width="1" height="40"/><rect x="222" y="2" width="3" height="40"/><rect x="227" y="2" width="2" height="40"/><rect x="230" y="2" width="1" height="40"/><rect x="232" y="2" width="4" height="40"/><rect x="238" y="2" width="1" height="40"/><rect x="240" y="2" width="2" height="40"/><rect x="243" y="2" width="3" height="40"/><rect x="248" y="2" width="1" height="40"/><rect x="250" y="2" width="1" height="40"/><rect x="252" y="2" width="2" height="40"/><rect x="256" y="2" width="4" height="40"/><rect x="261" y="2" width="1" height="40"/><rect x="263" y="2" width="3" height="40"/></svg></div><div class="documento"><div class="documento-titulo">RELATÓRIO GERENCIAL</div><div class="documento-numero">Documento nº ${esc(meta.docNum)}</div></div></header>
 <section class="titulo-principal"><h1>${titulo}</h1><p>Indicadores operacionais e financeiros do período analisado.</p></section>
-<section class="informacoes"><div class="informacao" style="position:relative;padding-right:78px"><div class="informacao-label">Período analisado</div><div class="informacao-valor">${esc(r.periodoLabel)}</div><div style="position:absolute;right:18px;top:50%;transform:translateY(-50%)"><img class="relatorio-qrcode" alt="QR Code para análise exclusiva deste relatório" crossorigin="anonymous" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent((()=>{const c=admin.obterContextoQR(r,meta);return admin.obterURLPublicaQR(c);})())}"></div></div><div class="informacao"><div class="informacao-label">Relatório gerado em</div><div class="informacao-valor">${esc(dh)}</div></div></section>
+<section class="informacoes"><div class="informacao" style="position:relative;padding-right:102px"><div class="informacao-label">Período analisado</div><div class="informacao-valor">${esc(r.periodoLabel)}</div><div style="position:absolute;right:16px;top:50%;transform:translateY(-50%)"><img class="relatorio-qrcode" alt="QR Code para análise exclusiva deste relatório" crossorigin="anonymous" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&ecc=H&data=${encodeURIComponent((()=>{const c=admin.obterContextoQR(r,meta);return admin.obterURLPublicaQR(c);})())}"></div></div><div class="informacao"><div class="informacao-label">Relatório gerado em</div><div class="informacao-valor">${esc(dh)}</div></div></section>
 <section class="secao"><div class="secao-cabecalho"><h2>Indicadores do período</h2><span>Visão geral</span></div><div class="indicadores">
 <div class="indicador"><div class="indicador-label">Clientes recorrentes</div><div class="indicador-valor">${esc(r.clientesRecorrentes ?? 0)}</div></div>
 <div class="indicador"><div class="indicador-label">Faturamento</div><div class="indicador-valor">${esc(moeda(r.faturamento))}</div></div>
@@ -6561,15 +6567,16 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
                da captura. Sem isso o html2canvas pode fotografar o espaço vazio
                do QR, deixando o código ausente ou ilegível no PDF. */
             const qrImgs=[...frameDoc.querySelectorAll('img.relatorio-qrcode')];
-            await Promise.all(qrImgs.map(img=>new Promise(resolve=>{
+            await Promise.all(qrImgs.map(img=>new Promise((resolve,reject)=>{
                 if(img.complete && img.naturalWidth>0){resolve();return;}
-                const done=()=>{img.removeEventListener('load',done);img.removeEventListener('error',done);resolve();};
+                const done=()=>{img.removeEventListener('load',done);img.removeEventListener('error',fail);resolve();};
+                const fail=()=>{img.removeEventListener('load',done);img.removeEventListener('error',fail);reject(new Error('QR Code não carregou.'));};
                 img.addEventListener('load',done,{once:true});
-                img.addEventListener('error',done,{once:true});
-                setTimeout(done,10000);
+                img.addEventListener('error',fail,{once:true});
+                setTimeout(()=>{ if(img.naturalWidth>0) resolve(); else reject(new Error('QR Code não carregou a tempo.')); },10000);
             })));
-            if(qrImgs.length && qrImgs.some(img=>!img.naturalWidth)){
-                throw new Error('O QR Code não conseguiu ser carregado. Gere o PDF novamente com o site publicado e com conexão à internet.');
+            if(qrImgs.length && qrImgs.some(img=>img.naturalWidth<100 || img.naturalHeight<100)){
+                throw new Error('O QR Code carregado ficou em resolução insuficiente. Gere o PDF novamente com conexão à internet.');
             }
             if(!page) throw new Error('Modelo do relatório não carregou.');
             if(document.fonts?.ready) await document.fonts.ready;
