@@ -2347,6 +2347,58 @@
     .cta-pulse{animation:none;}
   }
 </style>
+
+<style id="qr-analytics-styles">
+.qr-analytics-page{min-height:100vh;background:var(--bg,#0b0d10);color:var(--text,#f4f4f4);padding:34px 18px 60px;}
+.qr-analytics-shell{max-width:1180px;margin:0 auto;}
+.qr-analytics-head{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;padding:4px 2px 24px;border-bottom:1px solid rgba(255,255,255,.09);}
+.qr-analytics-kicker{font-size:11px;letter-spacing:1.5px;color:#b8b8b8;font-weight:800;text-transform:uppercase;margin-bottom:9px;}
+.qr-analytics-kicker i{margin-right:6px;}
+.qr-analytics-head h1{font-size:29px;line-height:1.15;margin:0;font-weight:800;letter-spacing:-.5px;}
+.qr-analytics-head p{margin:8px 0 0;color:#9d9d9d;font-size:13px;}
+.qr-analytics-doc{white-space:nowrap;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px 14px;font-size:12px;font-weight:800;letter-spacing:.5px;background:rgba(255,255,255,.025);}
+.qr-analytics-loading{min-height:45vh;display:flex;align-items:center;justify-content:center;gap:10px;color:#aaa;font-size:13px;}
+.qr-analytics-error{margin:26px 0;padding:18px;border:1px solid rgba(224,90,90,.35);background:rgba(224,90,90,.08);border-radius:12px;color:#f1a5a5;line-height:1.55;font-size:13px;}
+.qr-a-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:22px 0;}
+.qr-a-card,.qr-a-panel{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025);border-radius:14px;}
+.qr-a-card{padding:16px 15px;min-height:105px;}
+.qr-a-label{font-size:10px;color:#9a9a9a;text-transform:uppercase;letter-spacing:1px;font-weight:800;}
+.qr-a-value{margin-top:9px;font-size:23px;font-weight:800;line-height:1.1;word-break:break-word;}
+.qr-a-value small{font-size:11px;color:#999;font-weight:600;}
+.qr-a-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.qr-a-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;}
+.qr-a-panel{padding:18px;}
+.qr-a-panel h3{margin:0 0 14px;font-size:12px;text-transform:uppercase;letter-spacing:1px;}
+.qr-a-panel h3 i{margin-right:7px;}
+.qr-a-muted{color:#8f8f8f;font-size:11px;line-height:1.5;}
+.qr-a-list{display:flex;flex-direction:column;gap:8px;}
+.qr-a-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;}
+.qr-a-row:last-child{border-bottom:0;}
+.qr-a-row .name{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qr-a-row .meta{color:#aaa;white-space:nowrap;text-align:right;}
+.qr-a-bar{height:9px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:7px;}
+.qr-a-bar span{display:block;height:100%;background:#d6b56d;border-radius:99px;min-width:2px;}
+.qr-a-barline{display:grid;grid-template-columns:minmax(90px,1fr) 2fr auto;align-items:center;gap:10px;margin:11px 0;}
+.qr-a-barline .label{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qr-a-barline .num{font-size:11px;color:#aaa;min-width:35px;text-align:right;}
+.qr-a-donut-wrap{display:flex;align-items:center;gap:20px;min-height:190px;}
+.qr-a-donut{width:145px;height:145px;border-radius:50%;background:conic-gradient(#d6b56d 0 100%);position:relative;flex:none;}
+.qr-a-donut:after{content:"";position:absolute;inset:32px;border-radius:50%;background:#111419;}
+.qr-a-legend{display:flex;flex-direction:column;gap:9px;font-size:11px;}
+.qr-a-legend div{display:flex;gap:8px;align-items:center;}
+.qr-a-dot{width:9px;height:9px;border-radius:50%;background:#d6b56d;display:inline-block;}
+.qr-a-table-wrap{overflow:auto;border:1px solid rgba(255,255,255,.07);border-radius:11px;}
+.qr-a-table{width:100%;border-collapse:collapse;min-width:720px;}
+.qr-a-table th{background:#0f1115;color:#aaa;font-size:9px;text-transform:uppercase;letter-spacing:.7px;text-align:left;padding:10px;}
+.qr-a-table td{padding:10px;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:#ddd;vertical-align:top;}
+.qr-a-status{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:5px 7px;border-radius:999px;background:rgba(255,255,255,.07);display:inline-block;}
+.qr-a-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.qr-a-insight{padding:13px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.02);font-size:12px;line-height:1.5;}
+.qr-a-insight strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#999;margin-bottom:5px;}
+.qr-a-footer{margin-top:20px;color:#777;font-size:10px;text-align:center;line-height:1.5;}
+@media(max-width:1050px){.qr-a-summary{grid-template-columns:repeat(3,1fr)}.qr-a-grid3{grid-template-columns:1fr 1fr}.qr-a-insights{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.qr-analytics-page{padding:22px 12px 42px}.qr-analytics-head{align-items:flex-start;flex-direction:column}.qr-analytics-head h1{font-size:23px}.qr-a-summary{grid-template-columns:1fr 1fr}.qr-a-grid2,.qr-a-grid3{grid-template-columns:1fr}.qr-a-insights{grid-template-columns:1fr}.qr-a-donut-wrap{flex-direction:column;align-items:flex-start}.qr-a-barline{grid-template-columns:90px 1fr auto}.qr-analytics-doc{font-size:11px}}
+</style>
 </head>
 <body>
 
@@ -2793,14 +2845,19 @@
   </div>
 
   <!-- ============= DESTINO SEPARADO DO QR CODE ============= -->
-  <div id="qr-relatorio-destino" style="display:none;min-height:70vh;align-items:center;justify-content:center;padding:40px 20px;">
-    <div class="admin-login-card" style="display:flex;flex-direction:column;justify-content:center;text-align:center;max-width:520px;min-height:360px;">
-      <div class="admin-login-top"><img src="logo.png" alt="Prieto Barbearia"></div>
-      <div class="admin-login-bottom" style="text-align:center;">
-        <div class="admin-recover-title">Acesso autorizado</div>
-        <div class="admin-recover-sub" style="margin-top:12px;">O login foi validado. Este é o novo destino exclusivo acessado pelo QR Code do relatório.</div>
-        <div style="margin-top:24px;font-size:13px;color:#888;">DESTINO DO QR CODE — TESTE</div>
+  <div id="qr-relatorio-destino" class="qr-analytics-page" style="display:none;">
+    <div class="qr-analytics-shell">
+      <div class="qr-analytics-head">
+        <div>
+          <div class="qr-analytics-kicker"><i class="fa-solid fa-qrcode"></i> ANÁLISE EXCLUSIVA DO RELATÓRIO</div>
+          <h1 id="qr-analytics-title">Análise detalhada</h1>
+          <p id="qr-analytics-subtitle">Dados reunidos do período deste relatório.</p>
+        </div>
+        <div class="qr-analytics-doc" id="qr-analytics-doc">Documento nº —</div>
       </div>
+      <div id="qr-analytics-loading" class="qr-analytics-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando os dados do relatório...</div>
+      <div id="qr-analytics-content" style="display:none;"></div>
+      <div id="qr-analytics-error" class="qr-analytics-error" style="display:none;"></div>
     </div>
   </div>
 
@@ -4058,12 +4115,198 @@ const admin = {
         return !!(window.matchMedia && window.matchMedia('(max-width: 960px)').matches);
     },
 
+    obterContextoQR(r, meta={}){
+        const filtro = meta.filtroRelatorio || (meta.gestaoFiltro) || this.relatorioFiltro || this.gestaoFiltro || 'mes';
+        const modo = r && (r.modoBarbearia || r.indicadoresConsolidados) ? 'barbearia' : 'barbeiro';
+        const barbeiroId = meta.barbeiroRelatorio || (r && r.barbeiroRelatorioId) || (modo === 'barbeiro' ? (this.barbeiro?.id || '') : (this.barbeiro?.id || ''));
+        const periodo = this.calcularIntervaloQR(filtro, !!meta.gestaoFiltro);
+        return { doc:String(meta.docNum||''), barbeiro:String(barbeiroId||''), escopo:modo, inicio:periodo.inicio, fim:periodo.fim, filtro };
+    },
+
+    calcularIntervaloQR(filtro='mes', semanaGestao=false){
+        const hoje=this.paraData(this.hojeISO());
+        const iso=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
+        if(filtro==='dia') return {inicio:iso(hoje),fim:iso(hoje)};
+        if(filtro==='semana'){
+            const ini=new Date(hoje);
+            if(semanaGestao){ ini.setDate(ini.getDate()-ini.getDay()); } else { ini.setDate(ini.getDate()-6); }
+            const fim=semanaGestao ? new Date(ini) : new Date(hoje);
+            if(semanaGestao) fim.setDate(fim.getDate()+6);
+            return {inicio:iso(ini),fim:iso(fim)};
+        }
+        if(filtro==='ano') return {inicio:`${hoje.getFullYear()}-01-01`,fim:`${hoje.getFullYear()}-12-31`};
+        return {inicio:`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-01`,fim:iso(new Date(hoje.getFullYear(),hoje.getMonth()+1,0))};
+    },
+
+    async checarBarbeiroQR(){
+        const {data:{user}}=await sb.auth.getUser();
+        if(!user) return null;
+        const {data,error}=await sb.from('barbeiros').select('*').eq('user_id',user.id).single();
+        if(error || !data || data.ativo===false) return null;
+        return data;
+    },
+
+    async carregarDadosQRRelatorio(){
+        const params=new URLSearchParams(window.location.search);
+        const doc=String(params.get('doc')||'').trim();
+        const barbeiroId=String(params.get('barbeiro')||'').trim();
+        const escopo=params.get('escopo')==='barbearia'?'barbearia':'barbeiro';
+        const inicio=params.get('inicio');
+        const fim=params.get('fim');
+        const filtro=params.get('filtro')||'mes';
+        if(!doc || !barbeiroId || !/^\d{4,8}$/.test(doc) || !/^\d{4}-\d{2}-\d{2}$/.test(inicio||'') || !/^\d{4}-\d{2}-\d{2}$/.test(fim||'')){
+            throw new Error('Este QR Code não contém um identificador válido do relatório. Gere um novo PDF pelo sistema.');
+        }
+        const autorizado=await this.checarBarbeiroQR();
+        if(!autorizado) throw new Error('Seu login foi autenticado, mas não há um barbeiro ativo vinculado a este acesso.');
+
+        let relatorio=null;
+        try{
+            let q=sb.from('relatorios_gerados').select('*').eq('numero_relatorio',doc).eq('barbeiro_id',barbeiroId).limit(1);
+            const resp=await q;
+            if(!resp.error && resp.data && resp.data.length) relatorio=resp.data[0];
+        }catch(e){}
+        /* O documento/QR precisa continuar amarrado ao período impresso no PDF.
+           Se o registro do histórico existir, aceitamos somente o tipo de relatório
+           correspondente e usamos o período codificado no próprio QR. O número não
+           é usado como senha nem contém dados sensíveis. */
+        if(relatorio){
+            const titulo=String(relatorio.titulo||'').toLowerCase();
+            const pareceConsolidado=titulo.includes('consolidado') || titulo.includes('barbearia');
+            if((escopo==='barbearia') !== pareceConsolidado){
+                throw new Error('Este QR Code não corresponde ao tipo de relatório informado. Gere um novo PDF.');
+            }
+        }
+
+        let consulta=sb.from('agendamentos').select('*, servicos(nome), clientes(nome,created_at), barbeiros(nome)').gte('data',inicio).lte('data',fim).order('data',{ascending:false}).order('horario',{ascending:false});
+        if(escopo==='barbeiro') consulta=consulta.eq('barbeiro_id',barbeiroId);
+        const {data,error}=await consulta;
+        if(error) throw new Error('Não foi possível carregar os dados deste relatório. Verifique as permissões do sistema.');
+
+        const lista=data||[];
+        return {lista,doc,escopo,barbeiroId,inicio,fim,filtro,relatorio,autorizado};
+    },
+
+    async renderDashboardQRRelatorio(){
+        const loading=document.getElementById('qr-analytics-loading');
+        const content=document.getElementById('qr-analytics-content');
+        const errorEl=document.getElementById('qr-analytics-error');
+        try{
+            const d=await this.carregarDadosQRRelatorio();
+            const esc=v=>String(v??'—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            const moeda=v=>this.formatarMoeda(Number(v||0));
+            const lista=d.lista, finalizados=lista.filter(a=>a.status==='finalizado'), cancelados=lista.filter(a=>a.status==='cancelado');
+            const clientesMap={};
+            const servicosMap={}, diasMap={}, horasMap={}, statusMap={};
+            finalizados.forEach(a=>{
+                const clienteId=a.cliente_id||('presencial:'+String(a.cliente_nome||'Cliente presencial'));
+                const nome=a.cliente_nome||'Cliente presencial';
+                if(!clientesMap[clienteId]) clientesMap[clienteId]={id:clienteId,nome,atendimentos:0,gasto:0,servicos:{},cancelamentos:0,ultimaData:'',ultimaHora:''};
+                const c=clientesMap[clienteId]; c.atendimentos++; c.gasto+=Number(a.servico_valor||0); c.ultimaData=a.data||c.ultimaData; c.ultimaHora=a.horario||c.ultimaHora;
+                const sn=a.servicos?.nome||'Serviço não informado'; c.servicos[sn]=(c.servicos[sn]||0)+1; servicosMap[sn]=(servicosMap[sn]||0)+1;
+                const dl=this.formatarDataBR(a.data); diasMap[dl]=(diasMap[dl]||0)+1;
+                if(a.horario){const h=a.horario.slice(0,5);horasMap[h]=(horasMap[h]||0)+1;}
+            });
+            cancelados.forEach(a=>{
+                const clienteId=a.cliente_id||('presencial:'+String(a.cliente_nome||'Cliente presencial'));
+                const nome=a.cliente_nome||'Cliente presencial';
+                if(!clientesMap[clienteId]) clientesMap[clienteId]={id:clienteId,nome,atendimentos:0,gasto:0,servicos:{},cancelamentos:0,ultimaData:'',ultimaHora:''};
+                clientesMap[clienteId].cancelamentos++;
+            });
+            lista.forEach(a=>{statusMap[a.status||'sem status']=(statusMap[a.status||'sem status']||0)+1;});
+            const clientes=Object.values(clientesMap);
+            const faturamento=finalizados.reduce((s,a)=>s+Number(a.servico_valor||0),0);
+            const ticket=finalizados.length?faturamento/finalizados.length:0;
+            const novos=new Set(lista.filter(a=>a.cliente_id&&a.clientes?.created_at&&new Date(a.clientes.created_at).toISOString().slice(0,10)<=a.data).map(a=>a.cliente_id)).size;
+            const unicos=new Set(lista.filter(a=>a.cliente_id).map(a=>a.cliente_id)).size;
+            const recorrentes=Math.max(unicos-novos,0);
+            const ordenar=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+            const servicos=ordenar(servicosMap), dias=ordenar(diasMap), horas=ordenar(horasMap), status=ordenar(statusMap);
+            const topClientes=[...clientes].sort((a,b)=>b.gasto-a.gasto);
+            const topFrequentes=[...clientes].sort((a,b)=>b.atendimentos-a.atendimentos);
+            const topCancelados=[...clientes].filter(c=>c.cancelamentos>0).sort((a,b)=>b.cancelamentos-a.cancelamentos);
+            const clienteServico=clientes.map(c=>{const top=ordenar(c.servicos)[0];return {...c,topServico:top?top[0]:'—',topServicoQtd:top?top[1]:0};}).sort((a,b)=>b.atendimentos-a.atendimentos);
+            const maxBar=Math.max(...servicos.map(x=>x[1]),1);
+            const maxDia=Math.max(...dias.map(x=>x[1]),1);
+            const maxHora=Math.max(...horas.map(x=>x[1]),1);
+            const periodoLabel=d.relatorio?.periodo_label || ({dia:'Hoje',semana:'Período semanal',mes:'Este mês',ano:'Este ano'}[d.filtro]||'Período selecionado');
+            const gerado=d.relatorio?.created_at?this.formatarDataHoraBR(d.relatorio.created_at):'Data registrada no relatório';
+            document.getElementById('qr-analytics-title').textContent=d.escopo==='barbearia'?'Análise completa da barbearia':'Análise completa do relatório';
+            document.getElementById('qr-analytics-subtitle').textContent=`Período: ${periodoLabel} • ${this.formatarDataBR(d.inicio)} até ${this.formatarDataBR(d.fim)} • acesso autenticado`;
+            document.getElementById('qr-analytics-doc').textContent=`Documento nº ${d.doc}`;
+
+            const insights=[];
+            if(servicos[0]) insights.push(`<strong>Preferência geral</strong>O serviço mais realizado foi <b>${esc(servicos[0][0])}</b>, com ${servicos[0][1]} atendimento(s).`);
+            if(topClientes[0]) insights.push(`<strong>Maior faturamento por cliente</strong><b>${esc(topClientes[0].nome)}</b> gerou ${moeda(topClientes[0].gasto)} no período.`);
+            if(topFrequentes[0]) insights.push(`<strong>Cliente mais frequente</strong><b>${esc(topFrequentes[0].nome)}</b> teve ${topFrequentes[0].atendimentos} atendimento(s).`);
+            if(dias[0]) insights.push(`<strong>Dia mais movimentado</strong><b>${esc(dias[0][0])}</b> concentrou ${dias[0][1]} atendimento(s).`);
+            if(horas[0]) insights.push(`<strong>Horário mais movimentado</strong><b>${esc(this.formatarHora(horas[0][0]))}</b> teve ${horas[0][1]} atendimento(s).`);
+            if(topCancelados[0]) insights.push(`<strong>Maior número de cancelamentos</strong><b>${esc(topCancelados[0].nome)}</b> possui ${topCancelados[0].cancelamentos} cancelamento(s).`);
+
+            const fatRows=topClientes.slice(0,8).map(c=>`<div class="qr-a-barline"><div class="label">${esc(c.nome)}</div><div><div class="qr-a-bar"><span style="width:${Math.max((c.gasto/Math.max(topClientes[0]?.gasto||1,1))*100,2)}%"></span></div></div><div class="num">${moeda(c.gasto)}</div></div>`).join('')||'<div class="qr-a-muted">Sem clientes com faturamento no período.</div>';
+            const servRows=servicos.slice(0,8).map(x=>`<div class="qr-a-barline"><div class="label">${esc(x[0])}</div><div><div class="qr-a-bar"><span style="width:${Math.max(x[1]/maxBar*100,2)}%"></span></div></div><div class="num">${x[1]}x</div></div>`).join('')||'<div class="qr-a-muted">Sem serviços finalizados.</div>';
+            const diaRows=dias.slice(0,7).map(x=>`<div class="qr-a-row"><span class="name">${esc(x[0])}</span><span class="meta">${x[1]} atendimento(s)</span></div>`).join('')||'<div class="qr-a-muted">Sem dados.</div>';
+            const horaRows=horas.slice(0,7).map(x=>`<div class="qr-a-row"><span class="name">${esc(this.formatarHora(x[0]))}</span><span class="meta">${x[1]} atendimento(s)</span></div>`).join('')||'<div class="qr-a-muted">Sem horários.</div>';
+            const clientRows=clienteServico.slice(0,12).map(c=>`<div class="qr-a-row"><span class="name">${esc(c.nome)}</span><span class="meta">${c.atendimentos}x • ${esc(c.topServico)} • ${moeda(c.gasto)}</span></div>`).join('')||'<div class="qr-a-muted">Nenhum cliente identificado.</div>';
+            const cancelRows=topCancelados.slice(0,10).map(c=>`<div class="qr-a-row"><span class="name">${esc(c.nome)}</span><span class="meta">${c.cancelamentos} cancelamento(s)</span></div>`).join('')||'<div class="qr-a-muted">Nenhum cancelamento registrado.</div>';
+            const agRows=lista.slice(0,80).map(a=>`<tr><td>${esc(a.cliente_nome||'Cliente presencial')}</td><td>${esc(a.servicos?.nome||'—')}</td><td>${esc(this.formatarDataBR(a.data))}</td><td>${esc(a.horario?this.formatarHora(a.horario):'—')}</td><td><span class="qr-a-status">${esc(a.status||'—')}</span></td><td>${moeda(a.servico_valor||0)}</td></tr>`).join('')||'<tr><td colspan="6">Sem agendamentos no período.</td></tr>';
+            const statusTotal=Math.max(lista.length,1);
+            let acumulado=0, stops=[]; const bases=['#d6b56d','#777','#b0b0b0','#555','#e2e2e2'];
+            status.slice(0,5).forEach((x,i)=>{const pct=x[1]/statusTotal*100;const inicio=acumulado;acumulado+=pct;stops.push(`${bases[i%bases.length]} ${inicio}% ${acumulado}%`);});
+            const donut=stops.length?`conic-gradient(${stops.join(',')})`:'#333';
+            const legend=status.slice(0,5).map((x,i)=>`<div><span class="qr-a-dot" style="background:${bases[i%bases.length]}"></span>${esc(x[0])}: ${x[1]}</div>`).join('');
+
+            content.innerHTML=`
+              <div class="qr-a-summary">
+                <div class="qr-a-card"><div class="qr-a-label">Atendimentos</div><div class="qr-a-value">${finalizados.length}</div></div>
+                <div class="qr-a-card"><div class="qr-a-label">Clientes únicos</div><div class="qr-a-value">${unicos}</div></div>
+                <div class="qr-a-card"><div class="qr-a-label">Novos</div><div class="qr-a-value">${novos}</div></div>
+                <div class="qr-a-card"><div class="qr-a-label">Recorrentes</div><div class="qr-a-value">${recorrentes}</div></div>
+                <div class="qr-a-card"><div class="qr-a-label">Faturamento</div><div class="qr-a-value">${moeda(faturamento)}</div></div>
+                <div class="qr-a-card"><div class="qr-a-label">Ticket médio</div><div class="qr-a-value">${moeda(ticket)}</div></div>
+              </div>
+              <div class="qr-a-grid2">
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-chart-column"></i> Serviços / cortes mais realizados</h3>${servRows}</section>
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-money-bill-trend-up"></i> Faturamento por pessoa</h3>${fatRows}</section>
+              </div>
+              <div class="qr-a-grid3">
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-calendar-day"></i> Dias mais movimentados</h3><div class="qr-a-list">${diaRows}</div></section>
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-clock"></i> Horários mais movimentados</h3><div class="qr-a-list">${horaRows}</div></section>
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-chart-pie"></i> Status dos agendamentos</h3><div class="qr-a-donut-wrap"><div class="qr-a-donut" style="background:${donut}"></div><div class="qr-a-legend">${legend||'<div>Sem dados.</div>'}</div></div></section>
+              </div>
+              <div class="qr-a-grid2">
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-user-tag"></i> Perfil de cada cliente no período</h3><div class="qr-a-list">${clientRows}</div></section>
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-ban"></i> Cancelamentos por pessoa</h3><div class="qr-a-list">${cancelRows}</div></section>
+              </div>
+              <section class="qr-a-panel" style="margin-top:16px"><h3><i class="fa-solid fa-lightbulb"></i> Insights automáticos</h3><div class="qr-a-insights">${insights.map(x=>`<div class="qr-a-insight">${x}</div>`).join('')||'<div class="qr-a-muted">Ainda não há dados suficientes para gerar insights.</div>'}</div></section>
+              <section class="qr-a-panel" style="margin-top:16px"><h3><i class="fa-solid fa-calendar-check"></i> Todos os agendamentos e nomes</h3><div class="qr-a-table-wrap"><table class="qr-a-table"><thead><tr><th>Cliente</th><th>Serviço / corte</th><th>Data</th><th>Horário</th><th>Status</th><th>Valor</th></tr></thead><tbody>${agRows}</tbody></table></div>${lista.length>80?'<div class="qr-a-muted" style="margin-top:10px">Mostrando os 80 primeiros registros deste relatório.</div>':''}</section>
+              <div class="qr-a-grid2">
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-file-lines"></i> Identificação do relatório</h3><div class="qr-a-list"><div class="qr-a-row"><span class="name">Período analisado</span><span class="meta">${esc(periodoLabel)} • ${esc(this.formatarDataBR(d.inicio))} a ${esc(this.formatarDataBR(d.fim))}</span></div><div class="qr-a-row"><span class="name">Relatório gerado em</span><span class="meta">${esc(gerado)}</span></div><div class="qr-a-row"><span class="name">Acesso</span><span class="meta">Autenticado • ${esc(autorizado.nome||'Barbeiro')}</span></div></div></section>
+                <section class="qr-a-panel"><h3><i class="fa-solid fa-ranking-star"></i> Destaques do período</h3><div class="qr-a-list"><div class="qr-a-row"><span class="name">Maior faturamento por cliente</span><span class="meta">${topClientes[0]?esc(topClientes[0].nome)+' • '+moeda(topClientes[0].gasto):'—'}</span></div><div class="qr-a-row"><span class="name">Mais frequente</span><span class="meta">${topFrequentes[0]?esc(topFrequentes[0].nome)+' • '+topFrequentes[0].atendimentos+'x':'—'}</span></div><div class="qr-a-row"><span class="name">Corte/serviço campeão</span><span class="meta">${servicos[0]?esc(servicos[0][0])+' • '+servicos[0][1]+'x':'—'}</span></div></div></section>
+              </div>
+              <div class="qr-a-footer">Esta análise é uma visão gerencial montada a partir dos dados existentes no sistema para o período identificado no QR Code. Não é rastreamento externo nem coleta de dados fora da Barbearia Prieto.</div>`;
+            loading.style.display='none'; content.style.display='block'; errorEl.style.display='none';
+        }catch(e){
+            loading.style.display='none'; content.style.display='none'; errorEl.style.display='block'; errorEl.innerHTML=`<b>Não foi possível abrir este relatório.</b><br>${escHtmlQR(e.message||'Erro desconhecido.')}`;
+        }
+    },
+
     async checarSessao(){
         if(window.QR_RELATORIO_FLUXO){
-            document.getElementById('admin-login').classList.remove('hidden');
-            document.getElementById('admin-panel').classList.remove('active');
             const destino = document.getElementById('qr-relatorio-destino');
-            if(destino) destino.style.display = 'none';
+            document.getElementById('admin-panel').classList.remove('active');
+            const barbeiroQR = await this.checarBarbeiroQR();
+            if(barbeiroQR){
+                this.barbeiro = barbeiroQR;
+                const u = await sb.auth.getUser();
+                this.usuarioEmail = u.data.user?.email || '';
+                document.getElementById('admin-login').classList.add('hidden');
+                if(destino) destino.style.display = 'block';
+                await this.renderDashboardQRRelatorio();
+            }else{
+                document.getElementById('admin-login').classList.remove('hidden');
+                if(destino) destino.style.display = 'none';
+            }
             return;
         }
         // sessão de recuperação de senha (link de "Criar nova senha"): não é um
@@ -6174,7 +6417,7 @@ const admin = {
         const nomeArquivo = `relatorio-prieto-${r.modoBarbearia?'barbearia':'barbeiro'}-${this.hojeISO()}.pdf`;
         const titulo = r.modoBarbearia ? 'Relatório Consolidado da Barbearia' : 'Relatório de Desempenho';
         const nomeRodape = r.modoBarbearia ? null : this.nomeRealBarbeiro(this.barbeiro?.nome);
-        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo, nomeRodape, tipo:'relatorios', periodoLabel:r.periodoLabel});
+        await this.gerarPDFModeloHTMLOriginal(r, {docNum, escopoNumero, nomeArquivo, titulo, nomeRodape, tipo:'relatorios', periodoLabel:r.periodoLabel, filtroRelatorio:this.relatorioFiltro, barbeiroRelatorio:this.barbeiro?.id});
     },
 
     /* Gera o PDF a partir do MESMO HTML/CSS do modelo fornecido pelo usuário.
@@ -6240,7 +6483,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
 </style></head><body><div class="pagina">
 <header class="cabecalho"><img src="${LOGO_PRIETO_BASE64}" alt="Prieto Barbearia" class="logo"><div class="relatorio-barcode-wrap"><svg class="relatorio-barcode" viewBox="0 0 272 44" preserveAspectRatio="none" role="img" aria-label="Barcode sem dados"><rect x="4" y="2" width="2" height="40"/><rect x="8" y="2" width="1" height="40"/><rect x="10" y="2" width="3" height="40"/><rect x="14" y="2" width="1" height="40"/><rect x="17" y="2" width="1" height="40"/><rect x="19" y="2" width="2" height="40"/><rect x="22" y="2" width="4" height="40"/><rect x="28" y="2" width="1" height="40"/><rect x="30" y="2" width="2" height="40"/><rect x="33" y="2" width="1" height="40"/><rect x="36" y="2" width="3" height="40"/><rect x="40" y="2" width="2" height="40"/><rect x="43" y="2" width="1" height="40"/><rect x="46" y="2" width="4" height="40"/><rect x="51" y="2" width="1" height="40"/><rect x="53" y="2" width="1" height="40"/><rect x="56" y="2" width="2" height="40"/><rect x="59" y="2" width="3" height="40"/><rect x="63" y="2" width="1" height="40"/><rect x="66" y="2" width="2" height="40"/><rect x="69" y="2" width="1" height="40"/><rect x="71" y="2" width="4" height="40"/><rect x="77" y="2" width="2" height="40"/><rect x="80" y="2" width="1" height="40"/><rect x="82" y="2" width="3" height="40"/><rect x="87" y="2" width="1" height="40"/><rect x="89" y="2" width="1" height="40"/><rect x="91" y="2" width="2" height="40"/><rect x="95" y="2" width="3" height="40"/><rect x="99" y="2" width="1" height="40"/><rect x="101" y="2" width="4" height="40"/><rect x="107" y="2" width="1" height="40"/><rect x="109" y="2" width="2" height="40"/><rect x="112" y="2" width="1" height="40"/><rect x="115" y="2" width="3" height="40"/><rect x="119" y="2" width="2" height="40"/><rect x="122" y="2" width="1" height="40"/><rect x="125" y="2" width="2" height="40"/><rect x="128" y="2" width="4" height="40"/><rect x="133" y="2" width="1" height="40"/><rect x="136" y="2" width="1" height="40"/><rect x="138" y="2" width="3" height="40"/><rect x="142" y="2" width="2" height="40"/><rect x="146" y="2" width="1" height="40"/><rect x="148" y="2" width="4" height="40"/><rect x="153" y="2" width="1" height="40"/><rect x="156" y="2" width="2" height="40"/><rect x="159" y="2" width="3" height="40"/><rect x="163" y="2" width="1" height="40"/><rect x="166" y="2" width="1" height="40"/><rect x="168" y="2" width="2" height="40"/><rect x="171" y="2" width="4" height="40"/><rect x="177" y="2" width="1" height="40"/><rect x="179" y="2" width="3" height="40"/><rect x="183" y="2" width="1" height="40"/><rect x="186" y="2" width="2" height="40"/><rect x="189" y="2" width="1" height="40"/><rect x="191" y="2" width="4" height="40"/><rect x="197" y="2" width="2" height="40"/><rect x="200" y="2" width="1" height="40"/><rect x="202" y="2" width="3" height="40"/><rect x="207" y="2" width="1" height="40"/><rect x="209" y="2" width="2" height="40"/><rect x="212" y="2" width="4" height="40"/><rect x="218" y="2" width="1" height="40"/><rect x="220" y="2" width="1" height="40"/><rect x="222" y="2" width="3" height="40"/><rect x="227" y="2" width="2" height="40"/><rect x="230" y="2" width="1" height="40"/><rect x="232" y="2" width="4" height="40"/><rect x="238" y="2" width="1" height="40"/><rect x="240" y="2" width="2" height="40"/><rect x="243" y="2" width="3" height="40"/><rect x="248" y="2" width="1" height="40"/><rect x="250" y="2" width="1" height="40"/><rect x="252" y="2" width="2" height="40"/><rect x="256" y="2" width="4" height="40"/><rect x="261" y="2" width="1" height="40"/><rect x="263" y="2" width="3" height="40"/></svg></div><div class="documento"><div class="documento-titulo">RELATÓRIO GERENCIAL</div><div class="documento-numero">Documento nº ${esc(meta.docNum)}</div></div></header>
 <section class="titulo-principal"><h1>${titulo}</h1><p>Indicadores operacionais e financeiros do período analisado.</p></section>
-<section class="informacoes"><div class="informacao" style="position:relative;padding-right:78px"><div class="informacao-label">Período analisado</div><div class="informacao-valor">${esc(r.periodoLabel)}</div><div style="position:absolute;right:18px;top:50%;transform:translateY(-50%)"><img class="relatorio-qrcode" alt="QR Code para login" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?qr-relatorio=login')}"></div></div><div class="informacao"><div class="informacao-label">Relatório gerado em</div><div class="informacao-valor">${esc(dh)}</div></div></section>
+<section class="informacoes"><div class="informacao" style="position:relative;padding-right:78px"><div class="informacao-label">Período analisado</div><div class="informacao-valor">${esc(r.periodoLabel)}</div><div style="position:absolute;right:18px;top:50%;transform:translateY(-50%)"><img class="relatorio-qrcode" alt="QR Code para login" crossorigin="anonymous" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent((()=>{const c=admin.obterContextoQR(r,meta);return window.location.origin + window.location.pathname + '?qr-relatorio=login&doc='+encodeURIComponent(c.doc)+'&barbeiro='+encodeURIComponent(c.barbeiro)+'&escopo='+encodeURIComponent(c.escopo)+'&inicio='+encodeURIComponent(c.inicio)+'&fim='+encodeURIComponent(c.fim)+'&filtro='+encodeURIComponent(c.filtro);})())}"></div></div><div class="informacao"><div class="informacao-label">Relatório gerado em</div><div class="informacao-valor">${esc(dh)}</div></div></section>
 <section class="secao"><div class="secao-cabecalho"><h2>Indicadores do período</h2><span>Visão geral</span></div><div class="indicadores">
 <div class="indicador"><div class="indicador-label">Clientes recorrentes</div><div class="indicador-valor">${esc(r.clientesRecorrentes ?? 0)}</div></div>
 <div class="indicador"><div class="indicador-label">Faturamento</div><div class="indicador-valor">${esc(moeda(r.faturamento))}</div></div>
@@ -6526,7 +6769,7 @@ html,body{width:210mm;height:297mm;margin:0;padding:0;background:#e7e7e7;font-fa
         const escopoNumero=`gestao-barbeiro-${this.barbeiroGestao.id}`;
         const docNum=this.obterNumeroRelatorioPDF(escopoNumero);
         const nomeArquivo=`relatorio-${this.barbeiroGestao.nome.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${this.hojeISO()}.pdf`;
-        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:'Relatório de Desempenho',nomeRodape:this.nomeRealBarbeiro(this.barbeiroGestao.nome),tipo:'relatorios',periodoLabel:r.periodoLabel});
+        await this.gerarPDFModeloHTMLOriginal({...r,modoBarbearia:false,indicadoresConsolidados:true,clientesRecorrentes:r.clientesRecorrentes,porBarbeiro:[],servicosOrdenados:(()=>{const m={};(r.lista||[]).forEach(a=>{const n=a.servicos?a.servicos.nome:'Serviço';m[n]=(m[n]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})()}, {docNum,escopoNumero,nomeArquivo,titulo:'Relatório de Desempenho',nomeRodape:this.nomeRealBarbeiro(this.barbeiroGestao.nome),tipo:'relatorios',periodoLabel:r.periodoLabel,gestaoFiltro:this.gestaoFiltro,barbeiroRelatorio:this.barbeiroGestao.id});
     },
 
     formatarDataHoraBR(iso){
@@ -7327,18 +7570,29 @@ async function handleAdminLogin(event){
     }
 
     if(window.QR_RELATORIO_FLUXO){
+        const barbeiroQR = await admin.checarBarbeiroQR();
+        if(!barbeiroQR){
+            admin.mostrarErroLogin('Login autenticado, mas este acesso não está vinculado a um barbeiro ativo.');
+            try{ await sb.auth.signOut(); }catch(e){}
+            return;
+        }
+        admin.barbeiro = barbeiroQR;
+        admin.usuarioEmail = (await sb.auth.getUser()).data.user?.email || '';
         await mostrarDestinoQRRelatorio();
+        await admin.renderDashboardQRRelatorio();
         return;
     }
 
     await admin.carregarBarbeiro();
 }
 
+function escHtmlQR(str){ return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
 async function mostrarDestinoQRRelatorio(){
     document.getElementById('admin-login').classList.add('hidden');
     document.getElementById('admin-panel').classList.remove('active');
     const destino = document.getElementById('qr-relatorio-destino');
-    if(destino) destino.style.display = 'flex';
+    if(destino) destino.style.display = 'block';
     window.scrollTo(0,0);
 }
 
