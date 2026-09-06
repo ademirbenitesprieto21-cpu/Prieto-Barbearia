@@ -4070,11 +4070,12 @@ Um novo cliente acabou de realizar um agendamento na Prieto Barbearia.
 
 // variáveis realmente suportadas hoje pelo trigger (dados que existem no agendamento)
 const VARIAVEIS_MENSAGEM_NOTIFICACAO = [
-    { chave: '{cliente}',  desc: 'Nome do cliente' },
-    { chave: '{barbeiro}', desc: 'Nome do barbeiro' },
-    { chave: '{data}',     desc: 'Data do agendamento' },
-    { chave: '{horario}',  desc: 'Horário do agendamento' },
-    { chave: '{telefone}', desc: 'Telefone do cliente' }
+    { chave: '{cliente}',       desc: 'Nome do cliente' },
+    { chave: '{barbeiro}',      desc: 'Nome do barbeiro' },
+    { chave: '{data}',          desc: 'Data do agendamento' },
+    { chave: '{horario}',       desc: 'Horário do agendamento' },
+    { chave: '{telefone}',      desc: 'Telefone do cliente' },
+    { chave: '{email_cliente}', desc: 'E-mail do cliente' }
 ];
 
 // dados fictícios usados somente na pré-visualização dentro da Área Restrita
@@ -4083,7 +4084,8 @@ const PREVIA_DADOS_FICTICIOS_NOTIFICACAO = {
     '{barbeiro}': 'Barbeiro Tradicional',
     '{data}': '11/08/2026',
     '{horario}': '08:30',
-    '{telefone}': '(67) 99999-9999'
+    '{telefone}': '(67) 99999-9999',
+    '{email_cliente}': 'joao@email.com'
 };
 
 function escapeHtml(str){
@@ -5907,7 +5909,7 @@ const admin = {
        Edita o texto salvo em configuracoes.mensagem_notificacao (por barbeiro,
        vinculado a barbeiro_id). O trigger "gerar_notificacao_agendamento" no
        Supabase lê essa mesma coluna: se houver texto salvo, substitui as
-       variáveis {cliente}/{barbeiro}/{data}/{horario}/{telefone} pelos dados
+       variáveis {cliente}/{barbeiro}/{data}/{horario}/{telefone}/{email_cliente} pelos dados
        reais do agendamento e usa o resultado na notificação (Área Restrita +
        Telegram); se não houver, continua usando a mensagem padrão original —
        nada muda no fluxo de envio em si (enviar_telegram_ao_notificar). */
